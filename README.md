@@ -9,5 +9,6 @@ If you want to use the bot for personal use, add a file named `config.json` to t
 ```
 {
   token: "YOUR_TOKEN",
-  prefix: "YOUR_PREFIX"
+  prefix: "YOUR_PREFIX",
+  osuApiKey: "YOUR_OSU_API_KEY" //if you wish to use the osu commands!
 }
