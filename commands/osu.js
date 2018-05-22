@@ -51,9 +51,9 @@ module.exports = {
                 .setThumbnail("https://osu.ppy.sh/a/" + user.user_id)
                 .setTimestamp()
                 .setDescription("Country: " + user.country + " | Playcount: " + user.playcount)
-                .addField("Rank", "#" + user.pp_rank)
-                .addField("Country Rank", "#" + user.pp_country_rank)
-                .addField("PP", user.pp_raw + "pp")
+                .addField("Rank", "#" + parseInt(user.pp_rank).toLocaleString('en'))
+                .addField("Country Rank", "#" + parseInt(user.pp_country_rank).toLocaleString('en'))
+                .addField("PP", Math.round(user.pp_raw) + "pp")
                 .addField("Accuracy", parseFloat(user.accuracy).toFixed(2) + "%")
 
               m.channel.send({
@@ -108,7 +108,7 @@ module.exports = {
                 //Calculate accuracy
                 for (var i = 0; i < scores.length; i++) {
                   userAcc = (parseInt(scores[i].count300) * 300 + parseInt(scores[i].count100) * 100 + parseInt(scores[i].count50) * 50) / ((parseInt(scores[i].count300) + parseInt(scores[i].count100) + parseInt(scores[i].count50) + parseInt(scores[i].countmiss)) * 300) * 100;
-                  scores[i].accuracy = userAcc.toFixed(2).toString();
+                  scores[i].accuracy = determineAcc(scores[i])
                 }
 
                 let beatmapList = [];
@@ -151,6 +151,76 @@ module.exports = {
           console.log(err)
         });
     }
+
+    //Recent
+    else if (args[0] === "recent") {
+      const userName = args.slice(1).join('_');
+
+      //First Call
+      snekfetch.get("https://osu.ppy.sh/api/get_user_recent").query({
+          k: osuApiKey,
+          u: userName,
+          limit: "1"
+        })
+        .then(r => {
+          if (r.body.length == 0) {
+            m.reply("That username does not exist, or has not played in over 24 hours! Please try again.")
+            return;
+          } else {
+
+            const recent = r.body[0];
+
+            //Second Call
+            snekfetch.get("https://osu.ppy.sh/api/get_user").query({
+                k: osuApiKey,
+                u: userName
+              })
+              .then(r => {
+
+                userInfo = r.body[0];
+
+                //Third Call
+                snekfetch.get("https://osu.ppy.sh/api/get_beatmaps").query({
+                    k: osuApiKey,
+                    b: recent.beatmap_id
+                  })
+                  .then(r => {
+                    beatmapInfo = r.body[0];
+
+                    mods = "";
+                    determineMods(recent);
+                    recent.enabled_mods = mods;
+
+                    userAcc = "";
+                    recent.accuracy = determineAcc(recent);
+
+                    var playDate = Date.parse(recent.date);
+                    var currentDate = Date.now() + 28800000; //playDate is from UTC+8
+                    recent.date = timeDifference(currentDate, playDate);
+
+                    let embed = new Discord.RichEmbed()
+                      .setColor("#0000b2")
+                      .setAuthor("Recent Play for: " + userInfo.username, "https://osu.ppy.sh/a/" + userInfo.user_id, "https://osu.ppy.sh/users/" + userInfo.user_id)
+                      .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
+                      .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
+                      .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
+                      .addField(
+                        "+" + recent.enabled_mods + " |     Score: " + parseInt(recent.score).toLocaleString('en') + " (" + recent.accuracy + "%) | " + recent.date,
+                        recent.pp
+                      )
+                      .setTimestamp()
+
+
+                    //Send Embed to Channel
+                    m.channel.send({
+                      embed: embed
+                    });
+                  })
+              })
+          }
+        })
+    }
+
     //if args[0] isn't a command.
     else {
       m.channel.send("Try `osu help");
@@ -201,6 +271,27 @@ function determineMods(score) {
     }
   }
 };
+
+function determineAcc(score) {
+  userAcc = (parseInt(score.count300) * 300 + parseInt(score.count100) * 100 + parseInt(score.count50) * 50) / ((parseInt(score.count300) + parseInt(score.count100) + parseInt(score.count50) + parseInt(score.countmiss)) * 300) * 100;
+  return userAcc.toFixed(2).toString();
+};
+
+function timeDifference(current, previous) {
+  var msPerMinute = 60 * 1000; //60,000
+  var msPerHour = msPerMinute * 60; //3,600,000
+  var msPerDay = msPerHour * 24; //86,400,000
+
+  var elapsed = current - previous;
+
+  if (elapsed < msPerMinute) {
+    return Math.round(elapsed / 1000) + ' seconds ago';
+  } else if (elapsed < msPerHour) {
+    return Math.round(elapsed / msPerMinute) + ' minutes ago';
+  } else if (elapsed < msPerDay) {
+    return Math.round(elapsed / msPerHour) + ' hours ago';
+  }
+}
 
 function generateTop(m, osuUser, scores, maps) {
   //Create RichEmbed

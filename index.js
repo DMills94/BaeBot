@@ -51,6 +51,11 @@ client.on('message', message => {
   if (uI.includes(":pepehands:")) {
     client.commands.get('pepehands').execute(message, uI);
   }
+
+  if (uI.includes("goodbye")) new Promise(function(resolve, reject) {
+    const itsbaeChamp = client.emojis.find("name", "itsbaeChamp");
+    message.reply(`cya! ${itsbaeChamp}`)
+  });
 });
 
 //Start Bot
