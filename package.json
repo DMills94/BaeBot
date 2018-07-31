@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
+    "axios": "^0.18.0",
     "discord.js": "^11.3.2",
-    "npm": "^6.0.0"
+    "npm": "^6.0.0",
+    "ojsama": "^1.0.19"
   },
   "devDependencies": {},
   "scripts": {

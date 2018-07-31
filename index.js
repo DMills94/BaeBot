@@ -17,6 +17,7 @@ for (const file of commandFiles) {
 
 client.on('ready', () => {
   console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`);
+  client.channels.get("438985438548459530").send("BaeBot reporting for dooty!");
   client.user.setActivity("Stuck? Try `help!");
 });
 
@@ -31,7 +32,7 @@ client.on('message', message => {
 
   //Check for Prefix
   if (uI.startsWith(prefix)) {
-    const args = uI.slice(prefix.length).split(/ +/);
+    const args = uI.slice(prefix.length).split(" ");
     const commandName = args.shift();
 
     //Prefix Commands
@@ -43,7 +44,7 @@ client.on('message', message => {
       command.execute(message, args)
     } catch (error) {
       console.error(error);
-      message.reply('There was an error with that command!');
+      message.reply('There was an error with that command! Details: ' + error);
     }
   }
 
