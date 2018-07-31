@@ -142,7 +142,7 @@ const beatmapLookup = (urlInfo, m) => {
                                 console.log(beatmapAPI[i]);
                                 mapInfo += `\n----------------------------`
                                 mapInfo += `\n__**Difficulty: ${beatmapAPI[i].version}**__`
-                                mapInfo += `\n\u2022 **AR:** ${beatmapAPI[i].diff_approach} \u2022 **OD:** ${beatmapAPI[i].diff_overall} \u2022 **HP:** ${beatmapAPI[i].diff_drain} \u2022 **CS:** ${beatmapAPI[i].diff_size}`
+                                mapInfo += `\n\n\u2022 **AR:** ${beatmapAPI[i].diff_approach} \u2022 **OD:** ${beatmapAPI[i].diff_overall} \u2022 **HP:** ${beatmapAPI[i].diff_drain} \u2022 **CS:** ${beatmapAPI[i].diff_size}`
                                 mapInfo += `\n\u2022 **Length:** ${beatmapAPI[i].total_length} \u2022 **BPM:** ${Math.floor(beatmapAPI[i].bpm)}`
                                 mapInfo += `\n\u2022 **Star Rating:** ${parseFloat(beatmapAPI[i].difficultyrating).toFixed(2)}* \u2022 **Max Combo:** ${beatmapAPI[i].max_combo}x`
                                 mapInfo += `\n\n __Performance Values__ \n \u2022 **95%:** ${beatmapAPI[i].ppAccValues[0]}pp \u2022 **99%:** ${beatmapAPI[i].ppAccValues[1]}pp \u2022 **100%:** ${beatmapAPI[i].ppAccValues[2]}pp`
@@ -151,7 +151,7 @@ const beatmapLookup = (urlInfo, m) => {
 
                             let embed = new Discord.RichEmbed()
                                 .setColor('#ffb3ff')
-                                .setAuthor(`${beatmapAPI[0].artist} - ${beatmapAPI[0].title}by ${beatmapAPI[0].creator}`, undefined, `https://osu.ppy/beatmapsets/${beatmapAPI[0].beatmapset_id}#osu/${beatmapAPI[0].beatmap_id}`)
+                                .setAuthor(`${beatmapAPI[0].artist} - ${beatmapAPI[0].title} by ${beatmapAPI[0].creator}`, undefined, `https://osu.ppy/beatmapsets/${beatmapAPI[0].beatmapset_id}#osu/${beatmapAPI[0].beatmap_id}`)
                                 .setThumbnail("https://b.ppy.sh/thumb/" + beatmapAPI[0].beatmapset_id + "l.jpg")
                                 //Download (standard, no video, bloodcat)
                                 .setDescription(mapInfo)
