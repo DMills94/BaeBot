@@ -1,7 +1,6 @@
 const axios = require('axios');
-const api = "https://osu.ppy.sh/api/"
 const Discord = require('discord.js')
-const {osuApiKey} = require('../config.json');
+const { osuApiKey } = require('../config.json');
 const ojsama = require('ojsama');
 
 axios.defaults.baseURL = "https://osu.ppy.sh/";
@@ -28,14 +27,12 @@ module.exports = {
                     u: userName
                 }
             }).then(r => {
-                console.log(r);
                 if (r.data.length == 0) {
                     m.reply("That username does not exist! Please try again.")
                     return;
                 } else {
 
                     let user = r.data[0];
-                    // console.log(user);
 
                     if (args[0] === "user") {
 
@@ -366,6 +363,7 @@ const calculate = (beatmap, performance, userInfo, m, query) => {
             nmiss: nmiss,
             acc_percent: acc_percent
         })
+        console.log(recentPP);
 
         let maxPP = ojsama.ppv2({
             stars: stars
