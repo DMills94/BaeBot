@@ -363,7 +363,6 @@ const calculate = (beatmap, performance, userInfo, m, query) => {
             nmiss: nmiss,
             acc_percent: acc_percent
         })
-        console.log(recentPP);
 
         let maxPP = ojsama.ppv2({
             stars: stars

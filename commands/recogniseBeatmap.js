@@ -82,7 +82,10 @@ const beatmapLookup = (urlInfo, m) => {
     //API Call get-beatmap
     axios.get("api/get_beatmaps", { params: params})
         .then(resp => {
-            beatmapAPI = resp.data;
+            unsortedBeatmapAPI = resp.data;
+            beatmapAPI = unsortedBeatmapAPI.sort((a, b) => {
+                return b.difficultyrating - a.difficultyrating;
+            })
             let counter = 1;
 
             for (let i = 0; i < beatmapAPI.length; i++) {
@@ -139,7 +142,6 @@ const beatmapLookup = (urlInfo, m) => {
                                     break;
                                 }
 
-                                console.log(beatmapAPI[i]);
                                 mapInfo += `\n----------------------------`
                                 mapInfo += `\n__**Difficulty: ${beatmapAPI[i].version}**__`
                                 mapInfo += `\n\n\u2022 **AR:** ${beatmapAPI[i].diff_approach} \u2022 **OD:** ${beatmapAPI[i].diff_overall} \u2022 **HP:** ${beatmapAPI[i].diff_drain} \u2022 **CS:** ${beatmapAPI[i].diff_size}`
