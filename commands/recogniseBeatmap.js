@@ -12,6 +12,7 @@ module.exports = {
         const urlInfo = {
             isOldLink: null,
             isBeatmap: null,
+            isSet: null,
             beatmapSetId: null,
             beatmapId: null,
         }
@@ -20,87 +21,32 @@ module.exports = {
         const fullUrl = args.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i);
 
         urlInfo.isOldLink = fullUrl[2] !== "beatmapsets";
-        urlInfo.isBeatmap = fullUrl[2] =="b"; //Only used for old site links
+        urlInfo.isBeatmap = fullUrl[2] === "b"; //Only used for old site links
+        urlInfo.isSet = fullUrl[2] === "s"; //Only used for old site links
 
         if (!urlInfo.isOldLink) { //New Link
             const beatmapId = fullUrl[4];
 
-            if (!beatmapId) {
-                return m.channel.send("Unsupported Gamemode!")
+            if (!beatmapId) { //Make so set id still works - get top diff.
+                urlInfo.beatmapSetId = fullUrl[3];
+            }
+            else {
+                urlInfo.beatmapSetId = fullUrl[3];
+                urlInfo.beatmapId = beatmapId.substr(5)
             }
 
-            urlInfo.beatmapSetId = fullUrl[3];
-            urlInfo.beatmapId = beatmapId.substr(5)
-            console.log(urlInfo);
+            beatmapLookup(urlInfo, m);
         }
         else { //Old Link
-            urlInfo.beatmapId = fullUrl[3];
+            if (urlInfo.isBeatmap) {
+                urlInfo.beatmapId = fullUrl[3];
+            }
+            if (urlInfo.isSet) {
+                urlInfo.beatmapSetId = fullUrl[3];
+            }
+
+            beatmapLookup(urlInfo, m);
         }
-
-        let beatmap = {};
-        //API Call get-beatmap
-        axios.get("api/get_beatmaps", { params:{
-                    k: osuApiKey,
-                    b: urlInfo.beatmapId
-                }
-            })
-                .then(resp => {
-                    beatmapAPI = resp.data[0];
-                    console.log(beatmapAPI);
-
-                    for (let key in approvedRatings) {
-                        console.log(`[KEY]: ${key} | [VALUE]: ${approvedRatings[key]}`);
-                        if (beatmapAPI.approved === approvedRatings[key]) {
-                            console.log("MATCH");
-                            beatmapAPI.approved = key;
-                        }
-                    }
-
-                    //Get Beatmap data for calculations
-                    axios.get('osu/' + urlInfo.beatmapId, {params: {
-                            credentials: "include"
-                        }
-                    })
-                        .then(resp => {
-                            return resp.data
-                        })
-                        .then(raw => new ojsama.parser().feed(raw))
-                        .then(({ map }) => {
-                            let beatmapConfig = map;
-                            console.log(beatmapAPI);
-
-                            let stars = new ojsama.diff().calc({ map: beatmapConfig, mods: 0 })
-                            let combo = beatmapAPI.max_combo;
-
-                            //Calculate Star Rating for mods (unused atm)
-
-
-                            //Calculate PP Ratings for a acc ranges (FC)
-                            let ppAccRange = [90, 95, 98, 99, 100];
-                            let ppAccValues = []; //Will store pp values for a range
-                            for (var i = 0; i < ppAccRange.length; i++) {
-                                let performanceValue = ojsama.ppv2({
-                                    stars: stars,
-                                    combo: combo,
-                                    nmiss: 0,
-                                    acc_percent: ppAccRange[i]
-                                })
-
-                                formattedPerformanceValue = performanceValue.toString().split(" ")[0];
-                                ppAccValues.push(formattedPerformanceValue);
-                            }
-
-                            //Output embed
-                            let embed = new Discord.RichEmbed()
-                                .setColor('#ffb3ff')
-                                .setAuthor(`${beatmapAPI.artist} - ${beatmapAPI.title} [${beatmapAPI.version}]`, undefined, `https://osu.ppy/beatmapsets/${beatmapAPI.beatmapset_id}#osu/${beatmapAPI.beatmap_id}`)
-                                .setFooter(`Status: ${beatmapAPI.approved}`)
-                                .setTimestamp()
-
-                            m.channel.send('Work in progress!')
-                            m.channel.send({embed: embed});
-                        });
-                })
     }
 }
 
@@ -112,4 +58,113 @@ const approvedRatings = {
     "Pending": "0",
     "WIP": "-1",
     "Graveyard": "-2"
+}
+
+const convertToMinutes = seconds => {
+    return (seconds - (seconds %= 60)) / 60 + (9 < seconds ? ':' : ':0' ) + seconds;
+}
+
+const beatmapLookup = (urlInfo, m) => {
+    let beatmap = {};
+    let params = {};
+    if (urlInfo.beatmapId) {
+        params = {
+            k: osuApiKey,
+            b: urlInfo.beatmapId
+        }
+    }
+    if (!urlInfo.beatmapId && urlInfo.beatmapSetId) {
+            params = {
+                k: osuApiKey,
+                s: urlInfo.beatmapSetId
+            }
+    }
+    //API Call get-beatmap
+    axios.get("api/get_beatmaps", { params: params})
+        .then(resp => {
+            unsortedBeatmapAPI = resp.data;
+            beatmapAPI = unsortedBeatmapAPI.sort((a, b) => {
+                return b.difficultyrating - a.difficultyrating;
+            })
+            let counter = 1;
+
+            for (let i = 0; i < beatmapAPI.length; i++) {
+                for (let key in approvedRatings) {
+                    if (beatmapAPI[i].approved === approvedRatings[key]) {
+                        beatmapAPI[i].approved = key;
+                    }
+                }
+
+                beatmapAPI[i].total_length = convertToMinutes(beatmapAPI[i].total_length);
+
+                urlInfo.beatmapId = beatmapAPI[i].beatmap_id;
+                urlInfo.beatmapSetId = beatmapAPI[i].beatmapset_id;
+
+                //Get Beatmap data for calculations
+                axios.get('osu/' + urlInfo.beatmapId, {params: {
+                        credentials: "include"
+                    }
+                })
+                    .then(resp => {
+                        return resp.data
+                    })
+                    .then(raw => new ojsama.parser().feed(raw))
+                    .then(({ map }) => {
+                        let beatmapConfig = map;
+
+                        let stars = new ojsama.diff().calc({ map: beatmapConfig, mods: 0 })
+                        let combo = beatmapAPI[i].max_combo;
+                        //Calculate Star Rating for mods (unused atm)
+
+                        //Calculate PP Ratings for a acc ranges (FC)
+                        let ppAccRange = [95, 99, 100];
+                        let ppAccValues = []; //Will store pp values for a range
+                        for (let i = 0; i < ppAccRange.length; i++) {
+                            let performanceValue = ojsama.ppv2({
+                                stars: stars,
+                                combo: combo,
+                                nmiss: 0,
+                                acc_percent: ppAccRange[i]
+                            })
+
+                            formattedPerformanceValue = performanceValue.toString().split(" ")[0];
+                            ppAccValues.push(formattedPerformanceValue);
+                        }
+                        beatmapAPI[i].ppAccValues = ppAccValues;
+
+
+                        //Output embed
+                        if (counter === beatmapAPI.length) {
+                            let mapInfo = "";
+
+                            for (let i = 0; i < 3; i++) {
+                                if (i === beatmapAPI.length) {
+                                    break;
+                                }
+
+                                mapInfo += `\n----------------------------`
+                                mapInfo += `\n__**Difficulty: ${beatmapAPI[i].version}**__`
+                                mapInfo += `\n\n\u2022 **AR:** ${beatmapAPI[i].diff_approach} \u2022 **OD:** ${beatmapAPI[i].diff_overall} \u2022 **HP:** ${beatmapAPI[i].diff_drain} \u2022 **CS:** ${beatmapAPI[i].diff_size}`
+                                mapInfo += `\n\u2022 **Length:** ${beatmapAPI[i].total_length} \u2022 **BPM:** ${Math.floor(beatmapAPI[i].bpm)}`
+                                mapInfo += `\n\u2022 **Star Rating:** ${parseFloat(beatmapAPI[i].difficultyrating).toFixed(2)}* \u2022 **Max Combo:** ${beatmapAPI[i].max_combo}x`
+                                mapInfo += `\n\n __Performance Values__ \n \u2022 **95%:** ${beatmapAPI[i].ppAccValues[0]}pp \u2022 **99%:** ${beatmapAPI[i].ppAccValues[1]}pp \u2022 **100%:** ${beatmapAPI[i].ppAccValues[2]}pp`
+                                mapInfo += `\n\n **Downloads:** [Map](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}) - [No Video](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}n) - [Bloodcat](https://bloodcat.com/osu/s/${beatmapAPI[i].beatmapset_id})`
+                            }
+
+                            let embed = new Discord.RichEmbed()
+                                .setColor('#ffb3ff')
+                                .setAuthor(`${beatmapAPI[0].artist} - ${beatmapAPI[0].title} by ${beatmapAPI[0].creator}`, undefined, `https://osu.ppy/beatmapsets/${beatmapAPI[0].beatmapset_id}#osu/${beatmapAPI[0].beatmap_id}`)
+                                .setThumbnail("https://b.ppy.sh/thumb/" + beatmapAPI[0].beatmapset_id + "l.jpg")
+                                //Download (standard, no video, bloodcat)
+                                .setDescription(mapInfo)
+                                .setFooter(`Status: ${beatmapAPI[0].approved}`)
+                                .setTimestamp()
+
+                            m.channel.send({embed: embed});
+                        }
+
+                        counter++;
+                    });
+            }
+        })
 }
