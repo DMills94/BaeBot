@@ -67,14 +67,23 @@ client.on('message', message => {
         client.commands.get('pepehands').execute(message, uI);
     }
 
-    if (uI.includes("goodbye"))
+    if (uI.includes("goodbye") || uI.includes("good bye"))
         new Promise(function(resolve, reject) {
-            const itsbaeChamp = client.emojis.find("name", "itsbaeChamp");
-            message.reply(`cya! ${itsbaeChamp}`)
+            const konCha = client.emojis.find("name", "KonCha");
+            message.reply(`cya! ${konCha}`)
         });
 
     if (uI.includes("good bot")) {
-        message.channel.send("S...senpai owo")
+        if (message.author.id === "122136963129147393") {
+            message.channel.send("S...senpai owo")
+        }
+        else if (message.author.id === "138368170481156096") {
+            message.channel.send("Begone thot.")
+        }
+        else {
+            const itsbaeChamp = client.emojis.find("name", "itsbaeChamp")
+            message.channel.send(`Thanks! ${itsbaeChamp}`);
+        }
     }
 
     if (uI.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i)) {
