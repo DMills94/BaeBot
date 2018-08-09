@@ -16,11 +16,26 @@ commandHistory = [];
 
 client.on('ready', () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`);
-    client.channels.get("438985438548459530").send("BaeBot reporting for dooty!");
+    client.channels.get("476676731755823105").fetchMessage("476680709428346880")
+        .then(message => {
+            currentTime = new Date();
+            date = currentTime.toDateString();
+            time = currentTime.toTimeString();
+            message.edit(`I am online! Last refresh on **${date}** at **${time}**`);
+        })
+        .catch(console.error);
     client.user.setActivity("Stuck? Try `help!");
 
     let commandHistory = [];
 });
+
+client.on('error', () => {
+    client.channels.get("476676731755823105").fetchMessage("476680709428346880")
+        .then(message => {
+            message.edit("Offline!");
+        })
+        .catch(console.error);
+})
 
 //Recording incoming messages
 client.on('message', message => {
@@ -46,15 +61,19 @@ client.on('message', message => {
         try {
             if (command.name !== "history") {
                 command.execute(message, args);
+                console.log(`[EXECUTED COMMAND]: ${command.name}`);
+
+                //Update history
+                commandHistory.unshift(uI.slice(prefix.length));
+                if (commandHistory.length > 5) {
+                    commandHistory.pop();
+                }
             } else {
                 command.execute(message, args, commandHistory);
+                console.log(`[EXECUTED COMMAND]: ${command.name}`);
             }
 
-            //Update history
-            commandHistory.unshift(uI.slice(prefix.length));
-            if (commandHistory.length > 5) {
-                commandHistory.pop();
-            }
+
 
         } catch (error) {
             console.error(error);
@@ -78,7 +97,8 @@ client.on('message', message => {
             message.channel.send("S...senpai owo")
         }
         else if (message.author.id === "138368170481156096") {
-            message.channel.send("Begone thot.")
+            message.reply("begone thot.")
+            console.log(`Called Wiqued a thot :)`);
         }
         else {
             const itsbaeChamp = client.emojis.find("name", "itsbaeChamp")
@@ -86,8 +106,19 @@ client.on('message', message => {
         }
     }
 
+    if (uI.includes("bad bot")) {
+        if (message.author.id === "138368170481156096") {
+            message.reply("begone thot.")
+            console.log(`Called Wiqued a thot :)`);
+        }
+        else {
+            message.channel.send("I'm sorry :( If i'm not working correctly please contact my owner `@Bae#3308`");
+        }
+    }
+
     if (uI.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i)) {
         client.commands.get('recognise beatmap').execute(message, uI);
+        console.log(`[EXECUTED COMMAND]: recognise beatmap`);
     }
 });
 
