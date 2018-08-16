@@ -34,7 +34,10 @@ client.on('error', () => {
         .then(message => {
             message.edit("Offline!");
         })
-        .catch(console.error);
+        .catch(err => {
+            console.log("There was an error updating the bots status");
+        });
+    console.error;
 })
 
 //Recording incoming messages

@@ -63,6 +63,113 @@ module.exports = {
     }
 };
 
+const determineMods = score => {
+    if (score.enabled_mods == "0") {
+        mods = "NoMod";
+    } else {
+        for (i = 0; i < modnames.length; i++) {
+            if (score.enabled_mods & modnames[i].val) {
+                mods += modnames[i].short;
+            }
+        }
+    }
+};
+
+const determineAcc = score => {
+    userAcc = (parseInt(score.count300) * 300 + parseInt(score.count100) * 100 + parseInt(score.count50) * 50) / ((parseInt(score.count300) + parseInt(score.count100) + parseInt(score.count50) + parseInt(score.countmiss)) * 300) * 100;
+    return userAcc.toFixed(2).toString();
+};
+
+const calculate = (beatmap, performance, userInfo, m, query) => {
+
+    let cleanBeatmap;
+
+    axios.get('osu/' + beatmap.beatmap_id, {params: {
+            credentials: "include"
+        }
+    })
+    .then(resp => {
+        return resp.data
+    })
+    .then(raw => new ojsama.parser().feed(raw))
+    .then(({ map }) => {
+        cleanBeatmap = map;
+        let usedMods = ojsama.modbits.from_string(performance.enabled_mods);
+
+        let stars = new ojsama.diff().calc({ map: cleanBeatmap, mods: usedMods });
+        let combo = parseInt(performance.maxcombo);
+        let nmiss = parseInt(performance.countmiss);
+        let acc_percent = parseFloat(performance.accuracy);
+
+        let recentPP = ojsama.ppv2({
+            stars: stars,
+            combo: combo,
+            nmiss: nmiss,
+            acc_percent: acc_percent
+        })
+
+        let maxPP = ojsama.ppv2({
+            stars: stars
+        })
+
+        formattedStars = stars.toString().split(" ")[0];
+        formattedPerformancePP = recentPP.toString().split(" ")[0];
+        formattedMaxPP = maxPP.toString().split(" ")[0];
+
+        if (query === "recent") {
+            generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars);
+        }
+        else if (query === "top") {
+            scores[mapNum].maxPP = formattedMaxPP;
+            scores[mapNum].stars = formattedStars;
+
+            if (beatmapList.length == scores.length) {
+                generateTop(m, osuUser, scores, beatmapList)
+            } else {
+                mapNum++
+                getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList);
+            }
+        }
+    })
+    .catch(err => {
+        console.log(err);
+        m.channel.send("There was an error! More info: " + err);
+    })
+};
+
+const timeDifference = (current, previous) => {
+    const msPerMinute = 60 * 1000; //60,000
+    const msPerHour = msPerMinute * 60; //3,600,000
+    const msPerDay = msPerHour * 24; //86,400,000
+
+    let elapsed = current - previous;
+
+    if (elapsed < msPerMinute) {
+        return Math.round(elapsed / 1000) + ' seconds ago';
+    } else if (elapsed < msPerHour) {
+        return Math.round(elapsed / msPerMinute) + ' minutes ago';
+    } else if (elapsed < msPerDay) {
+        return Math.round(elapsed / msPerHour) + ' hours ago';
+    } else {
+        return Math.round(elapsed / msPerDay) + ' days ago';
+    }
+};
+
+
+const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars) => {
+    let embed = new Discord.RichEmbed()
+        .setColor("#0000b2")
+        .setAuthor("Recent Play for: " + userInfo.username, "https://osu.ppy.sh/a/" + userInfo.user_id, "https://osu.ppy.sh/users/" + userInfo.user_id)
+        .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
+        .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
+        .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
+        .addField(stars + "* | +" + recent.enabled_mods + " |     Score: " + parseInt(recent.score).toLocaleString('en') + " (" + recent.accuracy + "%) | " + recent.date, performancePP + "pp/" + maxPP + "pp | Combo: " + recent.maxcombo + "x/" + beatmapInfo.max_combo + "x {" + recent.count300 + "/" + recent.count100 + "/" + recent.count50 + "/" + recent.countmiss + "}")
+        .setTimestamp()
+
+    //Send Embed to Channel
+    m.channel.send({embed: embed});
+}
+
 //Function to change returned "mods" value to actual Mods
 let modnames = [
     {
@@ -179,112 +286,3 @@ let modnames = [
         short: "2K"
     }
 ];
-
-const determineMods = score => {
-    if (score.enabled_mods == "0") {
-        mods = "NoMod";
-    } else {
-        for (i = 0; i < modnames.length; i++) {
-            if (score.enabled_mods & modnames[i].val) {
-                mods += modnames[i].short;
-            }
-        }
-    }
-};
-
-const determineAcc = score => {
-    userAcc = (parseInt(score.count300) * 300 + parseInt(score.count100) * 100 + parseInt(score.count50) * 50) / ((parseInt(score.count300) + parseInt(score.count100) + parseInt(score.count50) + parseInt(score.countmiss)) * 300) * 100;
-    return userAcc.toFixed(2).toString();
-};
-
-const calculate = (beatmap, performance, userInfo, m, query) => {
-
-    let cleanBeatmap;
-
-    axios.get('osu/' + beatmap.beatmap_id, {params: {
-            credentials: "include"
-        }
-    })
-    .then(resp => {
-        return resp.data
-    })
-    .then(raw => new ojsama.parser().feed(raw))
-    .then(({ map }) => {
-        cleanBeatmap = map;
-        let usedMods = ojsama.modbits.from_string(performance.enabled_mods);
-
-        let stars = new ojsama.diff().calc({ map: cleanBeatmap, mods: usedMods });
-        let combo = parseInt(performance.maxcombo);
-        let nmiss = parseInt(performance.countmiss);
-        let acc_percent = parseFloat(performance.accuracy);
-
-        let recentPP = ojsama.ppv2({
-            stars: stars,
-            combo: combo,
-            nmiss: nmiss,
-            acc_percent: acc_percent
-        })
-
-        let maxPP = ojsama.ppv2({
-            stars: stars
-        })
-
-        formattedStars = stars.toString().split(" ")[0];
-        formattedPerformancePP = recentPP.toString().split(" ")[0];
-        formattedMaxPP = maxPP.toString().split(" ")[0];
-
-        if (query === "recent") {
-            generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars);
-        }
-        else if (query === "top") {
-            scores[mapNum].maxPP = formattedMaxPP;
-            scores[mapNum].stars = formattedStars;
-
-            if (beatmapList.length == scores.length) {
-                generateTop(m, osuUser, scores, beatmapList)
-            } else {
-                mapNum++
-                getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList);
-            }
-        }
-    })
-    .catch(err => {
-        console.log(err);
-        m.channel.send("There was an error! More info: " + err);
-    })
-
-
-};
-
-const timeDifference = (current, previous) => {
-    const msPerMinute = 60 * 1000; //60,000
-    const msPerHour = msPerMinute * 60; //3,600,000
-    const msPerDay = msPerHour * 24; //86,400,000
-
-    let elapsed = current - previous;
-
-    if (elapsed < msPerMinute) {
-        return Math.round(elapsed / 1000) + ' seconds ago';
-    } else if (elapsed < msPerHour) {
-        return Math.round(elapsed / msPerMinute) + ' minutes ago';
-    } else if (elapsed < msPerDay) {
-        return Math.round(elapsed / msPerHour) + ' hours ago';
-    } else {
-        return Math.round(elapsed / msPerDay) + ' days ago';
-    }
-};
-
-
-const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars) => {
-    let embed = new Discord.RichEmbed()
-        .setColor("#0000b2")
-        .setAuthor("Recent Play for: " + userInfo.username, "https://osu.ppy.sh/a/" + userInfo.user_id, "https://osu.ppy.sh/users/" + userInfo.user_id)
-        .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
-        .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
-        .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
-        .addField(stars + "* | +" + recent.enabled_mods + " |     Score: " + parseInt(recent.score).toLocaleString('en') + " (" + recent.accuracy + "%) | " + recent.date, performancePP + "pp/" + maxPP + "pp | Combo: " + recent.maxcombo + "x/" + beatmapInfo.max_combo + "x {" + recent.count300 + "/" + recent.count100 + "/" + recent.count50 + "/" + recent.countmiss + "}")
-        .setTimestamp()
-
-    //Send Embed to Channel
-    m.channel.send({embed: embed});
-}
