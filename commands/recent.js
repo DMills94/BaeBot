@@ -2,18 +2,34 @@ const axios = require('axios');
 const Discord = require('discord.js')
 const {osuApiKey} = require('../config.json');
 const ojsama = require('ojsama');
+const functions = require('./exportFunctions.js');
 
 module.exports = {
     name: "recent",
     description: "Returns a user's most recent play",
-    execute(m, args) {
-        const userName = args.join('_');
+    async execute(m, args) {
+        let username;
+
+        if (args.length === 0) {
+            username = await functions.lookupUser(m.author.id)
+                .catch(err => {
+                    m.reply("you do not have a linked account! Try ` `link [username]`");
+                    return;
+                })
+        }
+        else {
+            username = args.join('_');
+        }
+
+        if (!username) {
+            return;
+        }
 
         //First Call
         axios.get("api/get_user_recent", {
             params: {
                 k: osuApiKey,
-                u: userName,
+                u: username,
                 limit: "1"
             }
         }).then(resp => {
@@ -26,7 +42,7 @@ module.exports = {
                 axios.get("api/get_user", {
                     params: {
                         k: osuApiKey,
-                        u: userName
+                        u: username
                     }
                 }).then(resp => {
 

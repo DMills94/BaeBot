@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { osuApiKey } = require('../config.json');
 
 const firebase = axios.create({
     baseURL: "https://baebot-1573a.firebaseio.com/"
@@ -8,16 +9,75 @@ module.exports = {
     name: "link",
     description: "links a users discord id to an osu name",
     execute(m, args) {
-        console.log(args);
-        const userId = m.author.id;
-        const osuIGN = args[0];
 
-        firebase.get('linkedUsers.json')
+        const userId = m.author.id;
+        const osuIGN = args.join("_");
+        if (!osuIGN) {
+            return m.reply("please specify a osu! username to link with: ``link [username]`")
+        }
+
+        axios.get("api/get_user", {
+            params: {
+                k: osuApiKey,
+                u: osuIGN
+            }
+        })
             .then(resp => {
-                console.log(resp);
-            })
-            .catch(err => {
-                console.log(err);
-            })
+                if (resp.data.length === 0) {
+                    return m.reply("That username does not exist! Please try again.");
+                }
+
+                let existingLink = false;
+                let linkedDB = [];
+                let formattedUserName = resp.data[0].username;
+
+                //Get current list of registered users
+                firebase.get('linkedUsers.json')
+                    .then(resp => {
+
+                        //Check if linked already
+                        for (let key in resp.data) {
+                            linkedDB.push({
+                                ...resp.data[key],
+                                id: key
+                            })
+                        }
+
+                        for (let link in linkedDB) {
+                            if (linkedDB[link].discordID === userId) {
+                                existingLink = true;
+                            }
+                        }
+
+                        const user = {
+                            discordID: userId,
+                            osuName: formattedUserName
+                        };
+
+                        //If not post
+                        if (!existingLink) {
+                            firebase.post('linkedUsers.json', user)
+                                .then(resp => {
+                                    m.reply(`you have been successfully linked to ${formattedUserName}`);
+                                    console.log("[POST SUCCESS]");
+                                })
+                                .catch(err => {
+                                    m.reply("there's an error storing this data right now, please try again later!")
+                                    console.log(err);
+                                })
+                        }
+                        else {
+                            m.reply("you have already linked an osu profile to your account! Please use ``unlink` first and try again!")
+                        }
+                    })
+                    .catch(err => {
+                        m.reply("there's an error fetching stored data right now, please try again later!")
+                        console.log(err);
+                    })
+                })
+        .catch(err => {
+            console.log(err);
+        })
+
     }
 };

@@ -15,17 +15,13 @@ module.exports = {
 
         if (splitArgs[1] && splitArgs[1].startsWith("+")) {
             uIMods = splitArgs[1].slice(1).toLowerCase();
-            //check uIMods is correct strings
 
             uIModsParts = uIMods.match(/[\s\S]{1,2}/g)
-            console.log(uIModsParts);
+
             for (let mod of uIModsParts) {
                 if (!["hd", "hr", "dt", "nc", "so", "nf", "fl", "ht", "ez"].includes(mod)) {
                     return m.reply("invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `[beatmapURL] +[mods]`")
                 }
-                // else {
-                //     return m.reply("invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `[beatmapURL] +[mods]`")
-                // }
             }
 
             if (uIMods.includes("hr") && uIMods.includes("ez")) {
@@ -38,9 +34,6 @@ module.exports = {
         else if (splitArgs[1] && !splitArgs[1].startsWith("+")) {
             m.channel.send("Invalid mod entry!\nIf you want to add mods, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods like: `[beatmapURL] +[mods]`\nReturning result for `nomod`");
         }
-
-        console.log(`[URL] ${beatmapURL}`);
-        console.log(`[MODS] ${uIMods}`);
 
         // Extract Beatmap ID
         const urlInfo = {
@@ -188,18 +181,12 @@ const beatmapLookup = (urlInfo, m, mods) => {
                     .then(({ map }) => {
                         let beatmapConfig = map;
 
-                        console.log("[MODS] " + mods);
-
                         ojsamaMods = ojsama.modbits.from_string(mods)
-
-                        console.log("[ojsamaMods] " + ojsamaMods);
 
                         let stars = new ojsama.diff().calc({ map: beatmapConfig, mods: ojsamaMods })
                         beatmapAPI[i].difficultyrating = stars.toString();
 
                         let combo = beatmapAPI[i].max_combo;
-
-                        console.log("[STARS] " + stars);
 
 
                         //Calculate PP Ratings for a acc ranges (FC)

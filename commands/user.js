@@ -1,21 +1,38 @@
 const Discord = require('discord.js');
 const axios = require('axios');
 const { osuApiKey } = require('../config.json');
+const functions = require('./exportFunctions.js');
 
 module.exports = {
-    name: "profile",
+    name: "user",
     description: "Returns stats on the user's osu profile",
-    execute(m, args) {
-        const userName = args.join('_');
+    async execute(m, args) {
+
+        let username;
+
+        if (args.length === 0) {
+            username = await functions.lookupUser(m.author.id)
+                .catch(err => {
+                    m.reply("you do not have a linked account! Try ` `link [username]`");
+                    return;
+                })
+        }
+        else {
+            username = args.join('_');
+        }
+
+        if (!username) {
+            return;
+        }
 
         axios.get("api/get_user", {
             params: {
                 k: osuApiKey,
-                u: userName
+                u: username
             }
         })
             .then(r => {
-                if (r.data.length == 0) {
+                if (r.data.length === 0) {
                     m.reply("That username does not exist! Please try again.")
                     return;
                 }

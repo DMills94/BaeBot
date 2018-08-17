@@ -1,6 +1,6 @@
 const fs = require('fs');
 const Discord = require('discord.js');
-const {prefix, token} = require('./config.json')
+const { prefix, token, baeID, wiquedID } = require('./config.json')
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
@@ -85,6 +85,19 @@ client.on('message', message => {
     }
 
     //No-Prefix Commands
+
+    if (message.isMentioned(client.user)) {
+        if (message.author.id === wiquedID) {
+            message.reply("begone thot.")
+            console.log(`Called Wiqued a thot :)`);
+        }
+        else {
+            const emoteArray = Array.from(client.emojis);
+            const randomEmote = emoteArray[Math.floor(Math.random() * emoteArray.length) + 1][1]
+            message.channel.send(`${randomEmote}`);
+        }
+    }
+
     if (uI.includes(":pepehands:")) {
         client.commands.get('pepehands').execute(message, uI);
     }
@@ -95,11 +108,11 @@ client.on('message', message => {
             message.reply(`cya! ${konCha}`)
         });
 
-    if (uI.includes("good bot")) {
-        if (message.author.id === "122136963129147393") {
+    if (uI === "good bot" || uI === "goodbot") {
+        if (message.author.id === baeID) {
             message.channel.send("S...senpai owo")
         }
-        else if (message.author.id === "138368170481156096") {
+        else if (message.author.id === wiquedID) {
             message.reply("begone thot.")
             console.log(`Called Wiqued a thot :)`);
         }
@@ -109,8 +122,8 @@ client.on('message', message => {
         }
     }
 
-    if (uI.includes("bad bot")) {
-        if (message.author.id === "138368170481156096") {
+    if (uI === "bad bot" || uI === "badbot") {
+        if (message.author.id === wiquedID) {
             message.reply("begone thot.")
             console.log(`Called Wiqued a thot :)`);
         }
