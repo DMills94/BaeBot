@@ -109,13 +109,23 @@ const beatmapLookup = (urlInfo, m, mods) => {
     //API Call get-beatmap
     axios.get("api/get_beatmaps", { params: params})
         .then(resp => {
-            unsortedBeatmapAPI = resp.data;
+            unsortedBeatmapAPIRaw = resp.data;
+            let unsortedBeatmapAPI = [];
+
+            for (let map in unsortedBeatmapAPIRaw) {
+                if (unsortedBeatmapAPIRaw[map].mode == 0) {
+                    unsortedBeatmapAPI.push(unsortedBeatmapAPIRaw[map])
+                }
+            };
+
             beatmapAPI = unsortedBeatmapAPI.sort((a, b) => {
                 return b.difficultyrating - a.difficultyrating;
             });
+
             let counter = 1;
 
             for (let i = 0; i < beatmapAPI.length; i++) {
+
                 for (let key in approvedRatings) {
                     if (beatmapAPI[i].approved === approvedRatings[key]) {
                         beatmapAPI[i].approved = key;
@@ -123,24 +133,67 @@ const beatmapLookup = (urlInfo, m, mods) => {
                 };
 
                 beatmapAPI[i].total_length = convertToMinutes(beatmapAPI[i].total_length);
+
+                if (mods.includes("hr")) {
+                    beatmapAPI[i].diff_drain = parseFloat(beatmapAPI[i].diff_drain * 1.4);
+                    beatmapAPI[i].diff_approach = parseFloat(beatmapAPI[i].diff_approach * 1.4);
+                    if (beatmapAPI[i].diff_approach > 10) {
+                        beatmapAPI[i].diff_approach = 10;
+                    }
+                    beatmapAPI[i].diff_overall = parseFloat(beatmapAPI[i].diff_overall * 1.4);
+                    beatmapAPI[i].diff_size = parseFloat(beatmapAPI[i].diff_size * 1.3);
+                }
+                else if (mods.includes("ez")) {
+                    beatmapAPI[i].diff_drain  = parseFloat(beatmapAPI[i].diff_drain / 2);
+                    beatmapAPI[i].diff_approach  = parseFloat(beatmapAPI[i].diff_approach / 2);
+                    beatmapAPI[i].diff_overall  = parseFloat(beatmapAPI[i].diff_overall / 2);
+                    beatmapAPI[i].diff_size  = parseFloat(beatmapAPI[i].diff_size / 2);
+                };
+
                 if (mods.includes("dt") || mods.includes("nc")) {
                     beatmapAPI[i].bpm = Math.floor(beatmapAPI[i].bpm * 1.5);
 
+                    //Length
                     let splitTime = beatmapAPI[i].total_length.split(":");
-                    let minsToSeconds = parseInt(splitTime[0], 10)*60;
+                    let minsToSeconds = parseInt(splitTime[0], 10) * 60;
                     let totalSeconds = minsToSeconds + parseInt(splitTime[1], 10);
                     let newTime = Math.floor(totalSeconds / 1.5);
                     let newMinutes = Math.floor(newTime / 60).toString();
                     let newSeconds = (newTime - newMinutes * 60).toString();
                     beatmapAPI[i].total_length = "".concat(newMinutes, ":", newSeconds);
 
-                    beatmapAPI[i].diff_drain
-                    beatmapAPI[i].diff_approach
-                    beatmapAPI[i].diff_overall
+                    //AR
+                    const ar = beatmapAPI[i].diff_approach;
+                    let ms;
+
+                    if (ar > 5) {
+                        ms = 200 + (11 - ar) * 100;
+                    }
+                    else {
+                        ms = 800 + (5 - ar) * 80;
+                    }
+
+                    if (ms < 300) {
+                        beatmapAPI[i].diff_approach = 11
+                    }
+                    else if (ms < 1200) {
+                        beatmapAPI[i].diff_approach = Math.round((11 - (ms - 300) / 150) * 100) / 100;
+                    }
+                    else {
+                        beatmapAPI[i].diff_approach = Math.round((5 - (ms - 1200) / 120) * 100) / 100;
+                    }
+
+                    //OD
+                    const od = beatmapAPI[i].diff_overall;
+                    let timing = 79 - (od * 6) + 0.5;
+                    let dtTiming = timing * (2 / 3);
+                    let odNew = (79 + 0.5 - dtTiming) / 6;
+                    beatmapAPI[i].diff_overall = Math.round(odNew * 10) / 10;
                 }
                 else if (mods.includes("ht")) {
                     beatmapAPI[i].bpm = Math.floor(beatmapAPI[i].bpm * 0.75);
 
+                    //Length
                     let splitTime = beatmapAPI[i].total_length.split(":");
                     let minsToSeconds = parseInt(splitTime[0], 10)*60;
                     let totalSeconds = minsToSeconds + parseInt(splitTime[1], 10);
@@ -148,23 +201,42 @@ const beatmapLookup = (urlInfo, m, mods) => {
                     let newMinutes = Math.floor(newTime / 60).toString();
                     let newSeconds = (newTime - newMinutes * 60).toString();
 
-                    beatmapAPI[i].diff_drain = parseFloat(beatmapAPI[i].diff_drain * 1.4).toFixed(1);
-                    beatmapAPI[i].diff_approach = parseFloat(beatmapAPI[i].diff_approach * 1.4).toFixed(1);
-                    beatmapAPI[i].diff_overall = parseFloat(beatmapAPI[i].diff_overall * 1.4).toFixed(1);
+                    //AR
+                    const ar = beatmapAPI[i].diff_approach;
+                    let ms;
+
+                    if (ar > 5) {
+                        ms = 400 + (11 - ar) * 200;
+                    }
+                    else {
+                        ms = 1600 + (5 - ar) * 160;
+                    }
+
+                    if (ms > 2400) {
+                        beatmapAPI[i].diff_approach = -5
+                    }
+                    else if (ms > 1200) {
+                        beatmapAPI[i].diff_approach = Math.round((-5 - (ms - 2400) / 120) * 100) / 100;
+                    }
+                    else if (ms > 600) {
+                        beatmapAPI[i].diff_approach = Math.round((5 - (ms - 1200) / 150) * 100) / 100;
+                    }
+                    else {
+                        beatmapAPI[i].diff_approach = Math.round((9 - (ms - 600) / 150) * 100) / 100;
+                    }
+
+                    //OD
+                    const od = beatmapAPI[i].diff_overall;
+                    let timing = 79 - (od * 6) + 0.5;
+                    let htTiming = timing * (1 + (1 / 3));
+                    let odNew = (79 + 0.5 - htTiming) / 6;
+                    beatmapAPI[i].diff_overall = Math.round(odNew * 10) / 10;
                 }
 
-                if (mods.includes("hr")) {
-                    beatmapAPI[i].diff_drain = parseFloat(beatmapAPI[i].diff_drain * 1.4).toFixed(1);
-                    beatmapAPI[i].diff_approach = parseFloat(beatmapAPI[i].diff_approach * 1.4).toFixed(1);
-                    beatmapAPI[i].diff_overall = parseFloat(beatmapAPI[i].diff_overall * 1.4).toFixed(1);
-                    beatmapAPI[i].diff_size = parseFloat(beatmapAPI[i].diff_size * 1.3).toFixed(2);
-                }
-                else if (mods.includes("ez")) {
-                    beatmapAPI[i].diff_drain  = parseFloat(beatmapAPI[i].diff_drain /2).toFixed(1);
-                    beatmapAPI[i].diff_approach  = parseFloat(beatmapAPI[i].diff_drain / 2).toFixed(1);
-                    beatmapAPI[i].diff_overall  = parseFloat(beatmapAPI[i].diff_drain / 2).toFixed(1);
-                    beatmapAPI[i].diff_size  = parseFloat(beatmapAPI[i].diff_drain / 2).toFixed(2);
-                }
+                beatmapAPI[i].diff_size = Math.round(beatmapAPI[i].diff_size * 10) / 10;
+                beatmapAPI[i].diff_drain = Math.round(beatmapAPI[i].diff_drain * 10) / 10;
+                beatmapAPI[i].diff_overall = Math.round(beatmapAPI[i].diff_overall * 10) / 10;
+                beatmapAPI[i].diff_approach = Math.round(beatmapAPI[i].diff_approach * 10) / 10;
 
                 urlInfo.beatmapId = beatmapAPI[i].beatmap_id;
                 urlInfo.beatmapSetId = beatmapAPI[i].beatmapset_id;
@@ -181,7 +253,7 @@ const beatmapLookup = (urlInfo, m, mods) => {
                     .then(({ map }) => {
                         let beatmapConfig = map;
 
-                        ojsamaMods = ojsama.modbits.from_string(mods)
+                        ojsamaMods = ojsama.modbits.from_string(mods);
 
                         let stars = new ojsama.diff().calc({ map: beatmapConfig, mods: ojsamaMods })
                         beatmapAPI[i].difficultyrating = stars.toString();
@@ -226,9 +298,8 @@ const beatmapLookup = (urlInfo, m, mods) => {
 
                             let embed = new Discord.RichEmbed()
                                 .setColor('#ffb3ff')
-                                .setAuthor(`${beatmapAPI[0].artist} - ${beatmapAPI[0].title} by ${beatmapAPI[0].creator}`, undefined, `https://osu.ppy/beatmapsets/${beatmapAPI[0].beatmapset_id}#osu/${beatmapAPI[0].beatmap_id}`)
+                                .setAuthor(`${beatmapAPI[0].artist} - ${beatmapAPI[0].title} by ${beatmapAPI[0].creator}`, undefined, `https://osu.ppy.sh/beatmapsets/${beatmapAPI[0].beatmapset_id}#osu/${beatmapAPI[0].beatmap_id}`)
                                 .setThumbnail("https://b.ppy.sh/thumb/" + beatmapAPI[0].beatmapset_id + "l.jpg")
-                                //Download (standard, no video, bloodcat)
                                 .setDescription(mapInfo)
                                 .setFooter(`Status: ${beatmapAPI[0].approved}`)
                                 .setTimestamp()
@@ -237,7 +308,15 @@ const beatmapLookup = (urlInfo, m, mods) => {
                         }
 
                         counter++;
-                    });
+                    })
+                    .catch(err => {
+                        m.channel.send("There was an error! Sorry, please try again later!");
+                        console.log(`There was an error: ${err}`);
+                    })
             }
+        })
+        .catch(err => {
+            m.channel.send("There was an error! Sorry, please try again later!");
+            console.log(`There was an error: ${err}`);
         })
 }

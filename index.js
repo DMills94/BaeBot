@@ -23,13 +23,15 @@ client.on('ready', () => {
             time = currentTime.toTimeString();
             message.edit(`I am online! Last refresh on **${date}** at **${time}**`);
         })
-        .catch(console.error);
+        .catch(err => {
+            console.log(err);
+        });
     client.user.setActivity("Stuck? Try `help!");
 
     let commandHistory = [];
 });
 
-client.on('error', () => {
+client.on('error', err => {
     client.channels.get("476676731755823105").fetchMessage("476680709428346880")
         .then(message => {
             message.edit("Offline!");
@@ -37,7 +39,7 @@ client.on('error', () => {
         .catch(err => {
             console.log("There was an error updating the bots status");
         });
-    console.error;
+    console.log(err);
 })
 
 //Recording incoming messages
