@@ -288,7 +288,7 @@ const beatmapLookup = (urlInfo, m, mods) => {
                                 }
 
                                 mapInfo += `\n----------------------------`
-                                mapInfo += `\n__**Difficulty: ${beatmapAPI[i].version}**__ **+${mods.toUpperCase()}**`
+                                mapInfo += `\n__**Difficulty: ${beatmapAPI[i].version}**__ ${mods != "" ? "**+" + mods.toUpperCase() + "**" : ""}`
                                 mapInfo += `\n\n\u2022 **AR:** ${beatmapAPI[i].diff_approach} \u2022 **OD:** ${beatmapAPI[i].diff_overall} \u2022 **HP:** ${beatmapAPI[i].diff_drain} \u2022 **CS:** ${beatmapAPI[i].diff_size}`
                                 mapInfo += `\n\u2022 **Length:** ${beatmapAPI[i].total_length} \u2022 **BPM:** ${Math.floor(beatmapAPI[i].bpm)}`
                                 mapInfo += `\n\u2022 **Star Rating:** ${parseFloat(beatmapAPI[i].difficultyrating).toFixed(2)}* \u2022 **Max Combo:** ${beatmapAPI[i].max_combo}x`

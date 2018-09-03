@@ -17,9 +17,9 @@ module.exports = {
             .addField(`${prefix}profile [USER_NAME]`, "Look up basic profile stats of a user")
             .addField(`${prefix}top [USER_NAME]`, "Display a users Top-5")
             .addField(`${prefix}recent [USER_NAME]`, "Displays the users most recent play (within 24 hours)")
-            .addField(`${prefix} link/unlink [USER_NAME]`, "Links/Unlinks your discord account to an osu! username")
+            .addField(`${prefix}link/unlink [USER_NAME]`, "Links/Unlinks your discord account to an osu! username")
             .setFooter("Contact @Bae#3308 with any issues");
 
-        m.channel.send({embed: embed}) //User Lookup);
+        m.channel.send({embed: embed});
     }
 };

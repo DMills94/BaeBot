@@ -81,13 +81,14 @@ module.exports = {
 
 const determineMods = score => {
     if (score.enabled_mods == "0") {
-        mods = "NoMod";
+        mods = "";
     } else {
         for (i = 0; i < modnames.length; i++) {
             if (score.enabled_mods & modnames[i].val) {
                 mods += modnames[i].short;
             }
         }
+        mods = `+${mods}`
     }
 };
 
@@ -179,7 +180,7 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
         .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
         .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
         .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
-        .addField(stars + "* | +" + recent.enabled_mods + " |     Score: " + parseInt(recent.score).toLocaleString('en') + " (" + recent.accuracy + "%) | " + recent.date, performancePP + "pp/" + maxPP + "pp | Combo: " + recent.maxcombo + "x/" + beatmapInfo.max_combo + "x {" + recent.count300 + "/" + recent.count100 + "/" + recent.count50 + "/" + recent.countmiss + "}")
+        .addField(stars + "* " + recent.enabled_mods + "      |     Score: " + parseInt(recent.score).toLocaleString('en') + " (" + recent.accuracy + "%) | " + recent.date, performancePP + "pp/" + maxPP + "pp | Combo: " + recent.maxcombo + "x/" + beatmapInfo.max_combo + "x {" + recent.count300 + "/" + recent.count100 + "/" + recent.count50 + "/" + recent.countmiss + "}")
         .setTimestamp()
 
     //Send Embed to Channel

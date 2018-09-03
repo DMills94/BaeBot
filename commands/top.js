@@ -7,7 +7,7 @@ const functions = require('./exportFunctions.js');
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
-    async execute(m, args) {
+    async execute(m, args, plays, top5) {
         let username;
 
         if (args.length === 0) {
@@ -29,7 +29,7 @@ module.exports = {
         axios.get("api/get_user_best", { params: {
                 k: osuApiKey,
                 u: username,
-                limit: "5"
+                limit: plays
             }
         })
         .then(resp => {
@@ -38,7 +38,15 @@ module.exports = {
                 return;
             } else {
 
-                scores = resp.data;
+                if (top5) {
+                    scores = resp.data;
+                }
+                else {
+                    scores = resp.data[resp.data.length-1];
+                    let scoresArray = [];
+                    scoresArray.push(scores);
+                    scores = scoresArray;
+                }
 
                 //Second Call
                 axios.get("api/get_user", {params: {
@@ -75,7 +83,7 @@ module.exports = {
 
                     //Third Call x5 (5 beat maps)
 
-                    getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList);
+                    getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays);
 
                 }).catch(err => {
                     console.log(err)
@@ -89,7 +97,7 @@ module.exports = {
     }
 };
 
-const getBeatmapInfo = (index, m, osuUser, scores, beatmapList) => {
+const getBeatmapInfo = (index, m, osuUser, scores, beatmapList, top5, plays) => {
     axios.get("api/get_beatmaps", {params: {
             k: osuApiKey,
             b: scores[index].beatmap_id
@@ -100,7 +108,7 @@ const getBeatmapInfo = (index, m, osuUser, scores, beatmapList) => {
         beatmapInfo.orderKey = mapNum + 1;
         beatmapList.push(beatmapInfo);
 
-        calculate(beatmapInfo, scores[index], osuUser, m, "top");
+        calculate(beatmapInfo, scores[index], osuUser, m, "top", top5, plays);
     }).catch(err => {
         console.log(err)
         m.channel.send("Error! More info: " + err);
@@ -241,7 +249,7 @@ const determineAcc = score => {
     return userAcc.toFixed(2).toString();
 };
 
-const calculate = (beatmap, performance, userInfo, m, query) => {
+const calculate = (beatmap, performance, userInfo, m, query, top5, plays) => {
 
     let cleanBeatmap;
 
@@ -285,10 +293,10 @@ const calculate = (beatmap, performance, userInfo, m, query) => {
             scores[mapNum].stars = formattedStars;
 
             if (beatmapList.length == scores.length) {
-                generateTop(m, osuUser, scores, beatmapList)
+                generateTop(m, osuUser, scores, beatmapList, top5, plays)
             } else {
                 mapNum++
-                getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList);
+                getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays);
             }
         }
     })
@@ -318,19 +326,30 @@ const timeDifference = (current, previous) => {
     }
 };
 
-const generateTop = (m, osuUser, scores, maps) => {
-    //Create RichEmbed
-    let embed = new Discord.RichEmbed()
-        .setColor("#FFFFFF")
-        .setAuthor("Top 5 plays for " + osuUser.username, undefined, "https://osu.ppy.sh/users/" + osuUser.user_id)
-        .setThumbnail("https://osu.ppy.sh/a/" + osuUser.user_id)
-        .setTimestamp()
-        .addField("__PERSONAL BEST #1__", topInfoInfo(0, scores, maps))
-        .addField("__PERSONAL BEST #2__", topInfoInfo(1, scores, maps))
-        .addField("__PERSONAL BEST #3__", topInfoInfo(2, scores, maps))
-        .addField("__PERSONAL BEST #4__", topInfoInfo(3, scores, maps))
-        .addField("__PERSONAL BEST #5__", topInfoInfo(4, scores, maps))
-        .setFooter("Message sent: ")
+const generateTop = (m, osuUser, scores, maps, top5, plays) => {
+    let embed = new Discord.RichEmbed();
+    if (top5) {
+        embed
+            .setColor("#FFFFFF")
+            .setAuthor("Top 5 plays for " + osuUser.username, undefined, "https://osu.ppy.sh/users/" + osuUser.user_id)
+            .setThumbnail("https://osu.ppy.sh/a/" + osuUser.user_id)
+            .setTimestamp()
+            .addField("__PERSONAL BEST #1__", topInfoInfo(0, scores, maps))
+            .addField("__PERSONAL BEST #2__", topInfoInfo(1, scores, maps))
+            .addField("__PERSONAL BEST #3__", topInfoInfo(2, scores, maps))
+            .addField("__PERSONAL BEST #4__", topInfoInfo(3, scores, maps))
+            .addField("__PERSONAL BEST #5__", topInfoInfo(4, scores, maps))
+            .setFooter("Message sent: ")
+    }
+    else {
+        embed
+            .setColor("#FFFFFF")
+            .setAuthor(`Top play for ${osuUser.username}`, undefined, "https://osu.ppy.sh/users/" + osuUser.user_id)
+            .setThumbnail("https://b.ppy.sh/thumb/" + maps[0].beatmapset_id + "l.jpg")
+            .setTimestamp()
+            .addField(`__PERSONAL BEST ${plays}__`, topInfoInfo(0, scores, maps))
+            .setFooter("Message sent: ")
+    }
 
     //Send Embed to Channel
     m.channel.send({embed: embed});

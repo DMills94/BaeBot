@@ -55,7 +55,16 @@ client.on('message', message => {
     if (uI.startsWith(prefix)) {
 
         const args = uI.slice(prefix.length).split(" ");
-        const commandName = args.shift();
+        let commandName = args.shift();
+        let playNum = 5;
+        let top5 = true;
+
+        //If specific top play remove numbers
+        if (commandName.includes('top') && commandName.length > 3) {
+            playNum = commandName.slice(3);
+            commandName = 'top';
+            top5 = false;
+        }
 
         //Prefix Commands
         if (!client.commands.has(commandName))
@@ -65,8 +74,14 @@ client.on('message', message => {
 
         try {
             if (command.name !== "history") {
+                if (command.name === 'top') {
+                    command.execute(message, args, playNum, top5);
+                    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                }
+                else {
                 command.execute(message, args);
-                console.log(`[EXECUTED COMMAND]: ${command.name}`);
+                console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                }
 
                 //Update history
                 commandHistory.unshift(uI.slice(prefix.length));
@@ -75,7 +90,8 @@ client.on('message', message => {
                 }
             } else {
                 command.execute(message, args, commandHistory);
-                console.log(`[EXECUTED COMMAND]: ${command.name}`);
+                console.log(client, message);
+                console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
             }
 
 
