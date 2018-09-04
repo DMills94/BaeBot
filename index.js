@@ -1,11 +1,11 @@
-const fs = require('fs');
-const Discord = require('discord.js');
-const { prefix, token, baeID, wiquedID } = require('./config.json')
+const fs = require("fs");
+const Discord = require("discord.js");
+const { prefix, token, baeID, wiquedID } = require("./config.json")
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
 
-const commandFiles = fs.readdirSync('./commands');
+const commandFiles = fs.readdirSync("./commands");
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
@@ -14,7 +14,7 @@ for (const file of commandFiles) {
 
 commandHistory = [];
 
-client.on('ready', () => {
+client.on("ready", () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`);
     client.channels.get("476676731755823105").fetchMessage("476680709428346880")
         .then(message => {
@@ -26,12 +26,12 @@ client.on('ready', () => {
         .catch(err => {
             console.log(err);
         });
-    client.user.setActivity("Stuck? Try `help!");
+    client.user.setActivity("Stuck? Try .help!");
 
     let commandHistory = [];
 });
 
-client.on('error', err => {
+client.on("error", err => {
     client.channels.get("476676731755823105").fetchMessage("476680709428346880")
         .then(message => {
             message.edit("Offline!");
@@ -43,7 +43,7 @@ client.on('error', err => {
 })
 
 //Recording incoming messages
-client.on('message', message => {
+client.on("message", message => {
     //Bot ignores self
     if (message.author.bot)
         return;
@@ -60,9 +60,9 @@ client.on('message', message => {
         let top5 = true;
 
         //If specific top play remove numbers
-        if (commandName.includes('top') && commandName.length > 3) {
+        if (commandName.includes("top") && commandName.length > 3) {
             playNum = commandName.slice(3);
-            commandName = 'top';
+            commandName = "top";
             top5 = false;
         }
 
@@ -74,8 +74,16 @@ client.on('message', message => {
 
         try {
             if (command.name !== "history") {
-                if (command.name === 'top') {
-                    command.execute(message, args, playNum, top5);
+                let rankingEmojis;
+                if (command.name === "top" || command.name === "recent") {
+                    rankingEmojis = client.guilds.find("id", "486497815367778304").emojis;
+                }
+                if (command.name === "top") {
+                    command.execute(message, args, playNum, top5, rankingEmojis);
+                    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                }
+                else if (command.name === "recent") {
+                    command.execute(message, args, rankingEmojis);
                     console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
                 }
                 else {
@@ -98,7 +106,7 @@ client.on('message', message => {
 
         } catch (error) {
             console.error(error);
-            message.reply('There was an error with that command! Details: ' + error);
+            message.reply("There was an error with that command! Details: " + error);
         }
     }
 
@@ -117,7 +125,8 @@ client.on('message', message => {
     }
 
     if (uI.includes(":pepehands:")) {
-        client.commands.get('pepehands').execute(message, uI);
+        const emoji = client.emojis.find("name", "PepeHands");
+        message.react(emoji);
     }
 
     if (uI.includes("goodbye") || uI.includes("good bye"))
@@ -135,7 +144,7 @@ client.on('message', message => {
             console.log(`Called Wiqued a thot :)`);
         }
         else {
-            const itsbaeChamp = client.emojis.find("name", "itsbaeChamp")
+            const itsbaeChamp = client.emojis.find("name", "itsbaeChamp");
             message.channel.send(`Thanks! ${itsbaeChamp}`);
         }
     }
@@ -146,13 +155,13 @@ client.on('message', message => {
             console.log(`Called Wiqued a thot :)`);
         }
         else {
-            message.channel.send("I'm sorry :( If i'm not working correctly please contact my owner `@Bae#3308`");
+            message.channel.send("I am sorry :( If i am not working correctly please contact my owner `@Bae#3308`");
         }
     }
 
     if (uI.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i)) {
-        client.commands.get('recognise beatmap').execute(message, uI);
-        console.log(`[EXECUTED COMMAND]: recognise beatmap`);
+        client.commands.get("recognise beatmap").execute(message, uI);
+        console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: recognise beatmap`);
     }
 });
 

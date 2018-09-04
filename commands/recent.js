@@ -7,7 +7,7 @@ const functions = require('./exportFunctions.js');
 module.exports = {
     name: "recent",
     description: "Returns a user's most recent play",
-    async execute(m, args) {
+    async execute(m, args, rankingEmojis) {
         let username;
 
         if (args.length === 0) {
@@ -64,11 +64,11 @@ module.exports = {
                         userAcc = "";
                         recent.accuracy = determineAcc(recent);
 
-                        let playDate = Date.parse(recent.date);
-                        let currentDate = Date.now() + 28800000; //playDate is from UTC+8
+                        let playDate = Date.parse(recent.date); //UTC + 0
+                        let currentDate = Date.now() + 25200000; //UTC + 7
                         recent.date = timeDifference(currentDate, playDate);
 
-                        calculate(beatmapInfo, recent, userInfo, m, "recent")
+                        calculate(beatmapInfo, recent, userInfo, m, "recent", rankingEmojis)
                     })
                 })
             }
@@ -97,7 +97,7 @@ const determineAcc = score => {
     return userAcc.toFixed(2).toString();
 };
 
-const calculate = (beatmap, performance, userInfo, m, query) => {
+const calculate = (beatmap, performance, userInfo, m, query, rankingEmojis) => {
 
     let cleanBeatmap;
 
@@ -134,7 +134,7 @@ const calculate = (beatmap, performance, userInfo, m, query) => {
         formattedMaxPP = maxPP.toString().split(" ")[0];
 
         if (query === "recent") {
-            generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars);
+            generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis);
         }
         else if (query === "top") {
             scores[mapNum].maxPP = formattedMaxPP;
@@ -173,14 +173,26 @@ const timeDifference = (current, previous) => {
 };
 
 
-const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars) => {
+const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars, rankingEmojis) => {
+
+    if (recent.rank.length === 1) {
+        recent.rank += "_";
+    };
+
+    let rankImage;
+    if (recent.rank === "F_") {
+        rankImage = "\:x:"
+    } else {
+        rankImage = rankingEmojis.find("name", recent.rank);
+    }
+
     let embed = new Discord.RichEmbed()
         .setColor("#0000b2")
         .setAuthor("Recent Play for: " + userInfo.username, "https://osu.ppy.sh/a/" + userInfo.user_id, "https://osu.ppy.sh/users/" + userInfo.user_id)
         .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
         .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
         .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
-        .addField(stars + "* " + recent.enabled_mods + "      |     Score: " + parseInt(recent.score).toLocaleString('en') + " (" + recent.accuracy + "%) | " + recent.date, performancePP + "pp/" + maxPP + "pp | " + recent.maxcombo + "x/" + beatmapInfo.max_combo + "x {" + recent.count300 + "/" + recent.count100 + "/" + recent.count50 + "/" + recent.countmiss + "}")
+        .addField("\u2022 Stars: **" + stars + "***\n\u2022" + rankImage + recent.enabled_mods + " | Score: " + parseInt((recent.score)).toLocaleString("en") + " (" + recent.accuracy + "%) {" + recent.count300 + "/" + recent.count100 + "/" + recent.count50 + "/" + recent.countmiss + "}**\n\u2022 " + performancePP + "pp**/" + maxPP + "pp", "\u2022 Performance recorded: **" + recent.date + "**")
         .setTimestamp()
 
     //Send Embed to Channel

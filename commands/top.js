@@ -1,13 +1,13 @@
-const axios = require('axios');
-const Discord = require('discord.js')
-const { osuApiKey } = require('../config.json');
-const ojsama = require('ojsama');
-const functions = require('./exportFunctions.js');
+const axios = require("axios");
+const Discord = require("discord.js")
+const { osuApiKey } = require("../config.json");
+const ojsama = require("ojsama");
+const functions = require("./exportFunctions.js");
 
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
-    async execute(m, args, plays, top5) {
+    async execute(m, args, plays, top5, rankingEmojis) {
         let username;
 
         if (args.length === 0) {
@@ -18,7 +18,7 @@ module.exports = {
                 })
         }
         else {
-            username = args.join('_');
+            username = args.join("_");
         }
 
         if (!username) {
@@ -73,7 +73,7 @@ module.exports = {
                     //Time Since Playcount
                     for (let i = 0; i < scores.length; i++) {
                         let playDate = Date.parse(scores[i].date);
-                        let currentDate = Date.now() + 28800000; //playDate is from UTC+8
+                        let currentDate = Date.now() - 3600000;
                         scores[i].date = timeDifference(currentDate, playDate);
                     }
 
@@ -83,7 +83,7 @@ module.exports = {
 
                     //Third Call x5 (5 beat maps)
 
-                    getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays);
+                    getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis);
 
                 }).catch(err => {
                     console.log(err)
@@ -97,7 +97,7 @@ module.exports = {
     }
 };
 
-const getBeatmapInfo = (index, m, osuUser, scores, beatmapList, top5, plays) => {
+const getBeatmapInfo = (index, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis) => {
     axios.get("api/get_beatmaps", {params: {
             k: osuApiKey,
             b: scores[index].beatmap_id
@@ -108,7 +108,7 @@ const getBeatmapInfo = (index, m, osuUser, scores, beatmapList, top5, plays) => 
         beatmapInfo.orderKey = mapNum + 1;
         beatmapList.push(beatmapInfo);
 
-        calculate(beatmapInfo, scores[index], osuUser, m, "top", top5, plays);
+        calculate(beatmapInfo, scores[index], osuUser, m, "top", top5, plays, rankingEmojis);
     }).catch(err => {
         console.log(err)
         m.channel.send("Error! More info: " + err);
@@ -249,11 +249,11 @@ const determineAcc = score => {
     return userAcc.toFixed(2).toString();
 };
 
-const calculate = (beatmap, performance, userInfo, m, query, top5, plays) => {
+const calculate = (beatmap, performance, userInfo, m, query, top5, plays, rankingEmojis) => {
 
     let cleanBeatmap;
 
-    axios.get('osu/' + beatmap.beatmap_id, {params: {
+    axios.get("osu/" + beatmap.beatmap_id, {params: {
             credentials: "include"
         }
     })
@@ -285,19 +285,14 @@ const calculate = (beatmap, performance, userInfo, m, query, top5, plays) => {
         formattedPerformancePP = recentPP.toString().split(" ")[0];
         formattedMaxPP = maxPP.toString().split(" ")[0];
 
-        if (query === "recent") {
-            generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars);
-        }
-        else if (query === "top") {
-            scores[mapNum].maxPP = formattedMaxPP;
-            scores[mapNum].stars = formattedStars;
+        scores[mapNum].maxPP = formattedMaxPP;
+        scores[mapNum].stars = formattedStars;
 
-            if (beatmapList.length == scores.length) {
-                generateTop(m, osuUser, scores, beatmapList, top5, plays)
-            } else {
-                mapNum++
-                getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays);
-            }
+        if (beatmapList.length == scores.length) {
+            generateTop(m, osuUser, scores, beatmapList, top5, plays, rankingEmojis)
+        } else {
+            mapNum++
+            getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis);
         }
     })
     .catch(err => {
@@ -316,17 +311,17 @@ const timeDifference = (current, previous) => {
     let elapsed = current - previous;
 
     if (elapsed < msPerMinute) {
-        return Math.round(elapsed / 1000) + ' seconds ago';
+        return Math.round(elapsed / 1000) + " seconds ago";
     } else if (elapsed < msPerHour) {
-        return Math.round(elapsed / msPerMinute) + ' minutes ago';
+        return Math.round(elapsed / msPerMinute) + " minutes ago";
     } else if (elapsed < msPerDay) {
-        return Math.round(elapsed / msPerHour) + ' hours ago';
+        return Math.round(elapsed / msPerHour) + " hours ago";
     } else {
-        return Math.round(elapsed / msPerDay) + ' days ago';
+        return Math.round(elapsed / msPerDay) + " days ago";
     }
 };
 
-const generateTop = (m, osuUser, scores, maps, top5, plays) => {
+const generateTop = (m, osuUser, scores, maps, top5, plays, rankingEmojis) => {
     let embed = new Discord.RichEmbed();
     if (top5) {
         embed
@@ -334,11 +329,11 @@ const generateTop = (m, osuUser, scores, maps, top5, plays) => {
             .setAuthor("Top 5 plays for " + osuUser.username, undefined, "https://osu.ppy.sh/users/" + osuUser.user_id)
             .setThumbnail("https://osu.ppy.sh/a/" + osuUser.user_id)
             .setTimestamp()
-            .addField("__PERSONAL BEST #1__", topInfoInfo(0, scores, maps))
-            .addField("__PERSONAL BEST #2__", topInfoInfo(1, scores, maps))
-            .addField("__PERSONAL BEST #3__", topInfoInfo(2, scores, maps))
-            .addField("__PERSONAL BEST #4__", topInfoInfo(3, scores, maps))
-            .addField("__PERSONAL BEST #5__", topInfoInfo(4, scores, maps))
+            .addField("__PERSONAL BEST #1__", topInfoInfo(0, scores, maps, rankingEmojis))
+            .addField("__PERSONAL BEST #2__", topInfoInfo(1, scores, maps, rankingEmojis))
+            .addField("__PERSONAL BEST #3__", topInfoInfo(2, scores, maps, rankingEmojis))
+            .addField("__PERSONAL BEST #4__", topInfoInfo(3, scores, maps, rankingEmojis))
+            .addField("__PERSONAL BEST #5__", topInfoInfo(4, scores, maps, rankingEmojis))
             .setFooter("Message sent: ")
     }
     else {
@@ -347,7 +342,7 @@ const generateTop = (m, osuUser, scores, maps, top5, plays) => {
             .setAuthor(`Top play for ${osuUser.username}`, undefined, "https://osu.ppy.sh/users/" + osuUser.user_id)
             .setThumbnail("https://b.ppy.sh/thumb/" + maps[0].beatmapset_id + "l.jpg")
             .setTimestamp()
-            .addField(`__PERSONAL BEST ${plays}__`, topInfoInfo(0, scores, maps))
+            .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, scores, maps, rankingEmojis))
             .setFooter("Message sent: ")
     }
 
@@ -355,6 +350,18 @@ const generateTop = (m, osuUser, scores, maps, top5, plays) => {
     m.channel.send({embed: embed});
 };
 
-const topInfoInfo = (index, scores, maps) => {
-    return "[__**" + maps[index].artist + " - " + maps[index].title + " [" + maps[index].version + "]**__](https://osu.ppy.sh/b/" + maps[index].beatmap_id + ")\n\u2022 Stars: **" + scores[index].stars + "**\n\u2022 Mods: **" + scores[index].enabled_mods + "** | **" + scores[index].rank + "** | **" + parseFloat(scores[index].pp).toFixed(2) + "pp**/" + scores[index].maxPP + "pp \n\u2022 Score: " + parseInt((scores[index].score)).toLocaleString('en') + " (" + scores[index].accuracy + "%) {" + scores[index].count300 + "/" + scores[index].count100 + "/" + scores[index].count50 + "/" + scores[index].countmiss + "}\n\u2022 Performance recorded: **" + scores[index].date + "**";
+const topInfoInfo = (index, scores, maps, rankingEmojis) => {
+    if (scores[index].rank.length === 1) {
+        scores[index].rank += "_";
+    };
+    const rankImage = rankingEmojis.find("name", scores[index].rank)
+
+    if (scores[index].enabled_mods === "NoMod") {
+        scores[index].enabled_mods = ""
+    }
+    else {
+        scores[index].enabled_mods = ` | **+${scores[index].enabled_mods}**`
+    }
+
+    return "[**" + maps[index].artist + " - " + maps[index].title + " [" + maps[index].version + "]**](https://osu.ppy.sh/b/" + maps[index].beatmap_id + ")\n\u2022 Stars: **" + scores[index].stars + "***\n\u2022" + rankImage + scores[index].enabled_mods + " | **" + parseFloat(scores[index].pp).toFixed(2) + "pp**/" + scores[index].maxPP + "pp \n\u2022 Score: " + parseInt((scores[index].score)).toLocaleString("en") + " (" + scores[index].accuracy + "%) {" + scores[index].count300 + "/" + scores[index].count100 + "/" + scores[index].count50 + "/" + scores[index].countmiss + "}\n\u2022 Performance recorded: **" + scores[index].date + "**";
 };
