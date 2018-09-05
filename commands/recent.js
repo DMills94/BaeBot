@@ -179,20 +179,16 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
         recent.rank += "_";
     };
 
-    let rankImage;
-    if (recent.rank === "F_") {
-        rankImage = "\:x:"
-    } else {
-        rankImage = rankingEmojis.find("name", recent.rank);
-    }
+    let rankImage = rankingEmojis.find("name", recent.rank);
 
     let embed = new Discord.RichEmbed()
         .setColor("#0000b2")
-        .setAuthor("Recent Play for: " + userInfo.username, "https://osu.ppy.sh/a/" + userInfo.user_id, "https://osu.ppy.sh/users/" + userInfo.user_id)
+        .setAuthor(`Recent Play for ${userInfo.username}: ${userInfo.pp_raw}pp (#${parseFloat(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseFloat(userInfo.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
         .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
         .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
         .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
-        .addField("\u2022 Stars: **" + stars + "***\n\u2022" + rankImage + recent.enabled_mods + " | Score: " + parseInt((recent.score)).toLocaleString("en") + " (" + recent.accuracy + "%) {" + recent.count300 + "/" + recent.count100 + "/" + recent.count50 + "/" + recent.countmiss + "}**\n\u2022 " + performancePP + "pp**/" + maxPP + "pp", "\u2022 Performance recorded: **" + recent.date + "**")
+        .addField(`\u2022 \:star: **${stars}*** ${recent.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((recent.score)).toLocaleString("en")} (${recent.accuracy}%) | ${recent.rank === "F_" ? "~~**" + performancePP + "pp**/" + maxPP + "pp~~" : "**" + performancePP + "pp**/" + maxPP + "pp"}`, `\u2022 ${recent.maxcombo === beatmapInfo.max_combo ? "**" + recent.maxcombo + "**" : recent.maxcombo}x/**${beatmapInfo.max_combo}x** {${recent.count300}/${recent.count100}/${recent.count50}/${recent.countmiss}} | ${recent.date}`)
+        .setFooter("Message sent: ")
         .setTimestamp()
 
     //Send Embed to Channel
