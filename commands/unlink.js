@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { dbUrl } = require('../config.json');
 
-const firebase = axios.create({
+const dbCall = axios.create({
     baseURL: dbUrl
 })
 
@@ -17,7 +17,7 @@ module.exports = {
         let updatedLinkedDB;
 
         //Get current list of registered users
-        firebase.get('linkedUsers.json')
+        dbCall.get('linkedUsers.json')
             .then(resp => {
                 //Check if linked already
                 for (let key in resp.data) {
@@ -44,7 +44,7 @@ module.exports = {
                     }
                     delete updatedLinkedDB[keyToDelete]
 
-                    firebase.put('linkedUsers.json', updatedLinkedDB)
+                    dbCall.put('linkedUsers.json', updatedLinkedDB)
                         .then(resp => {
                             console.log("[UNLINK] POST SUCCESS");
                             m.channel.send("Unlink success!");

@@ -15,4 +15,4 @@ If you want to use the bot for personal use, add a file named `config.json` to t
 ```
 
 There's a few custom, replying to ID commands in `index.js` of which the keys are found `config.js` too.
-Also the database used is Firebase, Google's mobile database. The URL is private and in `config.js`
+Also the database used is dbCall, Google's mobile database. The URL is private and in `config.js`

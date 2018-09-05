@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { osuApiKey, dbUrl } = require('../config.json');
 
-const firebase = axios.create({
+const dbCall = axios.create({
     baseURL: dbUrl
 })
 
@@ -32,7 +32,7 @@ module.exports = {
                 let formattedUserName = resp.data[0].username;
 
                 //Get current list of registered users
-                firebase.get('linkedUsers.json')
+                dbCall.get('linkedUsers.json')
                     .then(resp => {
 
                         //Check if linked already
@@ -56,7 +56,7 @@ module.exports = {
 
                         //If not post
                         if (!existingLink) {
-                            firebase.post('linkedUsers.json', user)
+                            dbCall.post('linkedUsers.json', user)
                                 .then(resp => {
                                     m.reply(`you have been successfully linked to ${formattedUserName}`);
                                     console.log("[POST SUCCESS]");

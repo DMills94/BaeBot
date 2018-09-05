@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { dbUrl } = require('../config.json');
 
-const firebase = axios.create({baseURL: dbUrl})
+const dbCall = axios.create({baseURL: dbUrl})
 
 let customExports = module.exports = {};
 
@@ -12,7 +12,7 @@ customExports.lookupUser = (authorID) => {
     let username;
     let linkedDB = [];
 
-    firebase.get('linkedUsers.json')
+    dbCall.get('linkedUsers.json')
         .then(resp => {
             const database = resp.data;
 
@@ -42,7 +42,7 @@ customExports.lookupUser = (authorID) => {
 }
 
 customExports.storeLastBeatmapId = (guild, beatmapId) => {
-    firebase.put(`lastBeatmap/${guild.id}.json`, beatmapId)
+    dbCall.put(`lastBeatmap/${guild.id}.json`, beatmapId)
             .then(resp => {
                 console.log(`[BEATMAP ID STORED FOR ${guild.name}]: ${beatmapId}`);
             })

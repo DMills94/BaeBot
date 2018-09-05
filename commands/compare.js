@@ -7,7 +7,7 @@ const {
 const ojsama = require('ojsama');
 const functions = require('./exportFunctions.js');
 
-const firebase = axios.create({
+const dbCall = axios.create({
     baseURL: dbUrl
 });
 
@@ -34,7 +34,7 @@ module.exports = {
         //Get Beatmap Id
         let beatmapId;
 
-        firebase.get(`lastBeatmap/${m.guild.id}.json`)
+        dbCall.get(`lastBeatmap/${m.guild.id}.json`)
             .then(resp => {
                 beatmapId = resp.data;
 
@@ -67,6 +67,11 @@ module.exports = {
                                         }
                                     })
                                     .then(resp => {
+                                        if (resp.data.length < 1) {
+                                            m.channel.send("Go play the map first, dumb bitch - Belial 2k18");
+                                            return;
+                                        };
+
                                         let score = resp.data[0];
 
                                         mods = "";
