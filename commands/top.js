@@ -326,24 +326,24 @@ const generateTop = (m, osuUser, scores, maps, top5, plays, rankingEmojis) => {
     if (top5) {
         embed
             .setColor("#FFFFFF")
-            .setAuthor("Top 5 plays for " + osuUser.username, undefined, "https://osu.ppy.sh/users/" + osuUser.user_id)
+            .setAuthor(`Top 5 Plays for ${osuUser.username}: ${parseFloat(osuUser.pp_raw).toLocaleString('en')}pp (#${parseInt(osuUser.pp_rank).toLocaleString('en')} ${osuUser.country}#${parseInt(osuUser.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${osuUser.user_id}`, "https://osu.ppy.sh/users/" + osuUser.user_id)
             .setThumbnail("https://osu.ppy.sh/a/" + osuUser.user_id)
-            .setTimestamp()
             .addField("__PERSONAL BEST #1__", topInfoInfo(0, scores, maps, rankingEmojis))
             .addField("__PERSONAL BEST #2__", topInfoInfo(1, scores, maps, rankingEmojis))
             .addField("__PERSONAL BEST #3__", topInfoInfo(2, scores, maps, rankingEmojis))
             .addField("__PERSONAL BEST #4__", topInfoInfo(3, scores, maps, rankingEmojis))
             .addField("__PERSONAL BEST #5__", topInfoInfo(4, scores, maps, rankingEmojis))
             .setFooter("Message sent: ")
+            .setTimestamp()
     }
     else {
         embed
             .setColor("#FFFFFF")
-            .setAuthor(`Top play for ${osuUser.username}`, undefined, "https://osu.ppy.sh/users/" + osuUser.user_id)
+            .setAuthor(`Top Play for ${osuUser.username}: ${parseFloat(osuUser.pp_raw).toLocaleString('en')}pp (#${parseInt(osuUser.pp_rank).toLocaleString('en')} ${osuUser.country}#${parseInt(osuUser.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${osuUser.user_id}`, "https://osu.ppy.sh/users/" + osuUser.user_id)
             .setThumbnail("https://b.ppy.sh/thumb/" + maps[0].beatmapset_id + "l.jpg")
-            .setTimestamp()
             .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, scores, maps, rankingEmojis))
             .setFooter("Message sent: ")
+            .setTimestamp()
     }
 
     //Send Embed to Channel
@@ -360,8 +360,8 @@ const topInfoInfo = (index, scores, maps, rankingEmojis) => {
         scores[index].enabled_mods = ""
     }
     else {
-        scores[index].enabled_mods = ` | **+${scores[index].enabled_mods}**`
+        scores[index].enabled_mods = `**+${scores[index].enabled_mods}**`
     }
 
-    return "[**" + maps[index].artist + " - " + maps[index].title + " [" + maps[index].version + "]**](https://osu.ppy.sh/b/" + maps[index].beatmap_id + ")\n\u2022 Stars: **" + scores[index].stars + "***\n\u2022" + rankImage + scores[index].enabled_mods + " | **" + parseFloat(scores[index].pp).toFixed(2) + "pp**/" + scores[index].maxPP + "pp \n\u2022 Score: " + parseInt((scores[index].score)).toLocaleString("en") + " (" + scores[index].accuracy + "%) {" + scores[index].count300 + "/" + scores[index].count100 + "/" + scores[index].count50 + "/" + scores[index].countmiss + "}\n\u2022 Performance recorded: **" + scores[index].date + "**";
+    return `**[${maps[index].artist} - ${maps[index].title} [${maps[index].version}]](https://osu.ppy.sh/b/${maps[index].beatmap_id})** \n\u2022 \:star: **${scores[index].stars}*** ${scores[index].enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((scores[index].score)).toLocaleString("en")} (${scores[index].accuracy}%) | **${parseFloat(scores[index].pp).toFixed(2)}pp**/${scores[index].maxPP}pp \n\u2022 ${scores[index].maxcombo === maps[index].max_combo ? "**" + scores[index].maxcombo + "x**" : scores[index].maxcombo}/**${maps[index].max_combo}x** {${scores[index].count300}/${scores[index].count100}/${scores[index].count50}/${scores[index].countmiss}} | ${scores[index].date}`;
 };
