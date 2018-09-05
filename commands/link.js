@@ -1,8 +1,8 @@
 const axios = require('axios');
-const { osuApiKey } = require('../config.json');
+const { osuApiKey, dbUrl } = require('../config.json');
 
 const firebase = axios.create({
-    baseURL: "https://baebot-1573a.firebaseio.com/"
+    baseURL: dbUrl
 })
 
 module.exports = {

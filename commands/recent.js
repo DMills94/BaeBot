@@ -58,15 +58,15 @@ module.exports = {
                         beatmapInfo = resp.data[0];
 
                         mods = "";
-                        determineMods(recent);
+                        functions.determineMods(recent);
                         recent.enabled_mods = mods;
 
                         userAcc = "";
-                        recent.accuracy = determineAcc(recent);
+                        recent.accuracy = functions.determineAcc(recent);
 
                         let playDate = Date.parse(recent.date); //UTC + 0
                         let currentDate = Date.now() + 25200000; //UTC + 7
-                        recent.date = timeDifference(currentDate, playDate);
+                        recent.date = functions.timeDifference(currentDate, playDate);
 
                         calculate(beatmapInfo, recent, userInfo, m, "recent", rankingEmojis)
                     })
@@ -77,24 +77,6 @@ module.exports = {
             m.channel.send("Error! More info: " + err);
         })
     }
-};
-
-const determineMods = score => {
-    if (score.enabled_mods == "0") {
-        mods = "";
-    } else {
-        for (i = 0; i < modnames.length; i++) {
-            if (score.enabled_mods & modnames[i].val) {
-                mods += modnames[i].short;
-            }
-        }
-        mods = `+${mods}`
-    }
-};
-
-const determineAcc = score => {
-    userAcc = (parseInt(score.count300) * 300 + parseInt(score.count100) * 100 + parseInt(score.count50) * 50) / ((parseInt(score.count300) + parseInt(score.count100) + parseInt(score.count50) + parseInt(score.countmiss)) * 300) * 100;
-    return userAcc.toFixed(2).toString();
 };
 
 const calculate = (beatmap, performance, userInfo, m, query, rankingEmojis) => {
@@ -133,45 +115,13 @@ const calculate = (beatmap, performance, userInfo, m, query, rankingEmojis) => {
         formattedPerformancePP = recentPP.toString().split(" ")[0];
         formattedMaxPP = maxPP.toString().split(" ")[0];
 
-        if (query === "recent") {
-            generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis);
-        }
-        else if (query === "top") {
-            scores[mapNum].maxPP = formattedMaxPP;
-            scores[mapNum].stars = formattedStars;
-
-            if (beatmapList.length == scores.length) {
-                generateTop(m, osuUser, scores, beatmapList)
-            } else {
-                mapNum++
-                getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList);
-            }
-        }
+        generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis);
     })
     .catch(err => {
         console.log(err);
         m.channel.send("There was an error! More info: " + err);
     })
 };
-
-const timeDifference = (current, previous) => {
-    const msPerMinute = 60 * 1000; //60,000
-    const msPerHour = msPerMinute * 60; //3,600,000
-    const msPerDay = msPerHour * 24; //86,400,000
-
-    let elapsed = current - previous;
-
-    if (elapsed < msPerMinute) {
-        return Math.round(elapsed / 1000) + ' seconds ago';
-    } else if (elapsed < msPerHour) {
-        return Math.round(elapsed / msPerMinute) + ' minutes ago';
-    } else if (elapsed < msPerDay) {
-        return Math.round(elapsed / msPerHour) + ' hours ago';
-    } else {
-        return Math.round(elapsed / msPerDay) + ' days ago';
-    }
-};
-
 
 const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars, rankingEmojis) => {
 
@@ -180,26 +130,25 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
     };
 
     let rankImage;
-    if (recent.rank === "F_") {
-        rankImage = "\:x:"
-    } else {
-        rankImage = rankingEmojis.find("name", recent.rank);
-    }
+
+    rankImage = rankingEmojis.find("name", recent.rank);
 
     let embed = new Discord.RichEmbed()
         .setColor("#0000b2")
-        .setAuthor("Recent Play for: " + userInfo.username, "https://osu.ppy.sh/a/" + userInfo.user_id, "https://osu.ppy.sh/users/" + userInfo.user_id)
+        .setAuthor(`Recent Play for ${userInfo.username}: ${userInfo.pp_raw}pp (#${parseFloat(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseFloat(userInfo.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+        .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
         .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
         .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
-        .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
-        .addField("\u2022 Stars: **" + stars + "***\n\u2022" + rankImage + recent.enabled_mods + " | Score: " + parseInt((recent.score)).toLocaleString("en") + " (" + recent.accuracy + "%) {" + recent.count300 + "/" + recent.count100 + "/" + recent.count50 + "/" + recent.countmiss + "}**\n\u2022 " + performancePP + "pp**/" + maxPP + "pp", "\u2022 Performance recorded: **" + recent.date + "**")
+        .addField(`\u2022 \:star: **${stars}*** ${recent.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((recent.score)).toLocaleString("en")} (${recent.accuracy}%) | ${recent.rank === "F_" ? "~~**" + performancePP + "pp**/" + maxPP + "pp~~" : "**" + performancePP + "pp**/" + maxPP + "pp"}`, `\u2022 ${recent.maxcombo === beatmapInfo.max_combo ? "**" + recent.maxcombo + "**" : recent.maxcombo}x/**${beatmapInfo.max_combo}x** {${recent.count300}/${recent.count100}/${recent.count50}/${recent.countmiss}} | ${recent.date}`)
+        .setFooter("Message sent: ")
         .setTimestamp()
 
     //Send Embed to Channel
     m.channel.send({embed: embed});
+
+    functions.storeLastBeatmapId(m.guild, beatmapInfo.beatmap_id);`r`
 }
 
-//Function to change returned "mods" value to actual Mods
 let modnames = [
     {
         val: 1,

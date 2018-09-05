@@ -3,3 +3,4 @@ config.json
 
 #Node Modules
 node_modules/
+.idea/

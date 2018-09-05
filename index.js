@@ -26,7 +26,7 @@ client.on("ready", () => {
         .catch(err => {
             console.log(err);
         });
-    client.user.setActivity("Stuck? Try .help!");
+    client.user.setActivity(`Stuck? Try ${prefix}help!`);
 
     let commandHistory = [];
 });
@@ -61,7 +61,11 @@ client.on("message", message => {
 
         //If specific top play remove numbers
         if (commandName.includes("top") && commandName.length > 3) {
-            playNum = commandName.slice(3);
+            playNum = parseInt(commandName.slice(3));
+            if (playNum < 1 || playNum > 100) {
+                message.channel.send(`Please select a number between 1-100 for \` ${prefix}topx\``);
+                return;
+            }
             commandName = "top";
             top5 = false;
         }
@@ -75,14 +79,14 @@ client.on("message", message => {
         try {
             if (command.name !== "history") {
                 let rankingEmojis;
-                if (command.name === "top" || command.name === "recent") {
+                if (command.name === "top" || command.name === "recent" || command.name === "compare") {
                     rankingEmojis = client.guilds.find("id", "486497815367778304").emojis;
                 }
                 if (command.name === "top") {
                     command.execute(message, args, playNum, top5, rankingEmojis);
                     console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
                 }
-                else if (command.name === "recent") {
+                else if (command.name === "recent" || command.name === "compare") {
                     command.execute(message, args, rankingEmojis);
                     console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
                 }
@@ -129,11 +133,16 @@ client.on("message", message => {
         message.react(emoji);
     }
 
-    if (uI.includes("goodbye") || uI.includes("good bye"))
-        new Promise(function(resolve, reject) {
+    if (uI.startsWith("goodbye") || uI.startsWith("good bye")) {
+        if (message.author.id === wiquedID) {
+            message.reply(`cya thot! \:middle_finger:`);
+            console.log(`Called Wiqued a thot :)`);
+        }
+        else {
             const konCha = client.emojis.find("name", "KonCha");
             message.reply(`cya! ${konCha}`)
-        });
+        };
+    };
 
     if (uI === "good bot" || uI === "goodbot") {
         if (message.author.id === baeID) {
@@ -147,7 +156,7 @@ client.on("message", message => {
             const itsbaeChamp = client.emojis.find("name", "itsbaeChamp");
             message.channel.send(`Thanks! ${itsbaeChamp}`);
         }
-    }
+    };
 
     if (uI === "bad bot" || uI === "badbot") {
         if (message.author.id === wiquedID) {
@@ -157,7 +166,7 @@ client.on("message", message => {
         else {
             message.channel.send("I am sorry :( If i am not working correctly please contact my owner `@Bae#3308`");
         }
-    }
+    };
 
     if (uI.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i)) {
         client.commands.get("recognise beatmap").execute(message, uI);

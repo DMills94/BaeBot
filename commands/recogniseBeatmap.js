@@ -2,6 +2,7 @@ const axios = require('axios');
 const Discord = require('discord.js')
 const { osuApiKey } = require('../config.json');
 const ojsama = require('ojsama');
+const functions = require('./exportFunctions.js');
 
 module.exports = {
     name: "recognise beatmap",
@@ -305,6 +306,8 @@ const beatmapLookup = (urlInfo, m, mods) => {
                                 .setTimestamp()
 
                             m.channel.send({embed: embed});
+
+                            functions.storeLastBeatmapId(m.guild, beatmapAPI[0].beatmap_id);
                         }
 
                         counter++;
