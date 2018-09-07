@@ -32,13 +32,6 @@ client.on("ready", () => {
 });
 
 client.on("error", err => {
-    client.channels.get("476676731755823105").fetchMessage("476680709428346880")
-        .then(message => {
-            message.edit("Offline!");
-        })
-        .catch(err => {
-            console.log("There was an error updating the bots status");
-        });
     console.log(err);
 })
 

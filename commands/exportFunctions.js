@@ -8,6 +8,7 @@ let customExports = module.exports = {};
 customExports.lookupUser = (authorID) => {
     return new Promise((resolve, reject) => {
 
+    console.log(authorID);
     let existingLink = false;
     let username;
     let linkedDB = [];
@@ -60,9 +61,12 @@ customExports.determineMods = score => {
             if (score.enabled_mods & modnames[i].val) {
                 mods += modnames[i].short;
             }
-        }
-        mods = `+${mods}`
-    }
+        };
+        if (mods.includes("NC")) {
+            mods = mods.replace("DT", "");
+        };
+        mods = `+${mods}`;
+    };
 };
 
 customExports.determineAcc = score => {

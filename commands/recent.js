@@ -17,6 +17,17 @@ module.exports = {
                     return;
                 })
         }
+        else if (args[0].startsWith("<@")) {
+            let discordId = args[0].slice(2, args[0].length - 1);
+            if (discordId.startsWith("!")) {
+                discordId = discordId.slice(1);
+            }
+            username = await functions.lookupUser(discordId)
+                .catch(err => {
+                    m.reply("they do not have a linked account so I cannot find their top plays :(");
+                    return;
+                })
+        }
         else {
             username = args.join('_');
         }

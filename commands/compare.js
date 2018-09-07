@@ -23,7 +23,19 @@ module.exports = {
                     m.reply("you do not have a linked account! Try ` `link [username]`");
                     return;
                 })
-        } else {
+        }
+        else if (args[0].startsWith("<@")) {
+            let discordId = args[0].slice(2, args[0].length - 1);
+            if (discordId.startsWith("!")) {
+                discordId = discordId.slice(1);
+            }
+            username = await functions.lookupUser(discordId)
+                .catch(err => {
+                    m.reply("they do not have a linked account so I cannot find their top plays :(");
+                    return;
+                })
+        }
+        else {
             username = args.join("_");
         }
 
@@ -169,7 +181,7 @@ const generateCompare = (m, userInfo, beatmapInfo, score, performancePP, maxPP, 
 
     let embed = new Discord.RichEmbed()
         .setColor("#0000b2")
-        .setAuthor(`Recent Play for ${userInfo.username}: ${userInfo.pp_raw}pp (#${parseFloat(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseFloat(userInfo.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+        .setAuthor(`Best Play for ${userInfo.username}: ${userInfo.pp_raw}pp (#${parseFloat(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseFloat(userInfo.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
         .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
         .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
         .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
