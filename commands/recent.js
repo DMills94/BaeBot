@@ -30,7 +30,7 @@ module.exports = {
         }
         else {
             username = args.join('_');
-        }
+        };
 
         if (!username) {
             return;
