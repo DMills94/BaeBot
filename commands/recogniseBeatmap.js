@@ -17,7 +17,7 @@ module.exports = {
         if (splitArgs[1] && splitArgs[1].startsWith("+")) {
             uIMods = splitArgs[1].slice(1).toLowerCase();
 
-            uIModsParts = uIMods.match(/[\s\S]{1,2}/g)
+            uIModsParts = uIMods.match(/[\s\S]{1,2}/g);
 
             for (let mod of uIModsParts) {
                 if (!["hd", "hr", "dt", "nc", "so", "nf", "fl", "ht", "ez"].includes(mod)) {
@@ -307,7 +307,7 @@ const beatmapLookup = (urlInfo, m, mods) => {
 
                             m.channel.send({embed: embed});
 
-                            functions.storeLastBeatmapId(m.guild, beatmapAPI[0].beatmap_id);
+                            functions.storeLastBeatmap(m.guild, beatmapAPI[0]);
                         }
 
                         counter++;

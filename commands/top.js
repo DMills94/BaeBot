@@ -53,7 +53,7 @@ module.exports = {
                     scores = resp.data;
                 }
                 else {
-                    scores = resp.data[resp.data.length-1];
+                    scores = resp.data[resp.data.length - 1];
                     let scoresArray = [];
                     scoresArray.push(scores);
                     scores = scoresArray;
@@ -70,8 +70,7 @@ module.exports = {
 
                     //Determine Mods used for scores
                     for (let i = 0; i < scores.length; i++) {
-                        mods = "";
-                        functions.determineMods(scores[i]);
+                        mods = functions.determineMods(scores[i]);
                         scores[i].enabled_mods = mods;
                     }
 
@@ -90,7 +89,9 @@ module.exports = {
 
 
                     beatmapList = [];
-                    mapNum = 0
+                    mapNum = 0;
+
+                    console.log(scores);
 
                     //Third Call x5 (5 beat maps)
 
@@ -185,8 +186,8 @@ const generateTop = (m, osuUser, scores, maps, top5, plays, rankingEmojis) => {
     if (top5) {
         embed
             .setColor("#FFFFFF")
-            .setAuthor(`Top 5 Plays for ${osuUser.username}: ${parseFloat(osuUser.pp_raw).toLocaleString('en')}pp (#${parseInt(osuUser.pp_rank).toLocaleString('en')} ${osuUser.country}#${parseInt(osuUser.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${osuUser.user_id}`, "https://osu.ppy.sh/users/" + osuUser.user_id)
-            .setThumbnail("https://osu.ppy.sh/a/" + osuUser.user_id)
+            .setAuthor(`Top 5 Plays for ${osuUser.username}: ${parseFloat(osuUser.pp_raw).toLocaleString('en')}pp (#${parseInt(osuUser.pp_rank).toLocaleString('en')} ${osuUser.country}#${parseInt(osuUser.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${osuUser.user_id}`, "https://osu.ppy.sh/users/" + osuUser.user_id)
+            .setThumbnail("https://a.ppy.sh/" + osuUser.user_id)
             .addField("__PERSONAL BEST #1__", topInfoInfo(0, scores, maps, rankingEmojis))
             .addField("__PERSONAL BEST #2__", topInfoInfo(1, scores, maps, rankingEmojis))
             .addField("__PERSONAL BEST #3__", topInfoInfo(2, scores, maps, rankingEmojis))
@@ -198,13 +199,13 @@ const generateTop = (m, osuUser, scores, maps, top5, plays, rankingEmojis) => {
     else {
         embed
             .setColor("#FFFFFF")
-            .setAuthor(`Top Play for ${osuUser.username}: ${parseFloat(osuUser.pp_raw).toLocaleString('en')}pp (#${parseInt(osuUser.pp_rank).toLocaleString('en')} ${osuUser.country}#${parseInt(osuUser.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${osuUser.user_id}`, "https://osu.ppy.sh/users/" + osuUser.user_id)
+            .setAuthor(`Top Play for ${osuUser.username}: ${parseFloat(osuUser.pp_raw).toLocaleString('en')}pp (#${parseInt(osuUser.pp_rank).toLocaleString('en')} ${osuUser.country}#${parseInt(osuUser.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${osuUser.user_id}`, "https://osu.ppy.sh/users/" + osuUser.user_id)
             .setThumbnail("https://b.ppy.sh/thumb/" + maps[0].beatmapset_id + "l.jpg")
             .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, scores, maps, rankingEmojis))
             .setFooter("Message sent: ")
             .setTimestamp()
 
-        functions.storeLastBeatmapId(m.guild, maps[0].beatmap_id);
+        functions.storeLastBeatmap(m.guild, maps[0], scores[0]);
     }
 
     //Send Embed to Channel

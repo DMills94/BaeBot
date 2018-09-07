@@ -42,7 +42,7 @@ module.exports = {
                     let embed = new Discord.RichEmbed()
                         .setColor("#fcee03")
                         .setAuthor(user.username, undefined, "https://osu.ppy.sh/users/" + user.user_id)
-                        .setThumbnail("https://osu.ppy.sh/a/" + user.user_id)
+                        .setThumbnail("https://a.ppy.sh/" + user.user_id)
                         .setDescription(`Country: ${user.country} | Playcount: ${parseInt(user.playcount).toLocaleString('en')}`)
                         .addField("Rank", `#${parseInt(user.pp_rank).toLocaleString('en')}`)
                         .addField("Country Rank", `#${parseInt(user.pp_country_rank).toLocaleString('en')}`)

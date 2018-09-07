@@ -7,8 +7,6 @@ let customExports = module.exports = {};
 
 customExports.lookupUser = (authorID) => {
     return new Promise((resolve, reject) => {
-
-    console.log(authorID);
     let existingLink = false;
     let username;
     let linkedDB = [];
@@ -42,21 +40,25 @@ customExports.lookupUser = (authorID) => {
         })
 }
 
-customExports.storeLastBeatmapId = (guild, beatmapId) => {
-    dbCall.put(`lastBeatmap/${guild.id}.json`, beatmapId)
-            .then(resp => {
-                console.log(`[BEATMAP ID STORED FOR ${guild.name}]: ${beatmapId}`);
-            })
+customExports.storeLastBeatmap = (guild, beatmap, performance) => {
+    let beatmapObj = {
+        beatmap,
+        performance
+    };
+
+    dbCall.put(`lastBeatmap/${guild.id}.json`, beatmapObj)
             .catch(err => {
                 console.log("There was an error storing beatmap ID, please try again later.");
                 console.log(err);
-            })
+            });
 };
 
 customExports.determineMods = score => {
+    let mods = ""
     if (score.enabled_mods === "0") {
-        mods = "";
-    } else {
+        return mods = "";
+    }
+    else {
         for (i = 0; i < modnames.length; i++) {
             if (score.enabled_mods & modnames[i].val) {
                 mods += modnames[i].short;
@@ -65,9 +67,37 @@ customExports.determineMods = score => {
         if (mods.includes("NC")) {
             mods = mods.replace("DT", "");
         };
-        mods = `+${mods}`;
+        return `+${mods}`;
     };
 };
+
+customExports.modsToBitNum = mods => {
+    let bitNumValue = 0;
+    mods = mods.toLowerCase();
+    if (mods === "mods") {
+        return "mods";
+    }
+    else if (mods === "nomod" || mods === "") {
+        return 0;
+    }
+    else {
+        const modsSplit = mods.match(/[\s\S]{1,2}/g);
+        for (let mod in modsSplit) {
+            for (let obj in modnames) {
+                if (!["hd", "hr", "dt", "nc", "so", "nf", "fl", "ht", "ez"].includes(modsSplit[mod])) {
+                    return "invalid"
+                };
+
+                if (modsSplit[mod] === modnames[obj].short.toLowerCase()) {
+                    bitNumValue += modnames[obj].val;
+                    break;
+                };
+            };
+        };
+    };
+
+    return `${bitNumValue}`;
+}
 
 customExports.determineAcc = score => {
     userAcc = (parseInt(score.count300) * 300 + parseInt(score.count100) * 100 + parseInt(score.count50) * 50) / ((parseInt(score.count300) + parseInt(score.count100) + parseInt(score.count50) + parseInt(score.countmiss)) * 300) * 100;

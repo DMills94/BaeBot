@@ -12,113 +12,138 @@ const dbCall = axios.create({
 });
 
 module.exports = {
-    name: "compare",
-    description: "Compares the users best play against the last posted beatmap in that guild",
-    async execute(m, args, rankingEmojis) {
-        let username;
+        name: "compare",
+        description: "Compares the users best play against the last posted beatmap in that guild",
+        async execute(m, args, rankingEmojis) {
+            let username;
+            let compMods = false;
 
-        if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
-                .catch(err => {
-                    m.reply("you do not have a linked account! Try ` `link [username]`");
-                    return;
-                })
-        }
-        else if (args[0].startsWith("<@")) {
-            let discordId = args[0].slice(2, args[0].length - 1);
-            if (discordId.startsWith("!")) {
-                discordId = discordId.slice(1);
-            }
-            username = await functions.lookupUser(discordId)
-                .catch(err => {
-                    m.reply("they do not have a linked account so I cannot find their top plays :(");
-                    return;
-                })
-        }
-        else {
-            username = args.join("_");
-        }
+            for (let arg in args) {
+                if (args[arg].includes("+")) {
+                    modsToCompare = args[arg].slice(1);
+                    args.splice(arg, 1);
+                    compMods = true;
+                };
+            };
 
-        if (!username) {
-            return;
-        }
-
-        //Get Beatmap Id
-        let beatmapId;
-
-        dbCall.get(`lastBeatmap/${m.guild.id}.json`)
-            .then(resp => {
-                beatmapId = resp.data;
-
-                //User information
-                axios.get('api/get_user', {
-                        params: {
-                            k: osuApiKey,
-                            u: username
-                        }
+            if (args.length === 0) {
+                username = await functions.lookupUser(m.author.id)
+                    .catch(err => {
+                        m.reply("you do not have a linked account! Try ` `link [username]`");
+                        return;
                     })
-                    .then(resp => {
-                        let userInfo = resp.data[0];
+            } else if (args[0].startsWith("<@")) {
+                let discordId = args[0].slice(2, args[0].length - 1);
+                if (discordId.startsWith("!")) {
+                    discordId = discordId.slice(1);
+                }
+                username = await functions.lookupUser(discordId)
+                    .catch(err => {
+                        m.reply("they do not have a linked account so I cannot find their top plays :(");
+                        return;
+                    })
+            } else {
+                username = args.join("_");
+            }
 
-                        //Beatmap information
-                        axios.get('api/get_beatmaps', {
-                                params: {
-                                    k: osuApiKey,
-                                    b: beatmapId
-                                }
-                            })
-                            .then(resp => {
-                                let beatmapInfo = resp.data[0];
+            if (!username) {
+                return;
+            }
 
-                                //User's score
-                                axios.get('api/get_scores', {
-                                        params: {
-                                            k: osuApiKey,
-                                            b: beatmapId,
-                                            u: username
-                                        }
-                                    })
-                                    .then(resp => {
-                                        if (resp.data.length < 1) {
-                                            m.channel.send("Go play the map first, dumb bitch - Belial 2k18");
+            //Get Beatmap Id
+            let prevBeatmap;
+
+            dbCall.get(`lastBeatmap/${m.guild.id}.json`)
+                .then(resp => {
+                    prevBeatmap = resp.data;
+
+                    //User information
+                    axios.get('api/get_user', {
+                            params: {
+                                k: osuApiKey,
+                                u: username
+                            }
+                        })
+                        .then(resp => {
+                            let userInfo = resp.data[0];
+                            if (!userInfo) {
+                                return m.channel.send("The username provided doesn't exist! Please try again.")
+                            }
+
+
+                            axios.get('api/get_scores', {
+                                    params: {
+                                        k: osuApiKey,
+                                        b: prevBeatmap.beatmap.beatmap_id,
+                                        u: userInfo.user_id
+                                    }
+                                })
+                                .then(resp => {
+                                    if (resp.data.length < 1) {
+                                        m.channel.send("Go play the map first, dumb bitch - Belial 2k18");
+                                        return;
+                                    }
+
+                                    let score;
+
+                                    if (!compMods || !prevBeatmap.performance) {
+                                        score = resp.data[0];
+                                    } else {
+                                        let bitNumMods = functions.modsToBitNum(modsToCompare);
+                                        if (bitNumMods === "invalid") {
+                                            m.reply("invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `compare +mod/[mods]`");
                                             return;
+                                        }
+                                        else if (bitNumMods === "mods") {
+                                            prevBeatmapMods = prevBeatmap.performance.enabled_mods;
+                                            if (prevBeatmapMods.startsWith("+")) {
+                                                prevBeatmapMods = prevBeatmapMods.slice(1);
+                                            };
+
+                                            bitNumMods = functions.modsToBitNum(prevBeatmapMods);
                                         };
 
-                                        let score = resp.data[0];
+                                        let scoreFound = false;
 
-                                        mods = "";
-                                        functions.determineMods(score);
-                                        score.enabled_mods = mods;
+                                        for (let scoreObj in resp.data) {
+                                            if (resp.data[scoreObj].enabled_mods === bitNumMods) {
+                                                score = resp.data[scoreObj];
+                                                scoreFound = true;
+                                            };
+                                        };
 
-                                        userAcc = "";
-                                        score.accuracy = functions.determineAcc(score);
+                                        if (!scoreFound) {
+                                            return m.reply("sorry, you don't have a play on that map with the mods selected! Sometimes the API deletes very old plays, sorry about that :(");
+                                        }
+                                    };
 
-                                        let playDate = Date.parse(score.date); //UTC + 0
-                                        let currentDate = Date.now() + 25200000; //UTC + 7
-                                        score.date = functions.timeDifference(currentDate, playDate);
+                                    mods = functions.determineMods(score);
+                                    score.enabled_mods = mods;
 
-                                        calculate(beatmapInfo, score, userInfo, m, "recent", rankingEmojis)
+                                    userAcc = "";
+                                    score.accuracy = functions.determineAcc(score);
+
+                                    let playDate = Date.parse(score.date); //UTC + 0
+                                    let currentDate = Date.now() + 25200000; //UTC + 7
+                                    score.date = functions.timeDifference(currentDate, playDate);
+
+                                    calculate(prevBeatmap.beatmap, score, userInfo, m, "recent", rankingEmojis)
+                                })
+                                .catch(err => {
+                                    m.channel.send("There was an error getting your score on the map! Sorry about that, try later!");
+                                    console.log(err);
+                                })
+                        })
+                        .catch(err => {
+                            m.channel.send("There was an error fetching your user info! Sorry about that, try later!");
+                            console.log(err);
                                     })
-                                    .catch(err => {
-                                        m.channel.send("There was an error getting your score on the map! Sorry about that, try later!");
-                                        console.log(err);
-                                    })
-                            })
-                            .catch(err => {
-                                m.channel.send("There was an error fetching the beatmaps info! Sorry about that, try later!");
-                                console.log(err);
-                            })
                     })
-                    .catch(err => {
-                        m.channel.send("There was an error fetching your user info! Sorry about that, try later!");
-                        console.log(err);
-                    })
-            })
-            .catch(err => {
-                m.channel.send("There was an error fetching the last beatmap! Sorry about that, try later!");
-                console.log(err);
-            })
-    }
+                .catch(err => {
+                    m.channel.send("There was an error fetching the last beatmap! Sorry about that, try later!");
+                    console.log(err);
+                })
+}
 }
 
 const calculate = (beatmap, performance, userInfo, m, query, rankingEmojis) => {
@@ -134,7 +159,9 @@ const calculate = (beatmap, performance, userInfo, m, query, rankingEmojis) => {
             return resp.data
         })
         .then(raw => new ojsama.parser().feed(raw))
-        .then(({ map }) => {
+        .then(({
+            map
+        }) => {
             cleanBeatmap = map;
             let usedMods = ojsama.modbits.from_string(performance.enabled_mods);
 
@@ -169,7 +196,7 @@ const calculate = (beatmap, performance, userInfo, m, query, rankingEmojis) => {
         })
 };
 
-const generateCompare = (m, userInfo, beatmapInfo, score, performancePP, maxPP, stars, rankingEmojis) => {
+const generateCompare = (m, userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis) => {
 
     if (score.rank.length === 1) {
         score.rank += "_";
@@ -181,14 +208,18 @@ const generateCompare = (m, userInfo, beatmapInfo, score, performancePP, maxPP, 
 
     let embed = new Discord.RichEmbed()
         .setColor("#0000b2")
-        .setAuthor(`Best Play for ${userInfo.username}: ${userInfo.pp_raw}pp (#${parseFloat(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseFloat(userInfo.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
-        .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
-        .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
-        .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
-        .addField(`\u2022 \:star: **${stars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + performancePP + "pp**/" + maxPP + "pp~~" : "**" + performancePP + "pp**/" + maxPP + "pp"}`, `\u2022 ${score.maxcombo === beatmapInfo.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}x/**${beatmapInfo.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
+        .setAuthor(`Best Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+        .setThumbnail("https://b.ppy.sh/thumb/" + prevBeatmap.beatmapset_id + "l.jpg")
+        .setTitle(prevBeatmap.artist + " - " + prevBeatmap.title + " [" + prevBeatmap.version + "]")
+        .setURL("https://osu.ppy.sh/b/" + prevBeatmap.beatmap_id)
+        .addField(`\u2022 \:star: **${stars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + performancePP + "pp**/" + maxPP + "pp~~" : "**" + performancePP + "pp**/" + maxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}x/**${prevBeatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
         .setFooter("Message sent: ")
         .setTimestamp()
 
     //Send Embed to Channel
-    m.channel.send({embed: embed});
+    m.channel.send({
+        embed: embed
+    });
+
+    functions.storeLastBeatmap(m.guild, prevBeatmap, score);
 };

@@ -68,8 +68,7 @@ module.exports = {
                     }).then(resp => {
                         beatmapInfo = resp.data[0];
 
-                        mods = "";
-                        functions.determineMods(recent);
+                        mods = functions.determineMods(recent);
                         recent.enabled_mods = mods;
 
                         userAcc = "";
@@ -146,7 +145,7 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
 
     let embed = new Discord.RichEmbed()
         .setColor("#0000b2")
-        .setAuthor(`Recent Play for ${userInfo.username}: ${userInfo.pp_raw}pp (#${parseFloat(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseFloat(userInfo.pp_country_rank).toLocaleString('en')})`, `https://osu.ppy.sh/a/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+        .setAuthor(`Recent Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
         .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
         .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
         .setTitle(beatmapInfo.artist + " - " + beatmapInfo.title + " [" + beatmapInfo.version + "]")
@@ -157,121 +156,5 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
     //Send Embed to Channel
     m.channel.send({embed: embed});
 
-    functions.storeLastBeatmapId(m.guild, beatmapInfo.beatmap_id);`r`
-}
-
-let modnames = [
-    {
-        val: 1,
-        name: "NoFail",
-        short: "NF"
-    }, {
-        val: 2,
-        name: "Easy",
-        short: "EZ"
-    }, {
-        val: 4,
-        name: "TouchDevice",
-        short: "TD"
-    }, {
-        val: 8,
-        name: "Hidden",
-        short: "HD"
-    }, {
-        val: 16,
-        name: "HardRock",
-        short: "HR"
-    }, {
-        val: 32,
-        name: "SuddenDeath",
-        short: "SD"
-    }, {
-        val: 64,
-        name: "DoubleTime",
-        short: "DT"
-    }, {
-        val: 128,
-        name: "Relax",
-        short: "RX"
-    }, {
-        val: 256,
-        name: "HalfTime",
-        short: "HT"
-    }, {
-        val: 512,
-        name: "Nightcore",
-        short: "NC"
-    }, {
-        val: 1024,
-        name: "Flashlight",
-        short: "FL"
-    }, {
-        val: 2048,
-        name: "Autoplay",
-        short: "AT"
-    }, {
-        val: 4096,
-        name: "SpunOut",
-        short: "SO"
-    }, {
-        val: 8192,
-        name: "Relax2",
-        short: "AP"
-    }, {
-        val: 16384,
-        name: "Perfect",
-        short: "PF"
-    }, {
-        val: 32768,
-        name: "Key4",
-        short: "4K"
-    }, {
-        val: 65536,
-        name: "Key5",
-        short: "5K"
-    }, {
-        val: 131072,
-        name: "Key6",
-        short: "6K"
-    }, {
-        val: 262144,
-        name: "Key7",
-        short: "7K"
-    }, {
-        val: 524288,
-        name: "Key8",
-        short: "8K"
-    }, {
-        val: 1048576,
-        name: "FadeIn",
-        short: "FI"
-    }, {
-        val: 2097152,
-        name: "Random",
-        short: "RD"
-    }, {
-        val: 4194304,
-        name: "Cinema",
-        short: "CN"
-    }, {
-        val: 16777216,
-        name: "Key9",
-        short: "9K"
-    }, {
-        val: 33554432,
-        name: "Key10",
-        short: "10K"
-    }, {
-        val: 67108864,
-        name: "Key1",
-        short: "1K"
-    }, {
-        val: 134217728,
-        name: "Key3",
-        short: "3K"
-    }, {
-        val: 268435456,
-        name: "Key2",
-        short: "2K"
-    }
-];
+    functions.storeLastBeatmap(m.guild, beatmapInfo, recent);
+};
