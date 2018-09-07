@@ -16,16 +16,18 @@ commandHistory = [];
 
 client.on("ready", () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`);
-    client.channels.get("476676731755823105").fetchMessage("476680709428346880")
-        .then(message => {
-            currentTime = new Date();
-            date = currentTime.toDateString();
-            time = currentTime.toTimeString();
-            message.edit(`I am online! Last refresh on **${date}** at **${time}**`);
-        })
-        .catch(err => {
-            console.log(err);
-        });
+    if (client.user.id === "438366424805933056") {
+        client.channels.get("476676731755823105").fetchMessage("476680709428346880")
+            .then(message => {
+                currentTime = new Date();
+                date = currentTime.toDateString();
+                time = currentTime.toTimeString();
+                message.edit(`I am online! Last refresh on **${date}** at **${time}**`);
+            })
+            .catch(err => {
+                console.log(err);
+            });
+    }
     client.user.setActivity(`Stuck? Try ${prefix}help!`);
 
     let commandHistory = [];
@@ -76,16 +78,16 @@ client.on("message", message => {
                     rankingEmojis = client.guilds.find("id", "486497815367778304").emojis;
                 }
                 if (command.name === "top") {
-                    command.execute(message, args, playNum, top5, rankingEmojis);
                     console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                    command.execute(message, args, playNum, top5, rankingEmojis);
                 }
                 else if (command.name === "recent" || command.name === "compare") {
-                    command.execute(message, args, rankingEmojis);
                     console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                    command.execute(message, args, rankingEmojis);
                 }
                 else {
-                command.execute(message, args);
-                console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                    command.execute(message, args);
                 }
 
                 //Update history
@@ -94,9 +96,8 @@ client.on("message", message => {
                     commandHistory.pop();
                 }
             } else {
-                command.execute(message, args, commandHistory);
-                console.log(client, message);
                 console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                command.execute(message, args, commandHistory);
             }
 
 
