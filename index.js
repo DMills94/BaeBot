@@ -78,15 +78,15 @@ client.on("message", message => {
                     rankingEmojis = client.guilds.find("id", "486497815367778304").emojis;
                 }
                 if (command.name === "top") {
-                    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                    logCommand(message, command.name);
                     command.execute(message, args, playNum, top5, rankingEmojis);
                 }
                 else if (command.name === "recent" || command.name === "compare") {
-                    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                    logCommand(message, command.name);
                     command.execute(message, args, rankingEmojis);
                 }
                 else {
-                    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                    logCommand(message, command.name);;
                     command.execute(message, args);
                 }
 
@@ -96,7 +96,7 @@ client.on("message", message => {
                     commandHistory.pop();
                 }
             } else {
-                console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command.name}`);
+                logCommand(message, command.name);
                 command.execute(message, args, commandHistory);
             }
 
@@ -164,9 +164,16 @@ client.on("message", message => {
 
     if (uI.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i)) {
         client.commands.get("recognise beatmap").execute(message, uI);
-        console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: recognise beatmap`);
+        logCommand(message, "Recognise Beatmap");
     }
 });
+
+const logCommand = (message, command) => {
+    currentTime = new Date();
+    date = currentTime.toDateString().slice(4,10);
+    time = currentTime.toTimeString().slice(0,9);
+    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command} on ${date} at ${time}`);
+}
 
 //Start Bot
 client.login(token);
