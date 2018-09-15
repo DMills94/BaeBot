@@ -7,7 +7,7 @@ const functions = require("./exportFunctions.js");
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
-    async execute(m, args, plays, top5, rankingEmojis) {
+    async execute(m, args, rankingEmojis, plays, top5) {
         let username;
 
         if (args.length === 0) {
@@ -47,8 +47,8 @@ module.exports = {
             if (resp.data.length == 0) {
                 m.reply("That username does not exist! Please try again.")
                 return;
-            } else {
-
+            }
+            else {
                 if (top5) {
                     scores = resp.data;
                 }
@@ -91,10 +91,7 @@ module.exports = {
                     beatmapList = [];
                     mapNum = 0;
 
-                    console.log(scores);
-
                     //Third Call x5 (5 beat maps)
-
                     getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis);
 
                 }).catch(err => {
@@ -120,14 +117,14 @@ const getBeatmapInfo = (index, m, osuUser, scores, beatmapList, top5, plays, ran
         beatmapInfo.orderKey = mapNum + 1;
         beatmapList.push(beatmapInfo);
 
-        calculate(beatmapInfo, scores[index], osuUser, m, "top", top5, plays, rankingEmojis);
+        calculate(beatmapInfo, scores[index], osuUser, m, top5, plays, rankingEmojis);
     }).catch(err => {
         console.log(err)
         m.channel.send("Error! More info: " + err);
     })
 }
 
-const calculate = (beatmap, performance, userInfo, m, query, top5, plays, rankingEmojis) => {
+const calculate = (beatmap, performance, userInfo, m, top5, plays, rankingEmojis) => {
 
     let cleanBeatmap;
 
@@ -197,8 +194,24 @@ const generateTop = (m, osuUser, scores, maps, top5, plays, rankingEmojis) => {
             .setTimestamp()
     }
     else {
+        let colour;
+        switch (plays) {
+            case 1:
+                colour = "#FFD700";
+                break;
+            case 2:
+                colour = "#FFFFFF";
+                break;
+            case 3:
+                colour = "#cd7f32";
+                break;
+            default:
+                colour = "#c0c0c0";
+                break;
+        }
+
         embed
-            .setColor("#FFFFFF")
+            .setColor(colour)
             .setAuthor(`Top Play for ${osuUser.username}: ${parseFloat(osuUser.pp_raw).toLocaleString('en')}pp (#${parseInt(osuUser.pp_rank).toLocaleString('en')} ${osuUser.country}#${parseInt(osuUser.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${osuUser.user_id}`, "https://osu.ppy.sh/users/" + osuUser.user_id)
             .setThumbnail("https://b.ppy.sh/thumb/" + maps[0].beatmapset_id + "l.jpg")
             .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, scores, maps, rankingEmojis))

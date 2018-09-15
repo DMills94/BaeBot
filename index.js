@@ -6,6 +6,7 @@ const client = new Discord.Client();
 client.commands = new Discord.Collection();
 
 const commandFiles = fs.readdirSync("./commands");
+const functions = require("./commands/exportFunctions.js");
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
@@ -16,6 +17,8 @@ commandHistory = [];
 
 client.on("ready", () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`);
+    client.user.setActivity(`Stuck? Try ${prefix}help!`);
+
     if (client.user.id === "438366424805933056") {
         client.channels.get("476676731755823105").fetchMessage("476680709428346880")
             .then(message => {
@@ -28,9 +31,12 @@ client.on("ready", () => {
                 console.log(err);
             });
     }
-    client.user.setActivity(`Stuck? Try ${prefix}help!`);
 
     let commandHistory = [];
+    const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis;
+
+    updateTop100(rankingEmojis);
+    setInterval(updateTop100, 300000)
 });
 
 client.on("error", err => {
@@ -51,44 +57,45 @@ client.on("message", message => {
 
         const args = uI.slice(prefix.length).split(" ");
         let commandName = args.shift();
-        let playNum = 5;
+        let playNum;
         let top5 = true;
 
         //If specific top play remove numbers
         if (commandName.includes("top") && commandName.length > 3) {
             playNum = parseInt(commandName.slice(3));
             if (playNum < 1 || playNum > 100) {
-                message.channel.send(`Please select a number between 1-100 for \` ${prefix}topx\``);
-                return;
-            }
+                return message.channel.send(`Please select a number between 1-100 for \` ${prefix}topx\``);
+            };
             commandName = "top";
             top5 = false;
         }
+        else if (commandName.includes("top")) {
+            playNum = 5;
+        };
+
+        if (commandName.includes("rb") && commandName.length > 2) {
+            playNum = parseInt(commandName.slice(2));
+            if (playNum < 1 || playNum > 100) {
+                return message.channel.send(`Please select a number between 1-100 for \` ${prefix}rbx\``);
+            };
+            commandName = "rb";
+        }
+        else if (commandName.includes("rb")) {
+            playNum = 1;
+        };
 
         //Prefix Commands
-        if (!client.commands.has(commandName))
-            return;
+        if (!client.commands.has(commandName)) {
+            return message.channel.send("Sorry that's not command I have :( \nIf you need help try ` `help`!");
+        }
 
         const command = client.commands.get(commandName);
 
         try {
             if (command.name !== "history") {
-                let rankingEmojis;
-                if (command.name === "top" || command.name === "recent" || command.name === "compare") {
-                    rankingEmojis = client.guilds.find("id", "486497815367778304").emojis;
-                }
-                if (command.name === "top") {
-                    logCommand(message, command.name);
-                    command.execute(message, args, playNum, top5, rankingEmojis);
-                }
-                else if (command.name === "recent" || command.name === "compare") {
-                    logCommand(message, command.name);
-                    command.execute(message, args, rankingEmojis);
-                }
-                else {
-                    logCommand(message, command.name);;
-                    command.execute(message, args);
-                }
+                const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis;
+
+                command.execute(message, args, rankingEmojis, playNum, top5);
 
                 //Update history
                 commandHistory.unshift(uI.slice(prefix.length));
@@ -96,11 +103,10 @@ client.on("message", message => {
                     commandHistory.pop();
                 }
             } else {
-                logCommand(message, command.name);
                 command.execute(message, args, commandHistory);
             }
 
-
+            logCommand(message, command.name);
 
         } catch (error) {
             console.error(error);
@@ -172,7 +178,20 @@ const logCommand = (message, command) => {
     currentTime = new Date();
     date = currentTime.toDateString().slice(4,10);
     time = currentTime.toTimeString().slice(0,9);
-    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}]: ${command} on ${date} at ${time}`);
+    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}]: ${command} on ${date} at ${time}`);
+}
+
+async function updateTop100(rankingEmojis) {
+    const newScoresDuplicates = await functions.getTrackedUsersTop100();
+    const newScores = newScoresDuplicates.filter((object, index) =>
+        index === newScoresDuplicates.findIndex((obj) => (
+            obj.date === object.date
+        ))
+    )
+    if (newScores.length > 0) {
+        console.log("New scores detected...posting");
+        client.commands.get("postnew").execute(newScores, rankingEmojis, client.channels);
+    };
 }
 
 //Start Bot

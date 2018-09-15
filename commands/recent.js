@@ -68,8 +68,7 @@ module.exports = {
                     }).then(resp => {
                         beatmapInfo = resp.data[0];
 
-                        mods = functions.determineMods(recent);
-                        recent.enabled_mods = mods;
+                        recent.enabled_mods = functions.determineMods(recent);
 
                         userAcc = "";
                         recent.accuracy = functions.determineAcc(recent);
@@ -78,7 +77,7 @@ module.exports = {
                         let currentDate = Date.now() + 25200000; //UTC + 7
                         recent.date = functions.timeDifference(currentDate, playDate);
 
-                        calculate(beatmapInfo, recent, userInfo, m, "recent", rankingEmojis)
+                        calculate(beatmapInfo, recent, userInfo, m, rankingEmojis)
                     })
                 })
             }
@@ -89,7 +88,7 @@ module.exports = {
     }
 };
 
-const calculate = (beatmap, performance, userInfo, m, query, rankingEmojis) => {
+const calculate = (beatmap, performance, userInfo, m, rankingEmojis) => {
 
     let cleanBeatmap;
 
@@ -144,7 +143,7 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
     rankImage = rankingEmojis.find("name", recent.rank);
 
     let embed = new Discord.RichEmbed()
-        .setColor("#0000b2")
+        .setColor("#c0c0c0")
         .setAuthor(`Recent Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
         .setURL("https://osu.ppy.sh/b/" + beatmapInfo.beatmap_id)
         .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")

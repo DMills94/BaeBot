@@ -37,7 +37,6 @@ module.exports = {
                 if (!existingLink) {
                     return m.reply("you have no linked account to unlink! Please use ``link [username]` to link an account!")
                 }
-
                 else {
                     updatedLinkedDB = {
                         ...resp.data

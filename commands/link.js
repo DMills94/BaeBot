@@ -35,14 +35,13 @@ module.exports = {
                 dbCall.get('linkedUsers.json')
                     .then(resp => {
 
-                        //Check if linked already
                         for (let key in resp.data) {
                             linkedDB.push({
-                                ...resp.data[key],
-                                id: key
+                                ...resp.data[key]
                             })
                         }
 
+                        //Check if linked already
                         for (let link in linkedDB) {
                             if (linkedDB[link].discordID === userId) {
                                 existingLink = true;
@@ -56,7 +55,7 @@ module.exports = {
 
                         //If not post
                         if (!existingLink) {
-                            dbCall.post('linkedUsers.json', user)
+                            dbCall.put('linkedUsers.json', user)
                                 .then(resp => {
                                     m.reply(`you have been successfully linked to ${formattedUserName}`);
                                     console.log("[POST SUCCESS]");

@@ -1,7 +1,9 @@
 const axios = require('axios');
 const { dbUrl } = require('../config.json');
+const { osuApiKey } = require('../config.json');
+const postNewScores = require('./postNewScores.js');
 
-const dbCall = axios.create({baseURL: dbUrl})
+const dbCall = axios.create({baseURL: dbUrl});
 
 let customExports = module.exports = {};
 
@@ -13,9 +15,9 @@ customExports.lookupUser = (authorID) => {
 
     dbCall.get('linkedUsers.json')
         .then(resp => {
-            const database = resp.data;
+            const linkedUsers = resp.data;
 
-            for (let key in resp.data) {
+            for (let key in linkedUsers) {
                 linkedDB.push({
                     ...resp.data[key],
                     id: key
@@ -53,7 +55,92 @@ customExports.storeLastBeatmap = (guild, beatmap, performance) => {
             });
 };
 
-customExports.determineMods = score => {
+customExports.getTrackedUsersTop100 = () => {
+    return new Promise((resolve, reject) => {
+        let isError = false;
+        let changedScoresArray = [];
+
+
+        //Get tracked users
+        dbCall.get(`track.json`)
+            .then(resp => {
+                const trackedUsers = resp.data;
+
+                //Get users top 100
+                let counter = 0;
+                for (let user in trackedUsers) {
+                    axios.get("api/get_user_best", { params: {
+                            k: osuApiKey,
+                            u: trackedUsers[user].osuName,
+                            limit: 100
+                        }
+                    })
+                    .then(resp => {
+                        const usersTop100 = resp.data;
+
+                        //Check if new no top 100 data, and if so, add it to the DB
+                        if (trackedUsers[user].top100 === undefined) {
+                            dbCall.put(`track/${user}/top100.json`, usersTop100)
+                                .then(resp => {
+
+                                })
+                                .catch(err => {
+                                    console.log(err);
+                                })
+                        }
+                        else {
+                            //See if each of the new top 100 scores exist in the db top 100 scores
+                            for (var i = 53; i < 54; i++) {
+                                changedScores = checkNewScores(usersTop100[i], trackedUsers[user].top100);
+                                if (changedScores) {
+                                    usersTop100[i].playNumber = i + 1
+                                    changedScoresArray.push(usersTop100[i]);
+                                }
+                            }
+                        }
+                        counter++
+                        if (counter === Object.keys(trackedUsers).length) {
+                            resolve(changedScoresArray);
+                        }
+                    })
+                    .catch(err => {
+                        isError = true;
+                    })
+                }
+            })
+
+        if (isError) {
+            console.log("There was an error getting Users top 100, please try again.");
+        }
+    })
+};
+
+const checkNewScores = (score, database) => {
+    let scoreMatch = true;
+
+    for (let entry in database) {
+        const aProps = Object.getOwnPropertyNames(score);
+        const bProps = Object.getOwnPropertyNames(database[entry]);
+
+        if (aProps.length != bProps.length) {
+            scoreMatch = false;
+        };
+
+        for (let prop in aProps) {
+            const propName = aProps[prop];
+
+            if (score[propName] !== database[entry][propName]) {
+                scoreMatch = false;
+            };
+        };
+
+        scoreMatch = true;
+    };
+
+    return scoreMatch;
+}
+
+customExports.determineMods = (score) => {
     let mods = ""
     if (score.enabled_mods === "0") {
         return mods = "";
