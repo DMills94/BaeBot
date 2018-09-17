@@ -84,6 +84,8 @@ module.exports = {
                                             for (let play in topPlays) {
                                                 let scoreMatch = true
 
+                                                delete topPlays[8]['pp']
+
                                                 const aProps = Object.getOwnPropertyNames(recent)
                                                 const bProps = Object.getOwnPropertyNames(topPlays[play])
 
@@ -94,7 +96,7 @@ module.exports = {
                                                 for (let prop in aProps) {
                                                     const propName = aProps[prop]
 
-                                                    if (recent[propName] !== topPlays[play][propName]) {
+                                                    if (recent[propName] !== topPlays[play][propName] && propName !== 'date') {
                                                         scoreMatch = false
                                                     }
                                                 }
@@ -182,6 +184,8 @@ const calculate = (beatmap, performance, userInfo, m, rankingEmojis) => {
 };
 
 const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars, rankingEmojis) => {
+
+    console.log(recent);
 
     if (recent.rank.length === 1) {
         recent.rank += "_";
