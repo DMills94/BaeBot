@@ -1,7 +1,5 @@
 const axios = require('axios');
-const { dbUrl } = require('../config.json');
-const { osuApiKey } = require('../config.json');
-const postNewScores = require('./postNewScores.js');
+const { osuApiKey, dbUrl } = require('../config.json');
 
 const dbCall = axios.create({baseURL: dbUrl});
 
@@ -67,7 +65,7 @@ customExports.getTrackedUsersTop100 = () => {
                 const trackedUsers = resp.data;
 
                 //Get users top 100
-                let counter = 0;
+                let counter = 0
                 for (let user in trackedUsers) {
                     axios.get("api/get_user_best", { params: {
                             k: osuApiKey,
@@ -76,66 +74,73 @@ customExports.getTrackedUsersTop100 = () => {
                         }
                     })
                     .then(resp => {
-                        const usersTop100 = resp.data;
+                        const usersTop100 = resp.data
 
                         //Check if new no top 100 data, and if so, add it to the DB
                         if (trackedUsers[user].top100 === undefined) {
                             dbCall.put(`track/${user}/top100.json`, usersTop100)
-                                .then(resp => {
-
-                                })
                                 .catch(err => {
-                                    console.log(err);
+                                    console.log(err)
                                 })
                         }
                         else {
                             //See if each of the new top 100 scores exist in the db top 100 scores
-                            for (var i = 53; i < 54; i++) {
-                                changedScores = checkNewScores(usersTop100[i], trackedUsers[user].top100);
-                                if (changedScores) {
-                                    usersTop100[i].playNumber = i + 1
-                                    changedScoresArray.push(usersTop100[i]);
+                            for (var i = 0; i < 100; i++) {
+                                const scoreMatch = checkNewScores(usersTop100[i], trackedUsers[user].top100)
+
+                                if (!scoreMatch) {
+                                    console.log(usersTop100[i])
+                                    changedScoresArray.push(usersTop100[i])
                                 }
                             }
+
+                            //Update database
+                            dbCall.put(`track/${user}/top100.json`, usersTop100)
+                                .catch(err => {
+                                    console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
+                                })
                         }
                         counter++
                         if (counter === Object.keys(trackedUsers).length) {
-                            resolve(changedScoresArray);
+                            resolve(changedScoresArray)
                         }
                     })
                     .catch(err => {
-                        isError = true;
+                        isError = true
                     })
                 }
             })
 
         if (isError) {
-            console.log("There was an error getting Users top 100, please try again.");
+            console.log("There was an error getting Users top 100, please try again.")
         }
     })
 };
 
 const checkNewScores = (score, database) => {
-    let scoreMatch = true;
+    let scoreMatch
 
     for (let entry in database) {
-        const aProps = Object.getOwnPropertyNames(score);
-        const bProps = Object.getOwnPropertyNames(database[entry]);
+        scoreMatch = true;
+        const aProps = Object.getOwnPropertyNames(score)
+        const bProps = Object.getOwnPropertyNames(database[entry])
 
-        if (aProps.length != bProps.length) {
+        if (aProps.length !== bProps.length) {
             scoreMatch = false;
-        };
+        }
 
         for (let prop in aProps) {
-            const propName = aProps[prop];
+            const propName = aProps[prop]
 
             if (score[propName] !== database[entry][propName]) {
                 scoreMatch = false;
-            };
-        };
+            }
+        }
 
-        scoreMatch = true;
-    };
+        if (scoreMatch) {
+            break;
+        }
+    }
 
     return scoreMatch;
 }

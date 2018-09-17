@@ -1,92 +1,119 @@
-const axios = require("axios");
+const axios = require("axios")
 const Discord = require("discord.js")
-const { osuApiKey, dbUrl } = require("../config.json");
-const ojsama = require("ojsama");
+const { osuApiKey, dbUrl } = require("../config.json")
+const ojsama = require("ojsama")
+const functions = require("./exportFunctions.js")
 
 const dbCall = axios.create({
     baseURL: dbUrl
-});
+})
 
 module.exports = {
     name: "postnew",
     description: "Posts new scores from updating a users top 100",
-    execute(newScores, rankingEmojis, client) {
-        const functions = require("./exportFunctions.js");
-        for (let top in newScores) {
-            const score = newScores[top];
+    execute(score, rankingEmojis, client) {
 
-            score.enabled_mods = functions.determineMods(score);
+        //get user
+        axios.get('api/get_user', { params: {
+                k: osuApiKey,
+                u: score.user_id
+            }
+        })
+            .then(resp => {
+                const userInfo = resp.data[0]
 
-            userAcc = "";
-            score.accuracy = functions.determineAcc(score);
-
-            let playDate = Date.parse(score.date); //UTC + 0
-            let currentDate = Date.now() + 25200000; //UTC + 7
-            score.date = functions.timeDifference(currentDate, playDate);
-
-            //get user
-            axios.get('api/get_user', { params: {
-                    k: osuApiKey,
-                    u: score.user_id
-                }
-            })
-                .then(resp => {
-                    const userInfo = resp.data[0]
-                    if (!userInfo) {
-                        return m.channel.send("The username provided doesn't exist! Please try again.")
+                axios.get('api/get_beatmaps', { params: {
+                        k: osuApiKey,
+                        b: score.beatmap_id
                     }
+                })
+                    .then(resp => {
+                        const beatmapInfo = resp.data[0]
 
-                    axios.get('api/get_beatmaps', { params: {
-                            k: osuApiKey,
-                            b: score.beatmap_id
-                        }
+                        axios.get('api/get_user_best', { params: {
+                                k: osuApiKey,
+                                u: score.user_id,
+                                limit: 100
+                            }
+                        })
+                            .then(resp => {
+                                const topPlays = resp.data
+
+                                for (let play in topPlays) {
+                                    let scoreMatch = true
+
+                                    const aProps = Object.getOwnPropertyNames(score)
+                                    const bProps = Object.getOwnPropertyNames(topPlays[play])
+
+                                    if (aProps.length !== bProps.length) {
+                                        scoreMatch = false
+                                    }
+
+                                    for (let prop in aProps) {
+                                        const propName = aProps[prop]
+
+                                        if (score[propName] !== topPlays[play][propName]) {
+                                            scoreMatch = false
+                                        }
+                                    }
+
+                                    if (scoreMatch) {
+                                        score.playNumber = parseInt(play) + 1
+                                    }
+                                }
+
+                                score.enabled_mods = functions.determineMods(score)
+
+                                userAcc = ""
+                                score.accuracy = functions.determineAcc(score)
+
+                                let playDate = Date.parse(score.date) + 28800000
+                                let currentDate = Date.now() + 25200000
+                                score.date = functions.timeDifference(currentDate, playDate)
+
+                                calculate(beatmapInfo, score, userInfo, rankingEmojis, client)
+                            })
+                            .catch(err => {
+                                console.log(err);
+                            })
                     })
-                        .then(resp => {
-                            const beatmapInfo = resp.data[0]
-
-                            calculate(beatmapInfo, score, userInfo, rankingEmojis, client)
-                        })
-                        .catch(err => {
-                            console.log(err);
-                            m.channel.send("Error! More info: " + err);
-                        })
-                })
-                .catch(err => {
-                    console.log(err);
-                    m.channel.send("Error! More info: " + err);
-                })
-            //get beatmap
-            //score
-        }
+                    .catch(err => {
+                        console.log(err)
+                    })
+            })
+            .catch(err => {
+                console.log(err)
+            })
     }
 }
 
 const calculate = (beatmap, performance, userInfo, rankingEmojis, client) => {
 
-    let cleanBeatmap;
+    let cleanBeatmap
 
-    axios.get('osu/' + beatmap.beatmap_id, {
-            params: {
-                credentials: "include"
-            }
-        })
+    axios.get('osu/' + beatmap.beatmap_id, { params: {
+            credentials: "include"
+        }
+    })
         .then(resp => {
             return resp.data
         })
         .then(raw => new ojsama.parser().feed(raw))
-        .then(({
-            map
-        }) => {
-            cleanBeatmap = map;
-            let usedMods = ojsama.modbits.from_string(performance.enabled_mods);
+        .then(({ map }) => {
+            cleanBeatmap = map
+
+            console.log(performance);
+
+            let usedMods = ojsama.modbits.from_string(performance.enabled_mods)
 
             let stars = new ojsama.diff().calc({
                 map: cleanBeatmap,
                 mods: usedMods
-            });
-            let combo = parseInt(performance.maxcombo);
-            let nmiss = parseInt(performance.countmiss);
-            let acc_percent = parseFloat(performance.accuracy);
+            })
+
+            let combo = parseInt(performance.maxcombo)
+            let nmiss = parseInt(performance.countmiss)
+            let acc_percent = parseFloat(performance.accuracy)
 
             let recentPP = ojsama.ppv2({
                 stars: stars,
@@ -99,48 +126,46 @@ const calculate = (beatmap, performance, userInfo, rankingEmojis, client) => {
                 stars: stars
             })
 
-            formattedStars = stars.toString().split(" ")[0];
-            formattedPerformancePP = recentPP.toString().split(" ")[0];
-            formattedMaxPP = maxPP.toString().split(" ")[0];
+            formattedStars = stars.toString().split(" ")[0]
+            formattedPerformancePP = recentPP.toString().split(" ")[0]
+            formattedMaxPP = maxPP.toString().split(" ")[0]
 
-            generateTrackScore(userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, client);
+            generateTrackScore(userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, client)
         })
         .catch(err => {
-            console.log(err);
-            m.channel.send("There was an error! More info: " + err);
+            console.log(err)
         })
-};
+}
 
 const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis, client) => {
-
-    const functions = require("./exportFunctions.js");
     dbCall.get('track.json')
         .then(resp => {
-            const trackedUsers = resp.data;
+            const trackedUsers = resp.data
 
             if (score.rank.length === 1) {
-                score.rank += "_";
-            };
+                score.rank += "_"
+            }
 
-            let rankImage;
+            let rankImage
 
-            rankImage = rankingEmojis.find("name", score.rank);
-            let colour;
+            rankImage = rankingEmojis.find("name", score.rank)
+            let colour
 
             switch (score.playNumber) {
                 case 1:
-                    colour = "#FFD700";
-                    break;
+                    colour = "#FFD700"
+                    break
                 case 2:
-                    colour = "#FFFFFF";
-                    break;
+                    colour = "#FFFFFF"
+                    break
                 case 3:
-                    colour = "#cd7f32";
-                    break;
+                    colour = "#cd7f32"
+                    break
                 default:
-                    colour = "#c0c0c0";
-                    break;
+                    colour = "#c0c0c0"
+                    break
             }
+
             let embed = new Discord.RichEmbed()
                 .setColor(colour)
                 .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
@@ -158,12 +183,12 @@ const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, 
                     const channelToSend = client.find('id', trackedUsers[entry].channel)
                     channelToSend.send({
                         embed: embed
-                    });
+                    })
 
-                    const guildID = client.get(trackedUsers[entry].channel).guild;
+                    const guildID = client.get(trackedUsers[entry].channel).guild
 
-                    functions.storeLastBeatmap(guildID, prevBeatmap, score);
+                    functions.storeLastBeatmap(guildID, prevBeatmap, score)
                 }
             }
         })
-};
+}

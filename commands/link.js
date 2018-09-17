@@ -55,7 +55,7 @@ module.exports = {
 
                         //If not post
                         if (!existingLink) {
-                            dbCall.put('linkedUsers.json', user)
+                            dbCall.post('linkedUsers.json', user)
                                 .then(resp => {
                                     m.reply(`you have been successfully linked to ${formattedUserName}`);
                                     console.log("[POST SUCCESS]");

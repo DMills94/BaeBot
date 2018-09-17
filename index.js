@@ -36,7 +36,7 @@ client.on("ready", () => {
     const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis;
 
     updateTop100(rankingEmojis);
-    setInterval(updateTop100, 300000)
+    setInterval(function() { updateTop100(rankingEmojis) }, 150000)
 });
 
 client.on("error", err => {
@@ -188,10 +188,18 @@ async function updateTop100(rankingEmojis) {
             obj.date === object.date
         ))
     )
+    currentTime = new Date();
+    date = currentTime.toDateString().slice(4,10);
+    time = currentTime.toTimeString().slice(0,9);
     if (newScores.length > 0) {
-        console.log("New scores detected...posting");
-        client.commands.get("postnew").execute(newScores, rankingEmojis, client.channels);
-    };
+        console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`);
+        for (let score in newScores) {
+            client.commands.get("postnew").execute(newScores[score], rankingEmojis, client.channels);
+        }
+    }
+    else {
+        console.log(`[TRACKING] No new scores detected: ${date} at ${time}`);
+    }
 }
 
 //Start Bot
