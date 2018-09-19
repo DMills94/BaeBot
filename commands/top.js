@@ -7,11 +7,11 @@ const functions = require("./exportFunctions.js");
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
-    async execute(m, args, rankingEmojis, plays, top5) {
+    async execute(m, args, db, rankingEmojis, plays, top5) {
         let username;
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
+            username = await functions.lookupUser(m.author.id, db)
                 .catch(err => {
                     m.reply("you do not have a linked account! Try ` `link [username]`");
                     return;
@@ -22,7 +22,7 @@ module.exports = {
             if (discordId.startsWith("!")) {
                 discordId = discordId.slice(1);
             }
-            username = await functions.lookupUser(discordId)
+            username = await functions.lookupUser(discordId, db)
                 .catch(err => {
                     m.reply("they do not have a linked account so I cannot find their top plays :(");
                     return;
@@ -92,7 +92,7 @@ module.exports = {
                     mapNum = 0;
 
                     //Third Call x5 (5 beat maps)
-                    getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis);
+                    getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis, db);
 
                 }).catch(err => {
                     console.log(err)
@@ -106,7 +106,7 @@ module.exports = {
     }
 };
 
-const getBeatmapInfo = (index, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis) => {
+const getBeatmapInfo = (index, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis, db) => {
     axios.get("api/get_beatmaps", {params: {
             k: osuApiKey,
             b: scores[index].beatmap_id
@@ -117,14 +117,14 @@ const getBeatmapInfo = (index, m, osuUser, scores, beatmapList, top5, plays, ran
         beatmapInfo.orderKey = mapNum + 1;
         beatmapList.push(beatmapInfo);
 
-        calculate(beatmapInfo, scores[index], osuUser, m, top5, plays, rankingEmojis);
+        calculate(beatmapInfo, scores[index], osuUser, m, top5, plays, rankingEmojis, db);
     }).catch(err => {
         console.log(err)
         m.channel.send("Error! More info: " + err);
     })
 }
 
-const calculate = (beatmap, performance, userInfo, m, top5, plays, rankingEmojis) => {
+const calculate = (beatmap, performance, userInfo, m, top5, plays, rankingEmojis, db) => {
 
     let cleanBeatmap;
 
@@ -164,10 +164,10 @@ const calculate = (beatmap, performance, userInfo, m, top5, plays, rankingEmojis
         scores[mapNum].stars = formattedStars;
 
         if (beatmapList.length == scores.length) {
-            generateTop(m, osuUser, scores, beatmapList, top5, plays, rankingEmojis)
+            generateTop(m, osuUser, scores, beatmapList, top5, plays, rankingEmojis, db)
         } else {
             mapNum++
-            getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis);
+            getBeatmapInfo(mapNum, m, osuUser, scores, beatmapList, top5, plays, rankingEmojis, db);
         }
     })
     .catch(err => {
@@ -178,7 +178,7 @@ const calculate = (beatmap, performance, userInfo, m, top5, plays, rankingEmojis
 
 };
 
-const generateTop = (m, osuUser, scores, maps, top5, plays, rankingEmojis) => {
+const generateTop = (m, osuUser, scores, maps, top5, plays, rankingEmojis, db) => {
     let embed = new Discord.RichEmbed();
     if (top5) {
         embed
@@ -218,7 +218,7 @@ const generateTop = (m, osuUser, scores, maps, top5, plays, rankingEmojis) => {
             .setFooter("Message sent: ")
             .setTimestamp()
 
-        functions.storeLastBeatmap(m.guild, maps[0], scores[0]);
+        functions.storeLastBeatmap(m.guild, maps[0], scores[0], db);
     }
 
     //Send Embed to Channel

@@ -1,17 +1,17 @@
 const axios = require('axios');
 const Discord = require('discord.js')
-const {osuApiKey} = require('../config.json');
+const { osuApiKey } = require('../config.json');
 const ojsama = require('ojsama');
 const functions = require('./exportFunctions.js');
 
 module.exports = {
     name: "recent",
     description: "Returns a user's most recent play",
-    async execute(m, args, rankingEmojis) {
+    async execute(m, args, db, rankingEmojis) {
         let username;
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
+            username = await functions.lookupUser(m.author.id, db)
                 .catch(err => {
                     m.reply("you do not have a linked account! Try ` `link [username]`");
                     return;
@@ -22,7 +22,7 @@ module.exports = {
             if (discordId.startsWith("!")) {
                 discordId = discordId.slice(1);
             }
-            username = await functions.lookupUser(discordId)
+            username = await functions.lookupUser(discordId, db)
                 .catch(err => {
                     m.reply("they do not have a linked account so I cannot find their top plays :(");
                     return;
@@ -108,14 +108,13 @@ module.exports = {
 
                                             recent.enabled_mods = functions.determineMods(recent);
 
-                                            userAcc = "";
                                             recent.accuracy = functions.determineAcc(recent);
 
                                             let playDate = Date.parse(recent.date); //UTC + 0
                                             let currentDate = Date.now() + 25200000; //UTC + 7
                                             recent.date = functions.timeDifference(currentDate, playDate);
 
-                                            calculate(beatmapInfo, recent, userInfo, m, rankingEmojis)
+                                            calculate(beatmapInfo, recent, userInfo, m, rankingEmojis, db)
                                         })
                                         .catch(err => {
                                         console.log(err)
@@ -139,7 +138,7 @@ module.exports = {
     }
 };
 
-const calculate = (beatmap, performance, userInfo, m, rankingEmojis) => {
+const calculate = (beatmap, performance, userInfo, m, rankingEmojis, db) => {
 
     let cleanBeatmap;
 
@@ -175,7 +174,7 @@ const calculate = (beatmap, performance, userInfo, m, rankingEmojis) => {
         formattedPerformancePP = recentPP.toString().split(" ")[0];
         formattedMaxPP = maxPP.toString().split(" ")[0];
 
-        generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis);
+        generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, db);
     })
     .catch(err => {
         console.log(err);
@@ -183,7 +182,7 @@ const calculate = (beatmap, performance, userInfo, m, rankingEmojis) => {
     })
 };
 
-const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars, rankingEmojis) => {
+const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars, rankingEmojis, db) => {
 
     console.log(recent);
 
@@ -228,5 +227,5 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
     //Send Embed to Channel
     m.channel.send({embed: embed});
 
-    functions.storeLastBeatmap(m.guild, beatmapInfo, recent);
+    functions.storeLastBeatmap(m.guild, beatmapInfo, recent, db);
 };

@@ -1,17 +1,13 @@
 const axios = require("axios")
 const Discord = require("discord.js")
-const { osuApiKey, dbUrl } = require("../config.json")
+const { osuApiKey } = require("../config.json")
 const ojsama = require("ojsama")
 const functions = require("./exportFunctions.js")
-
-const dbCall = axios.create({
-    baseURL: dbUrl
-})
 
 module.exports = {
     name: "postnew",
     description: "Posts new scores from updating a users top 100",
-    execute(score, rankingEmojis, client) {
+    execute(score, db, rankingEmojis, client) {
 
         //get user
         axios.get('api/get_user', { params: {
@@ -64,17 +60,16 @@ module.exports = {
 
                                 score.enabled_mods = functions.determineMods(score)
 
-                                userAcc = ""
                                 score.accuracy = functions.determineAcc(score)
 
                                 let playDate = Date.parse(score.date)
                                 let currentDate = Date.now() + 25200000
                                 score.date = functions.timeDifference(currentDate, playDate)
 
-                                calculate(beatmapInfo, score, userInfo, rankingEmojis, client)
+                                calculate(beatmapInfo, score, userInfo, rankingEmojis, client, db)
                             })
                             .catch(err => {
-                                console.log(err);
+                                console.log(err)
                             })
                     })
                     .catch(err => {
@@ -87,7 +82,7 @@ module.exports = {
     }
 }
 
-const calculate = (beatmap, performance, userInfo, rankingEmojis, client) => {
+const calculate = (beatmap, performance, userInfo, rankingEmojis, client, db) => {
 
     let cleanBeatmap
 
@@ -101,8 +96,6 @@ const calculate = (beatmap, performance, userInfo, rankingEmojis, client) => {
         .then(raw => new ojsama.parser().feed(raw))
         .then(({ map }) => {
             cleanBeatmap = map
-
-            console.log(performance);
 
             let usedMods = ojsama.modbits.from_string(performance.enabled_mods)
 
@@ -126,11 +119,11 @@ const calculate = (beatmap, performance, userInfo, rankingEmojis, client) => {
                 stars: stars
             })
 
-            formattedStars = stars.toString().split(" ")[0]
-            formattedPerformancePP = recentPP.toString().split(" ")[0]
-            formattedMaxPP = maxPP.toString().split(" ")[0]
+            const formattedStars = stars.toString().split(" ")[0]
+            const formattedPerformancePP = recentPP.toString().split(" ")[0]
+            const formattedMaxPP = maxPP.toString().split(" ")[0]
 
-            generateTrackScore(userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, client)
+            generateTrackScore(userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, client, db)
         })
         .catch(err => {
             console.log("Error in get /osu/beatmap_id")
@@ -138,10 +131,11 @@ const calculate = (beatmap, performance, userInfo, rankingEmojis, client) => {
         })
 }
 
-const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis, client) => {
-    dbCall.get('track.json')
-        .then(resp => {
-            const trackedUsers = resp.data
+const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis, client, db) => {
+    const dbTrack = db.ref('/track/')
+
+    dbTrack.once('value', obj => {
+            const trackedUsers = obj.val()
 
             if (score.rank.length === 1) {
                 score.rank += "_"
@@ -188,7 +182,7 @@ const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, 
 
                     const guildID = client.get(trackedUsers[entry].channel).guild
 
-                    functions.storeLastBeatmap(guildID, prevBeatmap, score)
+                    functions.storeLastBeatmap(guildID, prevBeatmap, score, db)
                 }
             }
         })

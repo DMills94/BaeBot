@@ -1,14 +1,10 @@
 const axios = require('axios');
-const { osuApiKey, dbUrl } = require('../config.json');
-
-const dbCall = axios.create({
-    baseURL: dbUrl
-})
+const { osuApiKey } = require('../config.json');
 
 module.exports = {
     name: "link",
     description: "links a users discord id to an osu name",
-    execute(m, args) {
+    execute(m, args, db) {
 
         const userId = m.author.id;
         const osuIGN = args.join("_");
@@ -28,51 +24,45 @@ module.exports = {
                 }
 
                 let existingLink = false;
-                let linkedDB = [];
                 let formattedUserName = resp.data[0].username;
 
-                //Get current list of registered users
-                dbCall.get('linkedUsers.json')
-                    .then(resp => {
+                const dbLinked = db.ref("/linkedUsers")
 
-                        for (let key in resp.data) {
-                            linkedDB.push({
-                                ...resp.data[key]
-                            })
+                dbLinked.once("value", obj => {
+                    const linkedUsers = obj.val()
+
+                    for (let key in linkedUsers) {
+                        if (userId === linkedUsers[key].discordID) {
+                            existingLink = true
                         }
+                    }
 
-                        //Check if linked already
-                        for (let link in linkedDB) {
-                            if (linkedDB[link].discordID === userId) {
-                                existingLink = true;
-                            }
-                        }
-
+                    if (!existingLink) {
                         const user = {
                             discordID: userId,
                             osuName: formattedUserName
-                        };
+                        }
 
-                        //If not post
-                        if (!existingLink) {
-                            dbCall.post('linkedUsers.json', user)
-                                .then(resp => {
-                                    m.reply(`you have been successfully linked to ${formattedUserName}`);
-                                    console.log("[POST SUCCESS]");
-                                })
-                                .catch(err => {
-                                    m.reply("there's an error storing this data right now, please try again later!")
-                                    console.log(err);
-                                })
-                        }
-                        else {
-                            m.reply("you have already linked an osu profile to your account! Please use ``unlink` first and try again!")
-                        }
-                    })
-                    .catch(err => {
-                        m.reply("there's an error fetching stored data right now, please try again later!")
-                        console.log(err);
-                    })
+                        dbLinked.push().set(user)
+                            .then(() => {
+                                m.reply(`you have been successfully linked to \`${formattedUserName}\``);
+                                console.log("[POST SUCCESS]");
+                            })
+                            .catch(err => {
+                                m.reply("there's an error fetching stored data right now, please try again later!")
+                                console.log(err)
+                            })
+
+                    }
+                    else {
+                        m.reply("you have already linked an osu profile to your account! Please use ``unlink` first and try again!")
+                    }
+                }, err => {
+                    m.reply("there's an error fetching stored data right now, please try again later!")
+                    console.log(err.code)
+                })
+
+
                 })
         .catch(err => {
             console.log(err);

@@ -1,180 +1,175 @@
-const axios = require('axios');
+const axios = require('axios')
 const Discord = require('discord.js')
-const {
-    osuApiKey,
-    dbUrl
-} = require('../config.json');
-const ojsama = require('ojsama');
-const functions = require('./exportFunctions.js');
-
-const dbCall = axios.create({
-    baseURL: dbUrl
-});
+const {osuApiKey} = require('../config.json')
+const ojsama = require('ojsama')
+const functions = require('./exportFunctions.js')
 
 module.exports = {
     name: "compare",
     description: "Compares the users best play against the last posted beatmap in that guild",
-    async execute(m, args, rankingEmojis) {
-        let username;
-        let compMods = false;
+    async execute(m, args, db, rankingEmojis) {
+        let username
+        let compMods = false
 
         for (let arg in args) {
             if (args[arg].includes("+")) {
-                modsToCompare = args[arg].slice(1);
-                args.splice(arg, 1);
-                compMods = true;
-            };
-        };
+                modsToCompare = args[arg].slice(1)
+                args.splice(arg, 1)
+                compMods = true
+            }
+        }
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
+            username = await functions.lookupUser(m.author.id, db)
                 .catch(err => {
-                    m.reply("you do not have a linked account! Try ` `link [username]`");
-                    return;
+                    m.reply("you do not have a linked account! Try ` `link [username]`")
+                    return
                 })
         }
         else if (args[0].startsWith("<@")) {
-            let discordId = args[0].slice(2, args[0].length - 1);
+            let discordId = args[0].slice(2, args[0].length - 1)
             if (discordId.startsWith("!")) {
-                discordId = discordId.slice(1);
-            };
+                discordId = discordId.slice(1)
+            }
 
-            username = await functions.lookupUser(discordId)
-                .catch(err => {
-                    m.reply("they do not have a linked account so I cannot find their top plays :(");
-                    return;
+            username = await functions.lookupUser(discordId, db)
+                .catch(() => {
+                    m.reply("they do not have a linked account so I cannot find their top plays :(")
+                    return
                 })
         }
         else {
-            username = args.join("_");
-        };
+            username = args.join("_")
+        }
 
-        if (!username) {
-            return;
-        };
+        if (!username)
+            return
+
 
         //Get Beatmap Id
-        let prevBeatmap;
+        let prevBeatmap
 
-        dbCall.get(`lastBeatmap/${m.guild.id}.json`)
-            .then(resp => {
-                prevBeatmap = resp.data;
+        const lastBeatmap = db.ref(`/lastBeatmap/${m.guild.id}`)
 
-                //User information
-                axios.get('api/get_user', {
+        lastBeatmap.once('value', obj => {
+            prevBeatmap = obj.val()
+
+            console.log(prevBeatmap)
+
+            //User information
+            axios.get('api/get_user', {
+                params: {
+                    k: osuApiKey,
+                    u: username
+                }
+            })
+                .then(resp => {
+                    let userInfo = resp.data[0]
+                    if (!userInfo)
+                        return m.channel.send("The username provided doesn't exist! Please try again.")
+
+                    axios.get('api/get_scores', {
                         params: {
                             k: osuApiKey,
-                            u: username
+                            b: prevBeatmap.beatmap.beatmap_id,
+                            u: userInfo.user_id
                         }
                     })
-                    .then(resp => {
-                        let userInfo = resp.data[0];
-                        if (!userInfo) {
-                            return m.channel.send("The username provided doesn't exist! Please try again.")
-                        };
+                        .then(resp => {
+                            if (resp.data.length < 1) {
+                                m.channel.send("Go play the map first, dumb bitch - Belial 2k18")
+                                return
+                            }
 
-                        axios.get('api/get_scores', {
-                                params: {
-                                    k: osuApiKey,
-                                    b: prevBeatmap.beatmap.beatmap_id,
-                                    u: userInfo.user_id
+                            let score
+
+                            if (!compMods || !prevBeatmap.performance) {
+                                score = resp.data[0]
+                            }
+                            else {
+                                let bitNumMods = functions.modsToBitNum(modsToCompare)
+                                if (bitNumMods === "invalid") {
+                                    m.reply("invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `compare +mod/[mods]`")
+                                    return
                                 }
-                            })
-                            .then(resp => {
-                                if (resp.data.length < 1) {
-                                    m.channel.send("Go play the map first, dumb bitch - Belial 2k18");
-                                    return;
-                                };
+                                else if (bitNumMods === "mods") {
+                                    prevBeatmapMods = prevBeatmap.performance.enabled_mods
+                                    if (prevBeatmapMods.startsWith("+")) {
+                                        prevBeatmapMods = prevBeatmapMods.slice(1)
+                                    }
 
-                                let score;
-
-                                if (!compMods || !prevBeatmap.performance) {
-                                    score = resp.data[0];
+                                    bitNumMods = functions.modsToBitNum(prevBeatmapMods)
                                 }
-                                else {
-                                    let bitNumMods = functions.modsToBitNum(modsToCompare);
-                                    if (bitNumMods === "invalid") {
-                                        m.reply("invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `compare +mod/[mods]`");
-                                        return;
+
+                                let scoreFound = false
+
+                                for (let scoreObj in resp.data) {
+                                    if (resp.data[scoreObj].enabled_mods === bitNumMods) {
+                                        score = resp.data[scoreObj]
+                                        scoreFound = true
                                     }
-                                    else if (bitNumMods === "mods") {
-                                        prevBeatmapMods = prevBeatmap.performance.enabled_mods;
-                                        if (prevBeatmapMods.startsWith("+")) {
-                                            prevBeatmapMods = prevBeatmapMods.slice(1);
-                                        };
+                                }
 
-                                        bitNumMods = functions.modsToBitNum(prevBeatmapMods);
-                                    };
+                                if (!scoreFound) {
+                                    return m.reply("sorry, you don't have a play on that map with the mods selected! Sometimes the API deletes very old plays, sorry about that :(")
+                                }
+                            }
 
-                                    let scoreFound = false;
+                            mods = functions.determineMods(score)
+                            score.enabled_mods = mods
 
-                                    for (let scoreObj in resp.data) {
-                                        if (resp.data[scoreObj].enabled_mods === bitNumMods) {
-                                            score = resp.data[scoreObj];
-                                            scoreFound = true;
-                                        };
-                                    };
+                            score.accuracy = functions.determineAcc(score)
 
-                                    if (!scoreFound) {
-                                        return m.reply("sorry, you don't have a play on that map with the mods selected! Sometimes the API deletes very old plays, sorry about that :(");
-                                    }
-                                };
+                            let playDate = Date.parse(score.date) //UTC + 0
+                            let currentDate = Date.now() + 25200000 //UTC + 7
+                            score.date = functions.timeDifference(currentDate, playDate)
 
-                                mods = functions.determineMods(score);
-                                score.enabled_mods = mods;
-
-                                userAcc = "";
-                                score.accuracy = functions.determineAcc(score);
-
-                                let playDate = Date.parse(score.date); //UTC + 0
-                                let currentDate = Date.now() + 25200000; //UTC + 7
-                                score.date = functions.timeDifference(currentDate, playDate);
-
-                                calculate(prevBeatmap.beatmap, score, userInfo, m, rankingEmojis);
-                            })
-                            .catch(err => {
-                                m.channel.send("There was an error getting your score on the map! Sorry about that, try later!");
-                                console.log(err);
-                            })
-                    })
-                    .catch(err => {
-                        m.channel.send("There was an error fetching your user info! Sorry about that, try later!");
-                        console.log(err);
-                    })
-            })
+                            calculate(prevBeatmap.beatmap, score, userInfo, m, rankingEmojis, db)
+                        })
+                        .catch(err => {
+                            m.channel.send("There was an error getting your score on the map! Sorry about that, try later!")
+                            console.log(err)
+                        })
+                })
+                .catch(err => {
+                    m.channel.send("There was an error fetching your user info! Sorry about that, try later!")
+                    console.log(err)
+                })
+        })
             .catch(err => {
-                m.channel.send("There was an error fetching the last beatmap! Sorry about that, try later!");
-                console.log(err);
+                m.channel.send("There was an error fetching the last beatmap! Sorry about that, try later!")
+                console.log(err)
             })
     }
 }
 
-const calculate = (beatmap, performance, userInfo, m,  rankingEmojis) => {
+const calculate = (beatmap, performance, userInfo, m, rankingEmojis, db) => {
 
-    let cleanBeatmap;
+    let cleanBeatmap
 
     axios.get('osu/' + beatmap.beatmap_id, {
-            params: {
-                credentials: "include"
-            }
-        })
+        params: {
+            credentials: "include"
+        }
+    })
         .then(resp => {
             return resp.data
         })
         .then(raw => new ojsama.parser().feed(raw))
         .then(({
-            map
-        }) => {
-            cleanBeatmap = map;
-            let usedMods = ojsama.modbits.from_string(performance.enabled_mods);
+                   map
+               }) => {
+            cleanBeatmap = map
+            let usedMods = ojsama.modbits.from_string(performance.enabled_mods)
 
             let stars = new ojsama.diff().calc({
                 map: cleanBeatmap,
                 mods: usedMods
-            });
-            let combo = parseInt(performance.maxcombo);
-            let nmiss = parseInt(performance.countmiss);
-            let acc_percent = parseFloat(performance.accuracy);
+            })
+
+            let combo = parseInt(performance.maxcombo)
+            let nmiss = parseInt(performance.countmiss)
+            let acc_percent = parseFloat(performance.accuracy)
 
             let recentPP = ojsama.ppv2({
                 stars: stars,
@@ -187,27 +182,27 @@ const calculate = (beatmap, performance, userInfo, m,  rankingEmojis) => {
                 stars: stars
             })
 
-            formattedStars = stars.toString().split(" ")[0];
-            formattedPerformancePP = recentPP.toString().split(" ")[0];
-            formattedMaxPP = maxPP.toString().split(" ")[0];
+            formattedStars = stars.toString().split(" ")[0]
+            formattedPerformancePP = recentPP.toString().split(" ")[0]
+            formattedMaxPP = maxPP.toString().split(" ")[0]
 
-            generateCompare(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis);
+            generateCompare(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, db)
         })
         .catch(err => {
-            console.log(err);
-            m.channel.send("There was an error! More info: " + err);
+            console.log(err)
+            m.channel.send("There was an error! More info: " + err)
         })
-};
+}
 
-const generateCompare = (m, userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis) => {
+const generateCompare = (m, userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis, db) => {
 
     if (score.rank.length === 1) {
-        score.rank += "_";
-    };
+        score.rank += "_"
+    }
 
-    let rankImage;
+    let rankImage
 
-    rankImage = rankingEmojis.find("name", score.rank);
+    rankImage = rankingEmojis.find("name", score.rank)
 
     let embed = new Discord.RichEmbed()
         .setColor("#c0c0c0")
@@ -222,7 +217,5 @@ const generateCompare = (m, userInfo, prevBeatmap, score, performancePP, maxPP, 
     //Send Embed to Channel
     m.channel.send({
         embed: embed
-    });
-
-    functions.storeLastBeatmap(m.guild, prevBeatmap, score);
-};
+    })
+}

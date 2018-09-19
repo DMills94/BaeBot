@@ -11,7 +11,7 @@ module.exports = {
         let username;
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
+            username = await functions.lookupUser(m.author.id, db)
                 .catch(err => {
                     m.reply("you do not have a linked account! Try ` `link [username]`");
                     return;
@@ -22,7 +22,7 @@ module.exports = {
             if (discordId.startsWith("!")) {
                 discordId = discordId.slice(1);
             }
-            username = await functions.lookupUser(discordId)
+            username = await functions.lookupUser(discordId, db)
                 .catch(err => {
                     m.reply("they do not have a linked account so I cannot find their top plays :(");
                     return;

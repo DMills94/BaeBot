@@ -1,234 +1,234 @@
-const axios = require('axios');
-const { osuApiKey, dbUrl } = require('../config.json');
+const axios = require('axios')
+const {osuApiKey} = require('../config.json')
 
-const dbCall = axios.create({baseURL: dbUrl});
+let customExports = module.exports = {}
 
-let customExports = module.exports = {};
-
-customExports.lookupUser = (authorID) => {
+customExports.lookupUser = (authorID, db) => {
     return new Promise((resolve, reject) => {
-    let existingLink = false;
-    let username;
-    let linkedDB = [];
+        const linkDB = db.ref('/linkedUsers/')
+        let username
+        let existingLink = false
 
-    dbCall.get('linkedUsers.json')
-        .then(resp => {
-            const linkedUsers = resp.data;
+        linkDB.once('value', obj => {
+            const linkedUsers = obj.val()
 
-            for (let key in linkedUsers) {
-                linkedDB.push({
-                    ...resp.data[key],
-                    id: key
-                })
-            }
-
-            for (let link in linkedDB) {
-                if (linkedDB[link].discordID === authorID) {
-                    existingLink = true;
-                    username = linkedDB[link].osuName;
+            for (let user in linkedUsers) {
+                if (linkedUsers[user].discordID === authorID) {
+                    existingLink = true
+                    username = linkedUsers[user].osuName
                 }
             }
 
             if (existingLink) {
-                resolve(username);
+                resolve(username)
             }
             else {
-                reject();
+                reject()
             }
         })
-        .catch(err => console.log(err))
+            .catch(() => {
+                console.log("There was an error checking for a linked account in the database!")
+            })
+
+    })
+}
+
+customExports.storeLastBeatmap = (guild, beatmap, performance, db) => {
+    let beatmapObj = {
+        beatmap: beatmap,
+        performance: performance
+    }
+
+    const lastBeatmap = db.ref(`/lastBeatmap/${guild.id}`)
+    lastBeatmap.update(beatmapObj)
+        .catch(() => {
+            console.log("There was an error storing beatmap ID, please try again later.")
         })
 }
 
-customExports.storeLastBeatmap = (guild, beatmap, performance) => {
-    let beatmapObj = {
-        beatmap,
-        performance
-    };
-
-    dbCall.put(`lastBeatmap/${guild.id}.json`, beatmapObj)
-            .catch(err => {
-                console.log("There was an error storing beatmap ID, please try again later.");
-                console.log(err);
-            });
-};
-
-customExports.getTrackedUsersTop100 = () => {
-    return new Promise((resolve, reject) => {
-        let isError = false;
-        let changedScoresArray = [];
-
+customExports.getTrackedUsersTop100 = db => {
+    return new Promise((resolve) => {
+        let isError = false
+        let changedScoresArray = []
 
         //Get tracked users
-        dbCall.get(`track.json`)
-            .then(resp => {
-                const trackedUsers = resp.data;
+        const dbTrack = db.ref('/track/')
 
-                //Get users top 100
-                let counter = 0
+        dbTrack.once('value', obj => {
+            const trackedGuilds = obj.val()
+
+
+            //Get users top 100
+            let counter = 0
+            for (let guild in trackedGuilds) {
+                const trackedUsers = trackedGuilds[guild]
                 for (let user in trackedUsers) {
-                    axios.get("api/get_user_best", { params: {
+                    axios.get("api/get_user_best", {
+                        params: {
                             k: osuApiKey,
                             u: trackedUsers[user].osuName,
                             limit: 100
                         }
                     })
-                    .then(resp => {
-                        const usersTop100 = resp.data
-                        if (usersTop100.length < 100) {
-                            console.log("Didn't return 100 top scores.")
-                            return
-                        }
+                        .then(resp => {
+                            const usersTop100 = resp.data
 
-                        //Check if new no top 100 data, and if so, add it to the DB
-                        if (trackedUsers[user].top100 === undefined) {
-                            dbCall.put(`track/${user}/top100.json`, usersTop100)
-                                .catch(err => {
-                                    isError = true
-                                    console.log(err)
-                                })
-                        }
-                        else {
-                            //See if each of the new top 100 scores exist in the db top 100 scores
-                            for (var i = 0; i < 100; i++) {
-                                const scoreMatch = checkNewScores(usersTop100[i], trackedUsers[user].top100)
-
-                                if (!scoreMatch) {
-                                    changedScoresArray.push(usersTop100[i])
-                                }
+                            if (usersTop100.length < 100) {
+                                console.log("Didn't return 100 top scores.")
+                                return
                             }
 
-                            //Update database
-                            dbCall.put(`track/${user}/top100.json`, usersTop100)
-                                .catch(err => {
-                                    isError = true
-                                    console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
-                                })
-                        }
-                        counter++
-                        if (counter === Object.keys(trackedUsers).length) {
-                            resolve(changedScoresArray)
-                        }
-                    })
-                    .catch(err => {
-                        isError = true
-                    })
+                            //Check if new no top 100 data, and if so, add it to the DB
+                            if (trackedUsers[user].top100 === undefined) {
+                                dbCall.put(`track/${user}/top100.json`, usersTop100)
+                                    .catch(err => {
+                                        isError = true
+                                        console.log(err)
+                                    })
+                            }
+                            else {
+                                //See if each of the new top 100 scores exist in the db top 100 scores
+                                for (let score in usersTop100) {
+                                    const scoreMatch = checkNewScores(usersTop100[score], trackedUsers[user].top100)
+
+                                    if (!scoreMatch) {
+                                        changedScoresArray.push(usersTop100[score])
+                                    }
+                                }
+
+                                //Update database
+                                dbTrack.child(`/${guild}/${user}/top100`).set(usersTop100)
+                                    .catch(() => {
+                                        isError = true
+                                        console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
+                                    })
+                            }
+                            counter++
+                            if (counter === Object.keys(trackedUsers).length) {
+                                resolve(changedScoresArray)
+                            }
+                        })
+                        .catch(() => {
+                            isError = true
+                        })
                 }
-            })
+            }
+        })
 
         if (isError) {
             console.log("There was an error getting Users top 100, please try again.")
             return
         }
     })
-};
+}
 
 const checkNewScores = (score, database) => {
     let scoreMatch
 
     for (let entry in database) {
-        scoreMatch = true;
+        scoreMatch = true
         const aProps = Object.getOwnPropertyNames(score)
         const bProps = Object.getOwnPropertyNames(database[entry])
 
         if (aProps.length !== bProps.length) {
-            scoreMatch = false;
+            scoreMatch = false
         }
 
         for (let prop in aProps) {
             const propName = aProps[prop]
 
             if (score[propName] !== database[entry][propName]) {
-                scoreMatch = false;
+                scoreMatch = false
             }
         }
 
         if (scoreMatch) {
-            break;
+            break
         }
     }
 
-    return scoreMatch;
+    return scoreMatch
 }
 
-customExports.determineMods = (score) => {
+customExports.determineMods = score => {
     let mods = ""
     if (score.enabled_mods === "0") {
-        return mods = "";
+        return mods = ""
     }
     else {
-        for (i = 0; i < modnames.length; i++) {
-            if (score.enabled_mods & modnames[i].val) {
-                mods += modnames[i].short;
+        for (let mod in modnames) {
+            if (score.enabled_mods & modnames[mod].val) {
+                mods += modnames[mod].short
             }
-        };
+        }
+
         if (mods.includes("NC")) {
-            mods = mods.replace("DT", "");
-        };
-        return `+${mods}`;
-    };
-};
+            mods = mods.replace("DT", "")
+        }
+
+        return `+${mods}`
+    }
+}
 
 customExports.modsToBitNum = mods => {
-    let bitNumValue = 0;
-    mods = mods.toLowerCase();
+    let bitNumValue = 0
+    mods = mods.toLowerCase()
     if (mods === "mods") {
-        return "mods";
+        return "mods"
     }
     else if (mods === "nomod" || mods === "") {
-        return 0;
+        return 0
     }
     else {
-        const modsSplit = mods.match(/[\s\S]{1,2}/g);
+        const modsSplit = mods.match(/[\s\S]{1,2}/g)
         for (let mod in modsSplit) {
             for (let obj in modnames) {
                 if (!["hd", "hr", "dt", "nc", "so", "nf", "fl", "ht", "ez"].includes(modsSplit[mod])) {
                     return "invalid"
-                };
+                }
 
                 if (modsSplit[mod] === modnames[obj].short.toLowerCase()) {
-                    bitNumValue += modnames[obj].val;
-                    break;
-                };
-            };
-        };
-    };
+                    bitNumValue += modnames[obj].val
+                    break
+                }
+            }
+        }
+    }
 
-    return `${bitNumValue}`;
+    return `${bitNumValue}`
 }
 
 customExports.determineAcc = score => {
-    userAcc = (parseInt(score.count300) * 300 + parseInt(score.count100) * 100 + parseInt(score.count50) * 50) / ((parseInt(score.count300) + parseInt(score.count100) + parseInt(score.count50) + parseInt(score.countmiss)) * 300) * 100;
-    return userAcc.toFixed(2).toString();
-};
+    const userAcc = (parseInt(score.count300) * 300 + parseInt(score.count100) * 100 + parseInt(score.count50) * 50) / ((parseInt(score.count300) + parseInt(score.count100) + parseInt(score.count50) + parseInt(score.countmiss)) * 300) * 100
+    return userAcc.toFixed(2).toString()
+}
 
 customExports.timeDifference = (current, previous) => {
-    const msPerMinute = 60 * 1000; //60,000
-    const msPerHour = msPerMinute * 60; //3,600,000
-    const msPerDay = msPerHour * 24; //86,400,000
-    const msPerYear = msPerDay * 365;
+    const msPerMinute = 60 * 1000 //60,000
+    const msPerHour = msPerMinute * 60 //3,600,000
+    const msPerDay = msPerHour * 24 //86,400,000
+    const msPerYear = msPerDay * 365
 
-    let elapsed = current - previous;
-    let time;
+    let elapsed = current - previous
+    let time
 
     if (elapsed < msPerMinute) {
-        time = Math.round(elapsed / 1000);
-        return `${time} ${time > 1 ? "seconds ago" : "second ago"}`;
+        time = Math.round(elapsed / 1000)
+        return `${time} ${time > 1 ? "seconds ago" : "second ago"}`
     } else if (elapsed < msPerHour) {
-        time = Math.round(elapsed / msPerMinute);
-        return `${time} ${time > 1 ?" minutes ago" : "minute ago"}`;
+        time = Math.round(elapsed / msPerMinute)
+        return `${time} ${time > 1 ? " minutes ago" : "minute ago"}`
     } else if (elapsed < msPerDay) {
-        time = Math.round(elapsed / msPerHour);
-        return `${time} ${time > 1 ? "hours ago" : "hour ago"}`;
+        time = Math.round(elapsed / msPerHour)
+        return `${time} ${time > 1 ? "hours ago" : "hour ago"}`
     } else if (elapsed < msPerYear) {
-        time = Math.round(elapsed / msPerDay);
-        return `${time} ${time > 1 ? "days ago" : "day ago"}`;
+        time = Math.round(elapsed / msPerDay)
+        return `${time} ${time > 1 ? "days ago" : "day ago"}`
     } else {
-        time = Math.round(elapsed / msPerYear);
-        return `${time} ${time > 1 ? "years ago" : "year ago"}`;
+        time = Math.round(elapsed / msPerYear)
+        return `${time} ${time > 1 ? "years ago" : "year ago"}`
     }
-};
-
+}
 
 
 let modnames = [
@@ -345,4 +345,4 @@ let modnames = [
         name: "Key2",
         short: "2K"
     }
-];
+]
