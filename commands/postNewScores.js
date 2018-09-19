@@ -67,7 +67,7 @@ module.exports = {
                                 userAcc = ""
                                 score.accuracy = functions.determineAcc(score)
 
-                                let playDate = Date.parse(score.date) + 28800000
+                                let playDate = Date.parse(score.date)
                                 let currentDate = Date.now() + 25200000
                                 score.date = functions.timeDifference(currentDate, playDate)
 
@@ -133,7 +133,8 @@ const calculate = (beatmap, performance, userInfo, rankingEmojis, client) => {
             generateTrackScore(userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, client)
         })
         .catch(err => {
-            console.log(err)
+            console.log("Error in get /osu/beatmap_id")
+            return
         })
 }
 

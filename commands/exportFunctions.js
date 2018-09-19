@@ -75,11 +75,16 @@ customExports.getTrackedUsersTop100 = () => {
                     })
                     .then(resp => {
                         const usersTop100 = resp.data
+                        if (usersTop100.length < 100) {
+                            console.log("Didn't return 100 top scores.")
+                            return
+                        }
 
                         //Check if new no top 100 data, and if so, add it to the DB
                         if (trackedUsers[user].top100 === undefined) {
                             dbCall.put(`track/${user}/top100.json`, usersTop100)
                                 .catch(err => {
+                                    isError = true
                                     console.log(err)
                                 })
                         }
@@ -89,7 +94,6 @@ customExports.getTrackedUsersTop100 = () => {
                                 const scoreMatch = checkNewScores(usersTop100[i], trackedUsers[user].top100)
 
                                 if (!scoreMatch) {
-                                    console.log(usersTop100[i])
                                     changedScoresArray.push(usersTop100[i])
                                 }
                             }
@@ -97,6 +101,7 @@ customExports.getTrackedUsersTop100 = () => {
                             //Update database
                             dbCall.put(`track/${user}/top100.json`, usersTop100)
                                 .catch(err => {
+                                    isError = true
                                     console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
                                 })
                         }
@@ -113,6 +118,7 @@ customExports.getTrackedUsersTop100 = () => {
 
         if (isError) {
             console.log("There was an error getting Users top 100, please try again.")
+            return
         }
     })
 };
