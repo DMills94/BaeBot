@@ -54,8 +54,6 @@ module.exports = {
         lastBeatmap.once('value', obj => {
             prevBeatmap = obj.val()
 
-            console.log(prevBeatmap)
-
             //User information
             axios.get('api/get_user', {
                 params: {
@@ -147,7 +145,7 @@ const calculate = (beatmap, performance, userInfo, m, rankingEmojis, db) => {
 
     let cleanBeatmap
 
-    axios.get('osu/' + beatmap.beatmap_id, {
+    axios.get(`osu/${beatmap.beatmap_id}`, {
         params: {
             credentials: "include"
         }

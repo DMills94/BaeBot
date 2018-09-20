@@ -64,6 +64,11 @@ module.exports = {
 
                                 let playDate = Date.parse(score.date)
                                 let currentDate = Date.now() + 25200000
+
+                                if (currentDate - playDate > 7200000) {
+                                    return console.log("Play from longer than 2 hours ago, aborting.")
+                                }
+
                                 score.date = functions.timeDifference(currentDate, playDate)
 
                                 calculate(beatmapInfo, score, userInfo, rankingEmojis, client, db)
@@ -86,7 +91,7 @@ const calculate = (beatmap, performance, userInfo, rankingEmojis, client, db) =>
 
     let cleanBeatmap
 
-    axios.get('osu/' + beatmap.beatmap_id, { params: {
+    axios.get(`osu/${beatmap.beatmap_id}`, { params: {
             credentials: "include"
         }
     })
@@ -103,7 +108,6 @@ const calculate = (beatmap, performance, userInfo, rankingEmojis, client, db) =>
                 map: cleanBeatmap,
                 mods: usedMods
             })
-
             let combo = parseInt(performance.maxcombo)
             let nmiss = parseInt(performance.countmiss)
             let acc_percent = parseFloat(performance.accuracy)
@@ -127,6 +131,7 @@ const calculate = (beatmap, performance, userInfo, rankingEmojis, client, db) =>
         })
         .catch(err => {
             console.log("Error in get /osu/beatmap_id")
+            console.log(err)
             return
         })
 }
@@ -135,7 +140,7 @@ const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, 
     const dbTrack = db.ref('/track/')
 
     dbTrack.once('value', obj => {
-            const trackedUsers = obj.val()
+            const trackedGuilds = obj.val()
 
             if (score.rank.length === 1) {
                 score.rank += "_"
@@ -173,16 +178,19 @@ const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, 
 
             //Send Embed to Channel where user is tracked
 
-            for (let entry in trackedUsers) {
-                if (userInfo.username === trackedUsers[entry].osuName) {
-                    const channelToSend = client.find('id', trackedUsers[entry].channel)
-                    channelToSend.send({
-                        embed: embed
-                    })
+            for (let guild in trackedGuilds) {
+                const trackedUsers = trackedGuilds[guild]
+                for (let entry in trackedUsers) {
+                    if (userInfo.username === trackedUsers[entry].osuName) {
+                        const channelToSend = client.find('id', trackedUsers[entry].channel)
+                        channelToSend.send({
+                            embed: embed
+                        })
 
-                    const guildID = client.get(trackedUsers[entry].channel).guild
+                        const guildID = client.get(trackedUsers[entry].channel).guild
 
-                    functions.storeLastBeatmap(guildID, prevBeatmap, score, db)
+                        functions.storeLastBeatmap(guildID, prevBeatmap, score, db)
+                    }
                 }
             }
         })

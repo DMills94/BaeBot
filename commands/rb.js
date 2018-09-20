@@ -1,37 +1,37 @@
-const axios = require("axios");
+const axios = require("axios")
 const Discord = require("discord.js")
-const { osuApiKey } = require("../config.json");
-const ojsama = require("ojsama");
-const functions = require("./exportFunctions.js");
+const { osuApiKey } = require("../config.json")
+const ojsama = require("ojsama")
+const functions = require("./exportFunctions.js")
 
 module.exports = {
     name: "rb",
     description: "Displays users recent best (default: most recent)",
-    async execute(m, args, rankingEmojis, rbNum) {
-        let username;
+    async execute(m, args, db, rankingEmojis, rbNum) {
+        let username
 
         if (args.length === 0) {
             username = await functions.lookupUser(m.author.id, db)
                 .catch(err => {
-                    m.reply("you do not have a linked account! Try ` `link [username]`");
-                    return;
+                    m.reply("you do not have a linked account! Try ` `link [username]`")
+                    return
                 })
         } else if (args[0].startsWith("<@")) {
-            let discordId = args[0].slice(2, args[0].length - 1);
+            let discordId = args[0].slice(2, args[0].length - 1)
             if (discordId.startsWith("!")) {
-                discordId = discordId.slice(1);
+                discordId = discordId.slice(1)
             }
             username = await functions.lookupUser(discordId, db)
                 .catch(err => {
-                    m.reply("they do not have a linked account so I cannot find their top plays :(");
-                    return;
+                    m.reply("they do not have a linked account so I cannot find their top plays :(")
+                    return
                 })
         } else {
-            username = args.join("_");
-        };
+            username = args.join("_")
+        }
 
         if (!username) {
-            return;
+            return
         }
 
         //get users top 100
@@ -43,28 +43,26 @@ module.exports = {
                 }
             })
             .then(resp => {
-                const unsortedTopScores = resp.data;
+                const unsortedTopScores = resp.data
 
                 for (let score in unsortedTopScores) {
-                    unsortedTopScores[score].playNumber = parseInt(score) + 1;
-                    unsortedTopScores[score].date = Date.parse(unsortedTopScores[score].date);
-                };
+                    unsortedTopScores[score].playNumber = parseInt(score) + 1
+                    unsortedTopScores[score].date = Date.parse(unsortedTopScores[score].date)
+                }
 
                 const topScores = unsortedTopScores.sort((a, b) => {
-                    return b.date - a.date;
-                });
+                    return b.date - a.date
+                })
 
-                usersScore = topScores[rbNum - 1];
+                usersScore = topScores[rbNum - 1]
 
-                mods = functions.determineMods(usersScore);
-                usersScore.enabled_mods = mods;
+                usersScore.enabled_mods = functions.determineMods(usersScore)
 
-                userAcc = "";
-                usersScore.accuracy = functions.determineAcc(usersScore);
+                usersScore.accuracy = functions.determineAcc(usersScore)
 
                 let playDate = usersScore.date
                 let currentDate = Date.now() + 25200000 //UTC + 8
-                usersScore.date = functions.timeDifference(currentDate, playDate);
+                usersScore.date = functions.timeDifference(currentDate, playDate)
 
                 axios.get("api/get_user", {
                         params: {
@@ -73,10 +71,10 @@ module.exports = {
                         }
                     })
                     .then(resp => {
-                        const userInfo = resp.data[0];
+                        const userInfo = resp.data[0]
                         if (!userInfo) {
                             return m.channel.send("The username provided doesn't exist! Please try again.")
-                        };
+                        }
 
                         axios.get("api/get_beatmaps", {
                                 params: {
@@ -85,32 +83,32 @@ module.exports = {
                                 }
                             })
                             .then(resp => {
-                                const beatmapInfo = resp.data[0];
+                                const beatmapInfo = resp.data[0]
 
-                                calculate(beatmapInfo, usersScore, userInfo, m, rankingEmojis)
+                                calculate(beatmapInfo, usersScore, userInfo, m, rankingEmojis, db)
                             })
                             .catch(err => {
-                                console.log(err);
-                                m.channel.send("Error! More info: " + err);
+                                console.log(err)
+                                m.channel.send("Error! More info: " + err)
                             })
                     })
                     .catch(err => {
-                        console.log(err);
-                        m.channel.send("Error! More info: " + err);
+                        console.log(err)
+                        m.channel.send("Error! More info: " + err)
                     })
             })
             .catch(err => {
-                console.log(err);
-                m.channel.send("Error! More info: " + err);
+                console.log(err)
+                m.channel.send("Error! More info: " + err)
             })
     }
-};
+}
 
-const calculate = (beatmap, performance, userInfo, m, rankingEmojis) => {
+const calculate = (beatmap, performance, userInfo, m, rankingEmojis, db) => {
 
-    let cleanBeatmap;
+    let cleanBeatmap
 
-    axios.get('osu/' + beatmap.beatmap_id, {
+    axios.get(`osu/${beatmap.beatmap_id}`, {
             params: {
                 credentials: "include"
             }
@@ -122,16 +120,16 @@ const calculate = (beatmap, performance, userInfo, m, rankingEmojis) => {
         .then(({
             map
         }) => {
-            cleanBeatmap = map;
-            let usedMods = ojsama.modbits.from_string(performance.enabled_mods);
+            cleanBeatmap = map
+            let usedMods = ojsama.modbits.from_string(performance.enabled_mods)
 
             let stars = new ojsama.diff().calc({
                 map: cleanBeatmap,
                 mods: usedMods
-            });
-            let combo = parseInt(performance.maxcombo);
-            let nmiss = parseInt(performance.countmiss);
-            let acc_percent = parseFloat(performance.accuracy);
+            })
+            let combo = parseInt(performance.maxcombo)
+            let nmiss = parseInt(performance.countmiss)
+            let acc_percent = parseFloat(performance.accuracy)
 
             let recentPP = ojsama.ppv2({
                 stars: stars,
@@ -144,42 +142,42 @@ const calculate = (beatmap, performance, userInfo, m, rankingEmojis) => {
                 stars: stars
             })
 
-            formattedStars = stars.toString().split(" ")[0];
-            formattedPerformancePP = recentPP.toString().split(" ")[0];
-            formattedMaxPP = maxPP.toString().split(" ")[0];
+            formattedStars = stars.toString().split(" ")[0]
+            formattedPerformancePP = recentPP.toString().split(" ")[0]
+            formattedMaxPP = maxPP.toString().split(" ")[0]
 
-            generateRB(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis);
+            generateRB(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, db)
         })
         .catch(err => {
-            console.log(err);
-            m.channel.send("There was an error! More info: " + err);
+            console.log(err)
+            m.channel.send("There was an error! More info: " + err)
         })
-};
+}
 
-const generateRB = (m, userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis) => {
+const generateRB = (m, userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis, db) => {
 
     if (score.rank.length === 1) {
-        score.rank += "_";
-    };
+        score.rank += "_"
+    }
 
-    let rankImage;
+    let rankImage
 
-    rankImage = rankingEmojis.find("name", score.rank);
-    let colour;
+    rankImage = rankingEmojis.find("name", score.rank)
+    let colour
 
     switch (score.playNumber) {
         case 1:
-            colour = "#FFD700";
-            break;
+            colour = "#FFD700"
+            break
         case 2:
-            colour = "#FFFFFF";
-            break;
+            colour = "#FFFFFF"
+            break
         case 3:
-            colour = "#cd7f32";
-            break;
+            colour = "#cd7f32"
+            break
         default:
-            colour = "#c0c0c0";
-            break;
+            colour = "#c0c0c0"
+            break
     }
     let embed = new Discord.RichEmbed()
         .setColor(colour)
@@ -194,7 +192,7 @@ const generateRB = (m, userInfo, prevBeatmap, score, performancePP, maxPP, stars
     //Send Embed to Channel
     m.channel.send({
         embed: embed
-    });
+    })
 
-    functions.storeLastBeatmap(m.guild, prevBeatmap, score);
-};
+    functions.storeLastBeatmap(m.guild, prevBeatmap, score, db)
+}

@@ -1,5 +1,7 @@
 const axios = require('axios')
-const {osuApiKey} = require('../config.json')
+const {
+    osuApiKey
+} = require('../config.json')
 
 let customExports = module.exports = {}
 
@@ -10,22 +12,21 @@ customExports.lookupUser = (authorID, db) => {
         let existingLink = false
 
         linkDB.once('value', obj => {
-            const linkedUsers = obj.val()
+                const linkedUsers = obj.val()
 
-            for (let user in linkedUsers) {
-                if (linkedUsers[user].discordID === authorID) {
-                    existingLink = true
-                    username = linkedUsers[user].osuName
+                for (let user in linkedUsers) {
+                    if (linkedUsers[user].discordID === authorID) {
+                        existingLink = true
+                        username = linkedUsers[user].osuName
+                    }
                 }
-            }
 
-            if (existingLink) {
-                resolve(username)
-            }
-            else {
-                reject()
-            }
-        })
+                if (existingLink) {
+                    resolve(username)
+                } else {
+                    reject()
+                }
+            })
             .catch(() => {
                 console.log("There was an error checking for a linked account in the database!")
             })
@@ -46,10 +47,11 @@ customExports.storeLastBeatmap = (guild, beatmap, performance, db) => {
         })
 }
 
-customExports.getTrackedUsersTop100 = db => {
+customExports.getTrackedUsersTop100 = (db) => {
     return new Promise((resolve) => {
         let isError = false
         let changedScoresArray = []
+        let usersToTrack = 0
 
         //Get tracked users
         const dbTrack = db.ref('/track/')
@@ -57,41 +59,40 @@ customExports.getTrackedUsersTop100 = db => {
         dbTrack.once('value', obj => {
             const trackedGuilds = obj.val()
 
+            for (let id in trackedGuilds) {
+                usersToTrack += Object.keys(trackedGuilds[id]).length
+            }
 
             //Get users top 100
             let counter = 0
             for (let guild in trackedGuilds) {
                 const trackedUsers = trackedGuilds[guild]
                 for (let user in trackedUsers) {
+
                     axios.get("api/get_user_best", {
-                        params: {
-                            k: osuApiKey,
-                            u: trackedUsers[user].osuName,
-                            limit: 100
-                        }
-                    })
+                            params: {
+                                k: osuApiKey,
+                                u: trackedUsers[user].osuName,
+                                limit: 100
+                            }
+                        })
                         .then(resp => {
                             const usersTop100 = resp.data
 
-                            if (usersTop100.length < 100) {
-                                console.log("Didn't return 100 top scores.")
-                                return
-                            }
-
                             //Check if new no top 100 data, and if so, add it to the DB
                             if (trackedUsers[user].top100 === undefined) {
-                                dbCall.put(`track/${user}/top100.json`, usersTop100)
-                                    .catch(err => {
+                                dbTrack.child(`/${guild}/${user}/top100`).set(usersTop100)
+                                    .catch(() => {
                                         isError = true
-                                        console.log(err)
+                                        console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
                                     })
-                            }
-                            else {
+                            } else {
                                 //See if each of the new top 100 scores exist in the db top 100 scores
                                 for (let score in usersTop100) {
                                     const scoreMatch = checkNewScores(usersTop100[score], trackedUsers[user].top100)
 
                                     if (!scoreMatch) {
+                                        console.log(usersTop100[score])
                                         changedScoresArray.push(usersTop100[score])
                                     }
                                 }
@@ -102,10 +103,14 @@ customExports.getTrackedUsersTop100 = db => {
                                         isError = true
                                         console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
                                     })
-                            }
-                            counter++
-                            if (counter === Object.keys(trackedUsers).length) {
-                                resolve(changedScoresArray)
+
+                                counter++
+                                if (counter === usersToTrack) {
+                                    if (changedScoresArray) {
+
+                                    }
+                                    resolve(changedScoresArray)
+                                }
                             }
                         })
                         .catch(() => {
@@ -114,11 +119,6 @@ customExports.getTrackedUsersTop100 = db => {
                 }
             }
         })
-
-        if (isError) {
-            console.log("There was an error getting Users top 100, please try again.")
-            return
-        }
     })
 }
 
@@ -154,8 +154,7 @@ customExports.determineMods = score => {
     let mods = ""
     if (score.enabled_mods === "0") {
         return mods = ""
-    }
-    else {
+    } else {
         for (let mod in modnames) {
             if (score.enabled_mods & modnames[mod].val) {
                 mods += modnames[mod].short
@@ -175,11 +174,9 @@ customExports.modsToBitNum = mods => {
     mods = mods.toLowerCase()
     if (mods === "mods") {
         return "mods"
-    }
-    else if (mods === "nomod" || mods === "") {
+    } else if (mods === "nomod" || mods === "") {
         return 0
-    }
-    else {
+    } else {
         const modsSplit = mods.match(/[\s\S]{1,2}/g)
         for (let mod in modsSplit) {
             for (let obj in modnames) {
@@ -231,118 +228,116 @@ customExports.timeDifference = (current, previous) => {
 }
 
 
-let modnames = [
-    {
-        val: 1,
-        name: "NoFail",
-        short: "NF"
-    }, {
-        val: 2,
-        name: "Easy",
-        short: "EZ"
-    }, {
-        val: 4,
-        name: "TouchDevice",
-        short: "TD"
-    }, {
-        val: 8,
-        name: "Hidden",
-        short: "HD"
-    }, {
-        val: 16,
-        name: "HardRock",
-        short: "HR"
-    }, {
-        val: 32,
-        name: "SuddenDeath",
-        short: "SD"
-    }, {
-        val: 64,
-        name: "DoubleTime",
-        short: "DT"
-    }, {
-        val: 128,
-        name: "Relax",
-        short: "RX"
-    }, {
-        val: 256,
-        name: "HalfTime",
-        short: "HT"
-    }, {
-        val: 512,
-        name: "Nightcore",
-        short: "NC"
-    }, {
-        val: 1024,
-        name: "Flashlight",
-        short: "FL"
-    }, {
-        val: 2048,
-        name: "Autoplay",
-        short: "AT"
-    }, {
-        val: 4096,
-        name: "SpunOut",
-        short: "SO"
-    }, {
-        val: 8192,
-        name: "Relax2",
-        short: "AP"
-    }, {
-        val: 16384,
-        name: "Perfect",
-        short: "PF"
-    }, {
-        val: 32768,
-        name: "Key4",
-        short: "4K"
-    }, {
-        val: 65536,
-        name: "Key5",
-        short: "5K"
-    }, {
-        val: 131072,
-        name: "Key6",
-        short: "6K"
-    }, {
-        val: 262144,
-        name: "Key7",
-        short: "7K"
-    }, {
-        val: 524288,
-        name: "Key8",
-        short: "8K"
-    }, {
-        val: 1048576,
-        name: "FadeIn",
-        short: "FI"
-    }, {
-        val: 2097152,
-        name: "Random",
-        short: "RD"
-    }, {
-        val: 4194304,
-        name: "Cinema",
-        short: "CN"
-    }, {
-        val: 16777216,
-        name: "Key9",
-        short: "9K"
-    }, {
-        val: 33554432,
-        name: "Key10",
-        short: "10K"
-    }, {
-        val: 67108864,
-        name: "Key1",
-        short: "1K"
-    }, {
-        val: 134217728,
-        name: "Key3",
-        short: "3K"
-    }, {
-        val: 268435456,
-        name: "Key2",
-        short: "2K"
-    }
-]
+let modnames = [{
+    val: 1,
+    name: "NoFail",
+    short: "NF"
+}, {
+    val: 2,
+    name: "Easy",
+    short: "EZ"
+}, {
+    val: 4,
+    name: "TouchDevice",
+    short: "TD"
+}, {
+    val: 8,
+    name: "Hidden",
+    short: "HD"
+}, {
+    val: 16,
+    name: "HardRock",
+    short: "HR"
+}, {
+    val: 32,
+    name: "SuddenDeath",
+    short: "SD"
+}, {
+    val: 64,
+    name: "DoubleTime",
+    short: "DT"
+}, {
+    val: 128,
+    name: "Relax",
+    short: "RX"
+}, {
+    val: 256,
+    name: "HalfTime",
+    short: "HT"
+}, {
+    val: 512,
+    name: "Nightcore",
+    short: "NC"
+}, {
+    val: 1024,
+    name: "Flashlight",
+    short: "FL"
+}, {
+    val: 2048,
+    name: "Autoplay",
+    short: "AT"
+}, {
+    val: 4096,
+    name: "SpunOut",
+    short: "SO"
+}, {
+    val: 8192,
+    name: "Relax2",
+    short: "AP"
+}, {
+    val: 16384,
+    name: "Perfect",
+    short: "PF"
+}, {
+    val: 32768,
+    name: "Key4",
+    short: "4K"
+}, {
+    val: 65536,
+    name: "Key5",
+    short: "5K"
+}, {
+    val: 131072,
+    name: "Key6",
+    short: "6K"
+}, {
+    val: 262144,
+    name: "Key7",
+    short: "7K"
+}, {
+    val: 524288,
+    name: "Key8",
+    short: "8K"
+}, {
+    val: 1048576,
+    name: "FadeIn",
+    short: "FI"
+}, {
+    val: 2097152,
+    name: "Random",
+    short: "RD"
+}, {
+    val: 4194304,
+    name: "Cinema",
+    short: "CN"
+}, {
+    val: 16777216,
+    name: "Key9",
+    short: "9K"
+}, {
+    val: 33554432,
+    name: "Key10",
+    short: "10K"
+}, {
+    val: 67108864,
+    name: "Key1",
+    short: "1K"
+}, {
+    val: 134217728,
+    name: "Key3",
+    short: "3K"
+}, {
+    val: 268435456,
+    name: "Key2",
+    short: "2K"
+}]

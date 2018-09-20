@@ -6,7 +6,7 @@ const functions = require('./exportFunctions.js');
 module.exports = {
     name: "user",
     description: "Returns stats on the user's osu profile",
-    async execute(m, args) {
+    async execute(m, args, db) {
 
         let username;
 

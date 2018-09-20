@@ -1,39 +1,39 @@
-const axios = require('axios');
+const axios = require('axios')
 const Discord = require('discord.js')
-const { osuApiKey } = require('../config.json');
-const ojsama = require('ojsama');
-const functions = require('./exportFunctions.js');
+const { osuApiKey } = require('../config.json')
+const ojsama = require('ojsama')
+const functions = require('./exportFunctions.js')
 
 module.exports = {
     name: "recent",
     description: "Returns a user's most recent play",
     async execute(m, args, db, rankingEmojis) {
-        let username;
+        let username
 
         if (args.length === 0) {
             username = await functions.lookupUser(m.author.id, db)
                 .catch(err => {
-                    m.reply("you do not have a linked account! Try ` `link [username]`");
-                    return;
+                    m.reply("you do not have a linked account! Try ` `link [username]`")
+                    return
                 })
         }
         else if (args[0].startsWith("<@")) {
-            let discordId = args[0].slice(2, args[0].length - 1);
+            let discordId = args[0].slice(2, args[0].length - 1)
             if (discordId.startsWith("!")) {
-                discordId = discordId.slice(1);
+                discordId = discordId.slice(1)
             }
             username = await functions.lookupUser(discordId, db)
                 .catch(err => {
-                    m.reply("they do not have a linked account so I cannot find their top plays :(");
-                    return;
+                    m.reply("they do not have a linked account so I cannot find their top plays :(")
+                    return
                 })
         }
         else {
-            username = args.join('_');
+            username = args.join('_')
         }
 
         if (!username) {
-            return;
+            return
         }
 
         //First Call
@@ -47,10 +47,10 @@ module.exports = {
             .then(resp => {
                 if (resp.data.length == 0) {
                     m.reply("That username does not exist, or has not played in over 24 hours! Please try again.")
-                    return;
+                    return
                 }
                 else {
-                    const recent = resp.data[0];
+                    const recent = resp.data[0]
                     //Second Call
                     axios.get("api/get_user", {
                         params: {
@@ -60,7 +60,7 @@ module.exports = {
                     })
                         .then(resp => {
 
-                            let userInfo = resp.data[0];
+                            let userInfo = resp.data[0]
 
                             //Third Call
                             axios.get("api/get_beatmaps", {
@@ -70,7 +70,7 @@ module.exports = {
                                 }
                             })
                                 .then(resp => {
-                                    beatmapInfo = resp.data[0];
+                                    beatmapInfo = resp.data[0]
 
                                     axios.get('api/get_user_best', { params: {
                                             k: osuApiKey,
@@ -106,19 +106,19 @@ module.exports = {
                                                 }
                                             }
 
-                                            recent.enabled_mods = functions.determineMods(recent);
+                                            recent.enabled_mods = functions.determineMods(recent)
 
-                                            recent.accuracy = functions.determineAcc(recent);
+                                            recent.accuracy = functions.determineAcc(recent)
 
-                                            let playDate = Date.parse(recent.date); //UTC + 0
-                                            let currentDate = Date.now() + 25200000; //UTC + 7
-                                            recent.date = functions.timeDifference(currentDate, playDate);
+                                            let playDate = Date.parse(recent.date) //UTC + 0
+                                            let currentDate = Date.now() + 25200000 //UTC + 7
+                                            recent.date = functions.timeDifference(currentDate, playDate)
 
                                             calculate(beatmapInfo, recent, userInfo, m, rankingEmojis, db)
                                         })
                                         .catch(err => {
                                         console.log(err)
-                                        m.channel.send("Error! More info: " + err);
+                                        m.channel.send("Error! More info: " + err)
                                         })
 
 
@@ -127,22 +127,22 @@ module.exports = {
                         })
                         .catch(err => {
                         console.log(err)
-                        m.channel.send("Error! More info: " + err);
+                        m.channel.send("Error! More info: " + err)
                         })
                 }
             })
             .catch(err => {
             console.log(err)
-            m.channel.send("Error! More info: " + err);
+            m.channel.send("Error! More info: " + err)
             })
     }
-};
+}
 
 const calculate = (beatmap, performance, userInfo, m, rankingEmojis, db) => {
 
-    let cleanBeatmap;
+    let cleanBeatmap
 
-    axios.get('osu/' + beatmap.beatmap_id, {params: {
+    axios.get(`osu/${beatmap.beatmap_id}`, {params: {
             credentials: "include"
         }
     })
@@ -151,13 +151,13 @@ const calculate = (beatmap, performance, userInfo, m, rankingEmojis, db) => {
     })
     .then(raw => new ojsama.parser().feed(raw))
     .then(({ map }) => {
-        cleanBeatmap = map;
-        let usedMods = ojsama.modbits.from_string(performance.enabled_mods);
+        cleanBeatmap = map
+        let usedMods = ojsama.modbits.from_string(performance.enabled_mods)
 
-        let stars = new ojsama.diff().calc({ map: cleanBeatmap, mods: usedMods });
-        let combo = parseInt(performance.maxcombo);
-        let nmiss = parseInt(performance.countmiss);
-        let acc_percent = parseFloat(performance.accuracy);
+        let stars = new ojsama.diff().calc({ map: cleanBeatmap, mods: usedMods })
+        let combo = parseInt(performance.maxcombo)
+        let nmiss = parseInt(performance.countmiss)
+        let acc_percent = parseFloat(performance.accuracy)
 
         let recentPP = ojsama.ppv2({
             stars: stars,
@@ -170,29 +170,27 @@ const calculate = (beatmap, performance, userInfo, m, rankingEmojis, db) => {
             stars: stars
         })
 
-        formattedStars = stars.toString().split(" ")[0];
-        formattedPerformancePP = recentPP.toString().split(" ")[0];
-        formattedMaxPP = maxPP.toString().split(" ")[0];
+        formattedStars = stars.toString().split(" ")[0]
+        formattedPerformancePP = recentPP.toString().split(" ")[0]
+        formattedMaxPP = maxPP.toString().split(" ")[0]
 
-        generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, db);
+        generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, db)
     })
     .catch(err => {
-        console.log(err);
-        m.channel.send("There was an error! More info: " + err);
+        console.log(err)
+        m.channel.send("There was an error! More info: " + err)
     })
-};
+}
 
 const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars, rankingEmojis, db) => {
 
-    console.log(recent);
-
     if (recent.rank.length === 1) {
-        recent.rank += "_";
-    };
+        recent.rank += "_"
+    }
 
-    let rankImage;
+    let rankImage
 
-    rankImage = rankingEmojis.find("name", recent.rank);
+    rankImage = rankingEmojis.find("name", recent.rank)
 
     let embed = new Discord.RichEmbed()
         .setColor("#c0c0c0")
@@ -225,7 +223,7 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
     }
 
     //Send Embed to Channel
-    m.channel.send({embed: embed});
+    m.channel.send({embed: embed})
 
-    functions.storeLastBeatmap(m.guild, beatmapInfo, recent, db);
-};
+    functions.storeLastBeatmap(m.guild, beatmapInfo, recent, db)
+}
