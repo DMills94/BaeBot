@@ -84,7 +84,7 @@ module.exports = {
                                             for (let play in topPlays) {
                                                 let scoreMatch = true
 
-                                                delete topPlays[8]['pp']
+                                                delete topPlays[play]['pp']
 
                                                 const aProps = Object.getOwnPropertyNames(recent)
                                                 const bProps = Object.getOwnPropertyNames(topPlays[play])
@@ -202,7 +202,7 @@ const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, 
         .setTimestamp()
 
     if (recent.playNumber) {
-        switch (score.playNumber) {
+        switch (recent.playNumber) {
             case 1:
                 colour = "#FFD700"
                 break
