@@ -161,7 +161,7 @@ customExports.getTrackedUsersTop100 = (db) => {
                                     if (!scoreMatch) {
 
                                         let playDate = Date.parse(usersTop100[score].date)
-                                        let currentDate = Date.now() + 25200000
+                                        let currentDate = Date.now() - 3600000
 
                                         if (currentDate - playDate < 7200000) {
                                             changedScoresArray.push(usersTop100[score])

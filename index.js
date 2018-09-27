@@ -239,6 +239,7 @@ async function updateTop100(rankingEmojis, db) {
     const date = currentTime.toDateString().slice(4, 10)
     const time = currentTime.toTimeString().slice(0, 9)
     if (newScores.length > 0) {
+        console.log(newScores)
         console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`)
         for (let score in newScores) {
             client.commands.get("postnew").execute(newScores[score], db, rankingEmojis, client.channels)
