@@ -1,7 +1,6 @@
 const axios = require('axios')
-const {
-    osuApiKey
-} = require('../config.json')
+const { osuApiKey } = require('../config.json')
+const ojsama = require('ojsama')
 
 let customExports = module.exports = {}
 
@@ -31,6 +30,74 @@ customExports.lookupUser = (authorID, db) => {
                 console.log("There was an error checking for a linked account in the database!")
             })
 
+    })
+}
+
+customExports.getUser = (username, mode) => {
+    return new Promise(resolve => {
+        axios.get('api/get_user', { params: {
+                k: osuApiKey,
+                u: username,
+                m: mode
+            }
+        })
+            .then(resp => {
+                resolve(resp.data[0])
+            })
+    })
+}
+
+customExports.getUserTop = (username, limit) => {
+    return new Promise(resolve => {
+        axios.get('api/get_user_best', { params: {
+                k: osuApiKey,
+                u: username,
+                limit: limit
+            }
+        })
+            .then(resp => {
+                resolve(resp.data)
+            })
+    })
+}
+
+customExports.getBeatmap = bmpId => {
+    return new Promise(resolve => {
+        axios.get('api/get_beatmaps', { params: {
+                k: osuApiKey,
+                b: bmpId
+            }
+        })
+            .then(resp => {
+                resolve(resp.data)
+            })
+    })
+}
+
+customExports.getUserRecent = username => {
+    return new Promise(resolve => {
+        axios.get('api/get_user_recent', { params: {
+                k: osuApiKey,
+                u: username
+            }
+        })
+            .then(resp => {
+                resolve(resp.data)
+            })
+    })
+}
+
+customExports.getScores = (bmpId, username) => {
+    return new Promise(resolve => {
+        axios.get('api/get_scores', { params: {
+                 k: osuApiKey,
+                u: username,
+                b: bmpId
+            }
+        })
+            .then(resp => {
+                resolve(resp.data)
+            })
     })
 }
 
@@ -92,8 +159,16 @@ customExports.getTrackedUsersTop100 = (db) => {
                                     const scoreMatch = checkNewScores(usersTop100[score], trackedUsers[user].top100)
 
                                     if (!scoreMatch) {
-                                        console.log(usersTop100[score])
-                                        changedScoresArray.push(usersTop100[score])
+
+                                        let playDate = Date.parse(usersTop100[score].date)
+                                        let currentDate = Date.now() + 25200000
+
+                                        if (currentDate - playDate < 7200000) {
+                                            changedScoresArray.push(usersTop100[score])
+                                        }
+                                        else {
+                                            console.log(`Score over 2 hours ago caught`)
+                                        }
                                     }
                                 }
 
@@ -227,6 +302,53 @@ customExports.timeDifference = (current, previous) => {
     }
 }
 
+customExports.calculate = (beatmap, performance) => {
+    return new Promise(resolve => {
+
+        let cleanBeatmap
+        let results = {}
+
+        axios.get(`osu/${beatmap.beatmap_id}`, {
+            params: {
+                credentials: "include"
+            }
+        })
+            .then(resp => {
+                return resp.data
+            })
+            .then(raw => new ojsama.parser().feed(raw))
+            .then(({map}) => {
+                cleanBeatmap = map
+                const usedMods = ojsama.modbits.from_string(performance.enabled_mods)
+
+                const stars = new ojsama.diff().calc({map: cleanBeatmap, mods: usedMods})
+                const combo = parseInt(performance.maxcombo)
+                const nmiss = parseInt(performance.countmiss)
+                const acc_percent = parseFloat(performance.accuracy)
+
+                const recentPP = ojsama.ppv2({
+                    stars: stars,
+                    combo: combo,
+                    nmiss: nmiss,
+                    acc_percent: acc_percent
+                })
+
+                const maxPP = ojsama.ppv2({
+                    stars: stars
+                })
+
+                results.formattedStars = stars.toString().split(" ")[0]
+                results.formattedPerformancePP = recentPP.toString().split(" ")[0]
+                results.formattedMaxPP = maxPP.toString().split(" ")[0]
+
+                resolve(results)
+
+            })
+            .catch(err => {
+                console.log(`There was an error! More info: + ${err}`)
+            })
+    })
+}
 
 let modnames = [{
     val: 1,

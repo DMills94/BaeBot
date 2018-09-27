@@ -1,7 +1,4 @@
-const axios = require('axios')
 const Discord = require('discord.js')
-const { osuApiKey } = require('../config.json')
-const ojsama = require('ojsama')
 const functions = require('./exportFunctions.js')
 
 module.exports = {
@@ -23,7 +20,7 @@ module.exports = {
                 discordId = discordId.slice(1)
             }
             username = await functions.lookupUser(discordId, db)
-                .catch(err => {
+                .catch(() => {
                     m.reply("they do not have a linked account so I cannot find their top plays :(")
                     return
                 })
@@ -36,194 +33,95 @@ module.exports = {
             return
         }
 
-        //First Call
-        axios.get("api/get_user_recent", {
-            params: {
-                k: osuApiKey,
-                u: username,
-                limit: "1"
+        //osu API calls
+        const userInfo = await functions.getUser(username, 0)
+
+        if (!userInfo)
+            return m.reply("That username does not exist! Please try again.")
+
+        const recent = (await functions.getUserRecent(username))[0]
+
+        if (!recent)
+            return m.reply("That user has not played a loved or ranked map in the previous 24 hours so I can't find their score! :(")
+
+        const beatmapInfo = (await functions.getBeatmap(recent.beatmap_id))[0]
+
+        const topPlays = await functions.getUserTop(username, 100)
+
+        for (let play in topPlays) {
+            let scoreMatch = true
+
+            delete topPlays[play]['pp']
+
+            const aProps = Object.getOwnPropertyNames(recent)
+            const bProps = Object.getOwnPropertyNames(topPlays[play])
+
+            if (aProps.length !== bProps.length) {
+                scoreMatch = false
             }
-        })
-            .then(resp => {
-                if (resp.data.length == 0) {
-                    m.reply("That username does not exist, or has not played in over 24 hours! Please try again.")
-                    return
+
+            for (let prop in aProps) {
+                const propName = aProps[prop]
+
+                if (recent[propName] !== topPlays[play][propName] && propName !== 'date') {
+                    scoreMatch = false
                 }
-                else {
-                    const recent = resp.data[0]
-                    //Second Call
-                    axios.get("api/get_user", {
-                        params: {
-                            k: osuApiKey,
-                            u: username
-                        }
-                    })
-                        .then(resp => {
+            }
 
-                            let userInfo = resp.data[0]
-
-                            //Third Call
-                            axios.get("api/get_beatmaps", {
-                                params: {
-                                    k: osuApiKey,
-                                    b: recent.beatmap_id
-                                }
-                            })
-                                .then(resp => {
-                                    beatmapInfo = resp.data[0]
-
-                                    axios.get('api/get_user_best', { params: {
-                                            k: osuApiKey,
-                                            u: username,
-                                            limit: 100
-                                        }
-                                    })
-                                        .then(resp => {
-                                            const topPlays = resp.data
-
-                                            for (let play in topPlays) {
-                                                let scoreMatch = true
-
-                                                delete topPlays[play]['pp']
-
-                                                const aProps = Object.getOwnPropertyNames(recent)
-                                                const bProps = Object.getOwnPropertyNames(topPlays[play])
-
-                                                if (aProps.length !== bProps.length) {
-                                                    scoreMatch = false
-                                                }
-
-                                                for (let prop in aProps) {
-                                                    const propName = aProps[prop]
-
-                                                    if (recent[propName] !== topPlays[play][propName] && propName !== 'date') {
-                                                        scoreMatch = false
-                                                    }
-                                                }
-
-                                                if (scoreMatch) {
-                                                    recent.playNumber = parseInt(play) + 1
-                                                }
-                                            }
-
-                                            recent.enabled_mods = functions.determineMods(recent)
-
-                                            recent.accuracy = functions.determineAcc(recent)
-
-                                            let playDate = Date.parse(recent.date) //UTC + 0
-                                            let currentDate = Date.now() + 25200000 //UTC + 7
-                                            recent.date = functions.timeDifference(currentDate, playDate)
-
-                                            calculate(beatmapInfo, recent, userInfo, m, rankingEmojis, db)
-                                        })
-                                        .catch(err => {
-                                        console.log(err)
-                                        m.channel.send("Error! More info: " + err)
-                                        })
-
-
-
-                                })
-                        })
-                        .catch(err => {
-                        console.log(err)
-                        m.channel.send("Error! More info: " + err)
-                        })
-                }
-            })
-            .catch(err => {
-            console.log(err)
-            m.channel.send("Error! More info: " + err)
-            })
-    }
-}
-
-const calculate = (beatmap, performance, userInfo, m, rankingEmojis, db) => {
-
-    let cleanBeatmap
-
-    axios.get(`osu/${beatmap.beatmap_id}`, {params: {
-            credentials: "include"
-        }
-    })
-    .then(resp => {
-        return resp.data
-    })
-    .then(raw => new ojsama.parser().feed(raw))
-    .then(({ map }) => {
-        cleanBeatmap = map
-        let usedMods = ojsama.modbits.from_string(performance.enabled_mods)
-
-        let stars = new ojsama.diff().calc({ map: cleanBeatmap, mods: usedMods })
-        let combo = parseInt(performance.maxcombo)
-        let nmiss = parseInt(performance.countmiss)
-        let acc_percent = parseFloat(performance.accuracy)
-
-        let recentPP = ojsama.ppv2({
-            stars: stars,
-            combo: combo,
-            nmiss: nmiss,
-            acc_percent: acc_percent
-        })
-
-        let maxPP = ojsama.ppv2({
-            stars: stars
-        })
-
-        formattedStars = stars.toString().split(" ")[0]
-        formattedPerformancePP = recentPP.toString().split(" ")[0]
-        formattedMaxPP = maxPP.toString().split(" ")[0]
-
-        generateRecent(m, userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, db)
-    })
-    .catch(err => {
-        console.log(err)
-        m.channel.send("There was an error! More info: " + err)
-    })
-}
-
-const generateRecent = (m, userInfo, beatmapInfo, recent, performancePP, maxPP, stars, rankingEmojis, db) => {
-
-    if (recent.rank.length === 1) {
-        recent.rank += "_"
-    }
-
-    let rankImage
-
-    rankImage = rankingEmojis.find("name", recent.rank)
-
-    let embed = new Discord.RichEmbed()
-        .setColor("#c0c0c0")
-        .setAuthor(`Recent Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
-        .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
-        .setDescription(`**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`)
-        .addField(`\u2022 \:star: **${stars}*** ${recent.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((recent.score)).toLocaleString("en")} (${recent.accuracy}%) | ${recent.rank === "F_" ? "~~**" + performancePP + "pp**/" + maxPP + "pp~~" : "**" + performancePP + "pp**/" + maxPP + "pp"}`, `\u2022 ${recent.maxcombo === beatmapInfo.max_combo ? "**" + recent.maxcombo + "**" : recent.maxcombo}x/**${beatmapInfo.max_combo}x** {${recent.count300}/${recent.count100}/${recent.count50}/${recent.countmiss}} | ${recent.date}`)
-        .setFooter("Message sent: ")
-        .setTimestamp()
-
-    if (recent.playNumber) {
-        switch (recent.playNumber) {
-            case 1:
-                colour = "#FFD700"
-                break
-            case 2:
-                colour = "#FFFFFF"
-                break
-            case 3:
-                colour = "#cd7f32"
-                break
-            default:
-                colour = "#c0c0c0"
-                break
+            if (scoreMatch) {
+                recent.playNumber = parseInt(play) + 1
+            }
         }
 
-        embed
-            .setTitle(`__PERSONAL BEST #${recent.playNumber}__`)
-            .setColor(colour)
+        recent.enabled_mods = functions.determineMods(recent)
+
+        recent.accuracy = functions.determineAcc(recent)
+
+        let playDate = Date.parse(recent.date)
+        let currentDate = Date.now() - 3600000
+        recent.date = functions.timeDifference(currentDate, playDate)
+
+        const ppInfo = await functions.calculate(beatmapInfo, recent)
+
+        if (recent.rank.length === 1) {
+            recent.rank += "_"
+        }
+
+        const rankImage = rankingEmojis.find("name", recent.rank)
+
+        let embed = new Discord.RichEmbed()
+            .setColor("#c0c0c0")
+            .setAuthor(`Recent Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+            .setThumbnail("https://b.ppy.sh/thumb/" + beatmapInfo.beatmapset_id + "l.jpg")
+            .setDescription(`**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`)
+            .addField(`\u2022 \:star: **${ppInfo.formattedStars}*** ${recent.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((recent.score)).toLocaleString("en")} (${recent.accuracy}%) | ${recent.rank === "F_" ? "~~**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp~~" : "**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp"}`, `\u2022 ${recent.maxcombo === beatmapInfo.max_combo ? "**" + recent.maxcombo + "**" : recent.maxcombo}x/**${beatmapInfo.max_combo}x** {${recent.count300}/${recent.count100}/${recent.count50}/${recent.countmiss}} | ${recent.date}`)
+            .setFooter("Message sent: ")
+            .setTimestamp()
+
+        if (recent.playNumber) {
+            switch (recent.playNumber) {
+                case 1:
+                    colour = "#FFD700"
+                    break
+                case 2:
+                    colour = "#FFFFFF"
+                    break
+                case 3:
+                    colour = "#cd7f32"
+                    break
+                default:
+                    colour = "#c0c0c0"
+                    break
+            }
+
+            embed
+                .setTitle(`__PERSONAL BEST #${recent.playNumber}__`)
+                .setColor(colour)
+        }
+
+        //Send Embed to Channel
+        m.channel.send({embed: embed})
+
+        functions.storeLastBeatmap(m.guild, beatmapInfo, recent, db)
     }
-
-    //Send Embed to Channel
-    m.channel.send({embed: embed})
-
-    functions.storeLastBeatmap(m.guild, beatmapInfo, recent, db)
 }

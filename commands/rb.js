@@ -61,7 +61,7 @@ module.exports = {
                 usersScore.accuracy = functions.determineAcc(usersScore)
 
                 let playDate = usersScore.date
-                let currentDate = Date.now() + 25200000 //UTC + 8
+                let currentDate = Date.now()  - 3600000
                 usersScore.date = functions.timeDifference(currentDate, playDate)
 
                 axios.get("api/get_user", {

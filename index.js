@@ -45,6 +45,7 @@ client.on("ready", () => {
 
     const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis
 
+    console.log('Starting tracking..')
     updateTop100(rankingEmojis, db)
 
     setInterval(() => {

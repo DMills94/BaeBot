@@ -33,6 +33,9 @@ module.exports = {
                 argUsernames.push(newName)
             }
 
+            if (argUsernames.length > 10)
+                m.channel.send('Wow that is a lot of names, I might have issue adding them all! If I do, try adding users in small groups of maximum 10!')
+
             //multiadd
             for (let arg in argUsernames) {
 
