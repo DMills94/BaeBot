@@ -36,22 +36,10 @@ module.exports = {
                                 const topPlays = resp.data
 
                                 for (let play in topPlays) {
-                                    let scoreMatch = true
+                                    let scoreMatch = false
 
-                                    const aProps = Object.getOwnPropertyNames(score)
-                                    const bProps = Object.getOwnPropertyNames(topPlays[play])
-
-                                    if (aProps.length !== bProps.length) {
-                                        scoreMatch = false
-                                    }
-
-                                    for (let prop in aProps) {
-                                        const propName = aProps[prop]
-
-                                        if (score[propName] !== topPlays[play][propName]) {
-                                            scoreMatch = false
-                                        }
-                                    }
+                                    if (score.date === topPlays[play].date)
+                                        scoreMatch = true
 
                                     if (scoreMatch) {
                                         score.playNumber = parseInt(play) + 1

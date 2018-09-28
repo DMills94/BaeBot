@@ -46,10 +46,10 @@ client.on("ready", () => {
     const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis
 
     console.log('Starting tracking..')
-    updateTop100(rankingEmojis, db)
+    tracking(true, rankingEmojis, db)
 
     setInterval(() => {
-        updateTop100(rankingEmojis, db)
+        tracking(false, rankingEmojis, db)
     }, 150000)
 })
 
@@ -226,10 +226,12 @@ const logCommand = (message, command) => {
     console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}]: ${command} on ${date} at ${time}`)
 }
 
-async function updateTop100(rankingEmojis, db) {
-    const newScoresDuplicates = await functions.getTrackedUsersTop100(db)
+async function tracking(first, rankingEmojis, db) {
+    let newScores
 
-    const newScores = newScoresDuplicates.filter((object, index) =>
+    const newScoresDuplicates = await functions.getNewTrackedScores(first, db)
+
+    newScores = newScoresDuplicates.filter((object, index) =>
         index === newScoresDuplicates.findIndex((obj) => (
             obj.date === object.date
         ))
