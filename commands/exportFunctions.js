@@ -1,5 +1,5 @@
 const axios = require('axios')
-const { osuApiKey } = require('../config.json')
+const {osuApiKey} = require('../config.json')
 const ojsama = require('ojsama')
 
 let customExports = module.exports = {}
@@ -11,21 +11,21 @@ customExports.lookupUser = (authorID, db) => {
         let existingLink = false
 
         linkDB.once('value', obj => {
-                const linkedUsers = obj.val()
+            const linkedUsers = obj.val()
 
-                for (let user in linkedUsers) {
-                    if (linkedUsers[user].discordID === authorID) {
-                        existingLink = true
-                        username = linkedUsers[user].osuName
-                    }
+            for (let user in linkedUsers) {
+                if (linkedUsers[user].discordID === authorID) {
+                    existingLink = true
+                    username = linkedUsers[user].osuName
                 }
+            }
 
-                if (existingLink) {
-                    resolve(username)
-                } else {
-                    reject()
-                }
-            })
+            if (existingLink) {
+                resolve(username)
+            } else {
+                reject()
+            }
+        })
             .catch(() => {
                 console.log("There was an error checking for a linked account in the database!")
             })
@@ -35,7 +35,8 @@ customExports.lookupUser = (authorID, db) => {
 
 customExports.getUser = (username, mode) => {
     return new Promise(resolve => {
-        axios.get('api/get_user', { params: {
+        axios.get('api/get_user', {
+            params: {
                 k: osuApiKey,
                 u: username,
                 m: mode
@@ -47,9 +48,43 @@ customExports.getUser = (username, mode) => {
     })
 }
 
-customExports.getUserTop = (username, limit) => {
+customExports.getUserTop = (username, limit = 100) => {
     return new Promise(resolve => {
-        axios.get('api/get_user_best', { params: {
+        axios.get('api/get_user_best', {
+            params: {
+                k: osuApiKey,
+                u: username,
+                limit: limit
+            }
+        })
+            .then(resp => {
+                resolve(resp.data)
+            })
+            .catch(err => {
+                console.log(err)
+            })
+    })
+}
+
+customExports.getBeatmap = bmpId => {
+    return new Promise(resolve => {
+        axios.get('api/get_beatmaps', {
+            params: {
+                k: osuApiKey,
+                b: bmpId
+            }
+        })
+            .then(resp => {
+                resolve(resp.data)
+            })
+    })
+}
+
+customExports.getUserRecent = (username, limit = 10) => {
+
+    return new Promise(resolve => {
+        axios.get('api/get_user_recent', {
+            params: {
                 k: osuApiKey,
                 u: username,
                 limit: limit
@@ -61,36 +96,11 @@ customExports.getUserTop = (username, limit) => {
     })
 }
 
-customExports.getBeatmap = bmpId => {
-    return new Promise(resolve => {
-        axios.get('api/get_beatmaps', { params: {
-                k: osuApiKey,
-                b: bmpId
-            }
-        })
-            .then(resp => {
-                resolve(resp.data)
-            })
-    })
-}
-
-customExports.getUserRecent = username => {
-    return new Promise(resolve => {
-        axios.get('api/get_user_recent', { params: {
-                k: osuApiKey,
-                u: username
-            }
-        })
-            .then(resp => {
-                resolve(resp.data)
-            })
-    })
-}
-
 customExports.getScores = (bmpId, username) => {
     return new Promise(resolve => {
-        axios.get('api/get_scores', { params: {
-                 k: osuApiKey,
+        axios.get('api/get_scores', {
+            params: {
+                k: osuApiKey,
                 u: username,
                 b: bmpId
             }
@@ -114,16 +124,17 @@ customExports.storeLastBeatmap = (guild, beatmap, performance, db) => {
         })
 }
 
-customExports.getTrackedUsersTop100 = (db) => {
-    return new Promise((resolve) => {
+customExports.getNewTrackedScores = (first, db) => {
+    return new Promise(resolve => {
         let isError = false
-        let changedScoresArray = []
         let usersToTrack = 0
+        let changedScoresArray = []
+        let counter = 0
 
         //Get tracked users
         const dbTrack = db.ref('/track/')
 
-        dbTrack.once('value', obj => {
+        dbTrack.once('value', async obj => {
             const trackedGuilds = obj.val()
 
             for (let id in trackedGuilds) {
@@ -131,98 +142,109 @@ customExports.getTrackedUsersTop100 = (db) => {
             }
 
             //Get users top 100
-            let counter = 0
-            for (let guild in trackedGuilds) {
+
+            for (let guild in trackedGuilds) { //For each Guild
                 const trackedUsers = trackedGuilds[guild]
-                for (let user in trackedUsers) {
+                for (let user in trackedUsers) { //For each User
 
-                    axios.get("api/get_user_best", {
-                            params: {
-                                k: osuApiKey,
-                                u: trackedUsers[user].osuName,
-                                limit: 100
+                    const usersTop100 = await customExports.getUserTop(trackedUsers[user].osuName)
+                    const usersRecent = await customExports.getUserRecent(trackedUsers[user].osuName, 50)
+                    let updatedRecent = []
+
+                    //Check if new no top 100 data, and if so, add it to the DB
+                    if (trackedUsers[user].top100 === undefined) {
+                        dbTrack.child(`/${guild}/${user}/top100`).set(usersTop100)
+                            .catch(() => {
+                                isError = true
+                                console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
+                            })
+                    }
+                    //Check if new no recent data, and if so, add it to the DB
+                    if (trackedUsers[user].recent24hr === undefined) {
+                        dbTrack.child(`/${guild}/${user}/recent24hr`).set(usersRecent)
+                    }
+
+                    if (first) {
+                        //See if each of the new top 100 scores exist in the db top 100 scores
+                        const prevTop100 = trackedUsers[user].top100
+
+                        for (let score in usersTop100) { //For each score in NEW top 100
+                            let scoreMatch = false
+
+                            if (score === 2)
+                                break
+
+                            for (let record in prevTop100) {
+                                if (usersTop100[score].date === prevTop100[record].date)
+                                    scoreMatch = true
                             }
-                        })
-                        .then(resp => {
-                            const usersTop100 = resp.data
 
-                            //Check if new no top 100 data, and if so, add it to the DB
-                            if (trackedUsers[user].top100 === undefined) {
-                                dbTrack.child(`/${guild}/${user}/top100`).set(usersTop100)
-                                    .catch(() => {
-                                        isError = true
-                                        console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
-                                    })
-                            } else {
-                                //See if each of the new top 100 scores exist in the db top 100 scores
-                                for (let score in usersTop100) {
-                                    const scoreMatch = checkNewScores(usersTop100[score], trackedUsers[user].top100)
+                            if (!scoreMatch) {
+                                let playDate = Date.parse(usersTop100[score].date)
+                                let currentDate = Date.now() - 3600000
 
-                                    if (!scoreMatch) {
-
-                                        let playDate = Date.parse(usersTop100[score].date)
-                                        let currentDate = Date.now() - 3600000
-
-                                        if (currentDate - playDate < 7200000) {
-                                            changedScoresArray.push(usersTop100[score])
-                                        }
-                                        else {
-                                            console.log(`Score over 2 hours ago caught`)
-                                        }
-                                    }
-                                }
-
-                                //Update database
-                                dbTrack.child(`/${guild}/${user}/top100`).set(usersTop100)
-                                    .catch(() => {
-                                        isError = true
-                                        console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
-                                    })
-
-                                counter++
-                                if (counter === usersToTrack) {
-                                    if (changedScoresArray) {
-
-                                    }
-                                    resolve(changedScoresArray)
+                                if (currentDate - playDate < 86400000) {
+                                    changedScoresArray.push(usersTop100[score])
                                 }
                             }
-                        })
-                        .catch(() => {
-                            isError = true
-                        })
+                        }
+
+                        dbTrack.child(`/${guild}/${user}/recent24hr`).set(usersRecent)
+                    }
+                    else {
+                        //See if new recent scores exist in the new top 100 scores
+                        const prevRecent = trackedUsers[user].recent24hr
+
+                        //Get new recent scores
+                        for (let newR in usersRecent) {
+                            let scoreMatch = false
+
+                            for (let prev in prevRecent) {
+                                if (usersRecent[newR].date === prevRecent[prev].date)
+                                    scoreMatch = true
+                            }
+
+                            if (!scoreMatch)
+                                updatedRecent.push(usersRecent[newR])
+                        }
+
+                        //Compare new recent scores to new top 100
+                        for (let newR in updatedRecent) {
+                            let scoreMatch = false
+
+                            for (let prevBest in usersTop100) {
+                                if (updatedRecent[newR].date === usersTop100[prevBest].date)
+                                    scoreMatch = true
+                            }
+
+                            if (scoreMatch)
+                                changedScoresArray.push(updatedRecent[newR])
+                        }
+
+                        //Check existing 24 hour recent and remove scores >24 hours old
+                        for (let recent in prevRecent) {
+                            let playDate = Date.parse(prevRecent[recent].date)
+                            let currentDate = Date.now() - 3600000
+
+                            if (currentDate - playDate < 86400000) {
+                                updatedRecent.push(prevRecent[recent])
+                            }
+                        }
+
+                        dbTrack.child(`/${guild}/${user}/recent24hr`).set(updatedRecent)
+                    }
+
+                    //Update database
+                    dbTrack.child(`/${guild}/${user}/top100`).set(usersTop100)
+
+                    counter++
+                    if (counter === usersToTrack) {
+                        resolve(changedScoresArray)
+                    }
                 }
             }
         })
     })
-}
-
-const checkNewScores = (score, database) => {
-    let scoreMatch
-
-    for (let entry in database) {
-        scoreMatch = true
-        const aProps = Object.getOwnPropertyNames(score)
-        const bProps = Object.getOwnPropertyNames(database[entry])
-
-        if (aProps.length !== bProps.length) {
-            scoreMatch = false
-        }
-
-        for (let prop in aProps) {
-            const propName = aProps[prop]
-
-            if (score[propName] !== database[entry][propName]) {
-                scoreMatch = false
-            }
-        }
-
-        if (scoreMatch) {
-            break
-        }
-    }
-
-    return scoreMatch
 }
 
 customExports.determineMods = score => {
