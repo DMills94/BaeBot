@@ -41,7 +41,7 @@ module.exports = {
             isOldLink: null,
             isBeatmap: null,
             isSet: null,
-            beatmapSetId: null,
+            beatmapSetId: null, 
             beatmapId: null,
         }
 
@@ -278,7 +278,6 @@ const beatmapLookup = (urlInfo, m, mods, db) => {
                         }
                         beatmapAPI[i].ppAccValues = ppAccValues
 
-
                         //Output embed
                         if (counter === beatmapAPI.length) {
                             let mapInfo = ""
@@ -314,12 +313,12 @@ const beatmapLookup = (urlInfo, m, mods, db) => {
                     })
                     .catch(err => {
                         m.channel.send("There was an error! Sorry, please try again later!")
-                        console.log(`There was an error: ${err}`)
+                        console.log(`There was an error [get_osu]: ${err}`)
                     })
             }
         })
         .catch(err => {
             m.channel.send("There was an error! Sorry, please try again later!")
-            console.log(`There was an error: ${err}`)
+            console.log(`There was an error [get_beatmaps]: ${err}`)
         })
 }

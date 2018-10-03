@@ -58,6 +58,10 @@ module.exports = {
                 return m.channel.send("The username provided doesn't exist! Please try again.")
 
             const userScores = await functions.getScores(prevBeatmap.beatmap.beatmap_id, username)
+
+            if (userScores.length < 1)
+                return m.reply('Go play the map first, dumb bitch - Belial 2018')
+
             let score
 
             if (!compMods || !prevBeatmap.performance) {

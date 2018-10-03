@@ -102,7 +102,6 @@ client.on("message", message => {
                     "devMode": devMode
                 })
 
-                console.log(devMode)
                 if (devMode) {
                     client.user.setActivity(`In dev mode`)
                 } else {
@@ -139,7 +138,7 @@ client.on("message", message => {
                 command.execute(message, args, commandHistory)
             }
 
-            logCommand(message, command.name)
+            logCommand(message, command.name, args)
 
         } catch (error) {
             console.error(error)
@@ -219,11 +218,11 @@ client.on('guildDelete', guild => {
         })
 })
 
-const logCommand = (message, command) => {
+const logCommand = (message, command, args = []) => {
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)
     const time = currentTime.toTimeString().slice(0, 9)
-    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}]: ${command} on ${date} at ${time}`)
+    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}]: ${command} ${args.join(' ') === '' ? '' : '[' + args.join(' ') + ']'} on ${date} at ${time}`)
 }
 
 async function tracking(first, rankingEmojis, db) {
