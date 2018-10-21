@@ -146,16 +146,16 @@ customExports.getNewTrackedScores = (first, db) => {
                 const trackedUsers = trackedGuilds[guild]
                 for (let user in trackedUsers) { //For each User
 
-                    const usersTop100 = await customExports.getUserTop(trackedUsers[user].osuName)
+                    const userBest = await customExports.getUserTop(trackedUsers[user].osuName, trackedUsers[user].limit)
                     const usersRecent = await customExports.getUserRecent(trackedUsers[user].osuName, 50)
                     let updatedRecent = []
 
                     //Check if new no top 100 data, and if so, add it to the DB
-                    if (trackedUsers[user].top100 === undefined) {
-                        dbTrack.child(`/${guild}/${user}/top100`).set(usersTop100)
+                    if (trackedUsers[user].userBest === undefined) {
+                        dbTrack.child(`/${guild}/${user}/userBest`).set(userBest)
                             .catch(() => {
                                 isError = true
-                                console.log(`Error storing ${trackedUsers[user].osuName}'s top 100 scores`)
+                                console.log(`Error storing ${trackedUsers[user].osuName}'s top scores`)
                             })
                     }
                     //Check if new no recent data, and if so, add it to the DB
@@ -165,25 +165,25 @@ customExports.getNewTrackedScores = (first, db) => {
 
                     if (first) {
                         //See if each of the new top 100 scores exist in the db top 100 scores
-                        const prevTop100 = trackedUsers[user].top100
+                        const prevTop100 = trackedUsers[user].userBest
 
-                        for (let score in usersTop100) { //For each score in NEW top 100
+                        for (let score in userBest) { //For each score in NEW top 100
                             let scoreMatch = false
 
                             if (score === 2)
                                 break
 
                             for (let record in prevTop100) {
-                                if (usersTop100[score].date === prevTop100[record].date)
+                                if (userBest[score].date === prevTop100[record].date)
                                     scoreMatch = true
                             }
 
                             if (!scoreMatch) {
-                                let playDate = Date.parse(usersTop100[score].date)
+                                let playDate = Date.parse(userBest[score].date)
                                 let currentDate = Date.now() - 3600000
 
                                 if (currentDate - playDate < 86400000) {
-                                    changedScoresArray.push(usersTop100[score])
+                                    changedScoresArray.push(userBest[score])
                                 }
                             }
                         }
@@ -211,10 +211,12 @@ customExports.getNewTrackedScores = (first, db) => {
                         for (let newR in updatedRecent) {
                             let scoreMatch = false
 
-                            for (let prevBest in usersTop100) {
-                                if (updatedRecent[newR].date === usersTop100[prevBest].date)
+                            for (let prevBest in userBest) {
+                                if (updatedRecent[newR].date === userBest[prevBest].date)
                                     scoreMatch = true
                             }
+
+
 
                             if (scoreMatch)
                                 changedScoresArray.push(updatedRecent[newR])
@@ -234,7 +236,7 @@ customExports.getNewTrackedScores = (first, db) => {
                     }
 
                     //Update database
-                    dbTrack.child(`/${guild}/${user}/top100`).set(usersTop100)
+                    dbTrack.child(`/${guild}/${user}/userBest`).set(userBest)
 
                     counter++
                     if (counter === usersToTrack) {

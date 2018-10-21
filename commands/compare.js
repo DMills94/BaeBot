@@ -1,7 +1,4 @@
-const axios = require('axios')
 const Discord = require('discord.js')
-const {osuApiKey} = require('../config.json')
-const ojsama = require('ojsama')
 const functions = require('./exportFunctions.js')
 
 module.exports = {

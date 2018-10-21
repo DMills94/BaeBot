@@ -27,9 +27,29 @@ module.exports = {
             args.shift()
             let argUsernamesRaw = args.join(' ').split(',')
             let argUsernames = []
+            let trackLimit = 100
+
             for (let user in argUsernamesRaw) {
-                newName = argUsernamesRaw[user].trim()
-                argUsernames.push(newName)
+                let nameToTrack
+                const userToTrack = argUsernamesRaw[user].trim()
+                const userToTrackArr = userToTrack.split(' ')
+
+                for (let index in userToTrackArr) {
+                    if (userToTrackArr[index].startsWith('top=')) {
+                        trackLimit = parseInt(userToTrackArr[index].substring(4))
+                        userToTrackArr.splice(index, 1)
+                    }
+                }
+
+                nameToTrack = userToTrackArr.join('_')
+
+                trackInfo = {
+                    username: nameToTrack,
+                    limit: trackLimit
+                }
+
+                argUsernames.push(trackInfo)
+                trackLimit = 100 //something
             }
 
             if (argUsernames.length > 10)
@@ -38,7 +58,7 @@ module.exports = {
             //multiadd
             for (let arg in argUsernames) {
 
-                let username = argUsernames[arg]
+                let username = argUsernames[arg].username
 
                 //check username exists
                 axios.get('api/get_user', {
@@ -58,11 +78,11 @@ module.exports = {
                             params: {
                                 k: osuApiKey,
                                 u: username,
-                                limit: 100
+                                limit: argUsernames[arg].limit
                             }
                         })
                             .then(resp => {
-                                const top100 = resp.data
+                                const userBest = resp.data
 
                                 dbTrack.once('value', obj => {
 
@@ -80,13 +100,14 @@ module.exports = {
                                         const trackInfo = {
                                             osuName: username,
                                             channel: m.channel.id,
-                                            top100: top100
+                                            limit: argUsernames[arg].limit,
+                                            userBest: userBest
                                         }
 
                                         dbTrack.push().set(trackInfo)
                                             .then(() => {
                                                 console.log("[TRACK] ADD - POST SUCCESS")
-                                                return m.channel.send(`\`${username}\` is now being tracked for new top100 osu! standard scores!`)
+                                                return m.channel.send(`\`${username}\` is now being tracked for osu! standard scores in their \`top ${argUsernames[arg].limit}\`!`)
                                             })
                                             .catch(err => {
                                                 console.log(err)
@@ -202,14 +223,17 @@ module.exports = {
 
                 for (let entry in obj.val()) {
                     if (m.channel.id === obj.val()[entry].channel) {
-                        usernameArr.push(obj.val()[entry].osuName)
+                        usernameArr.push({
+                            username: obj.val()[entry].osuName,
+                            limit: obj.val()[entry].limit
+                        })
                     }
                 }
                 if (usernameArr.length > 0) {
                     trackedText += `__List of tracked users in this channel__ \n\`\`\``
 
                     for (let name in usernameArr) {
-                        trackedText += `\n - ${usernameArr[name]}`
+                        trackedText += `\n - Top: ${(usernameArr[name].limit).toString().length === 2 ? usernameArr[name].limit + ' ' : usernameArr[name].limit} | ${usernameArr[name].username}`
                     }
 
                     trackedText += "```"

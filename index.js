@@ -30,19 +30,6 @@ client.on("ready", () => {
         client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
     }
 
-    if (client.user.id === "438366424805933056") {
-        client.channels.get("476676731755823105").fetchMessage("476680709428346880")
-            .then(message => {
-                currentTime = new Date()
-                date = currentTime.toDateString()
-                time = currentTime.toTimeString()
-                message.edit(`I am online! Last refresh on **${date}** at **${time}**`)
-            })
-            .catch(err => {
-                console.log(err)
-            })
-    }
-
     const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis
 
     console.log('Starting tracking..')
@@ -256,8 +243,8 @@ async function tracking(first, rankingEmojis, db) {
 
 //Database Auth
 admin.initializeApp({
-    credential: admin.credential.cert(config.serviceAccountKey),
-    databaseURL: config.dbUrl
+    credential: admin.credential.cert(config.serviceAccountKeyTest),
+    databaseURL: config.dbUrlTest
 })
 
 //Assign database
