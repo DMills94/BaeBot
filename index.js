@@ -74,6 +74,10 @@ client.on("message", message => {
         let playNum
         let top5 = true
 
+        if (commandName === 'r') {
+            commandName = 'recent'
+        }
+
         //If specific top play remove numbers
         if (commandName.includes("top") && commandName.length > 3) {
             playNum = parseInt(commandName.slice(3))

@@ -16,7 +16,7 @@ module.exports = {
             .setAuthor("osu! related commands")
             .addField(`${prefix}user [USER_NAME]`, "Look up basic profile stats of a user")
             .addField(`${prefix}top [USER_NAME] / top[x] [USER_NAME]`, "Display a users Top-5, or Top-X play where X is an integer between 1 and 100.")
-            .addField(`${prefix}recent [USER_NAME]`, "Displays the users most recent play (within 24 hours)")
+            .addField(`${prefix}recent/r [USER_NAME]`, "Displays the users most recent play (within 24 hours)")
             .addField(`${prefix}compare [USER_NAME]`, "Compares the users best score on the last beatmap posted.")
             .addField(`${prefix}rb [USER_NAME] / rb[x] [USER_NAME]`, "Shows the users recent best score, or X recent best where X is an integer between 1 and 100.")
             .addField(`${prefix}track`, "Use ` `track -help` for more info!")

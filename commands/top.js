@@ -99,16 +99,18 @@ module.exports = {
                     colour = "#cd7f32"
                     break
                 default:
-                    colour = "#c0c0c0"
+                    colour = "#0096CF"
                     break
             }
+
+            const mapStatus = functions.approvedStatus(beatmapList[0].approved)
 
             embed
                 .setColor(colour)
                 .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
                 .setThumbnail("https://b.ppy.sh/thumb/" + beatmapList[0].beatmapset_id + "l.jpg")
                 .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, topPlays, beatmapList, rankingEmojis))
-                .setFooter("Message sent: ")
+                .setFooter(`${mapStatus} | Beatmap by ${beatmapList[0].creator} | Message sent: `)
                 .setTimestamp()
 
             functions.storeLastBeatmap(m.guild, beatmapList[0], topPlays[0], db)

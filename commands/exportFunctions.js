@@ -126,7 +126,6 @@ customExports.storeLastBeatmap = (guild, beatmap, performance, db) => {
 
 customExports.getNewTrackedScores = (first, db) => {
     return new Promise(resolve => {
-        let isError = false
         let usersToTrack = 0
         let changedScoresArray = []
         let counter = 0
@@ -321,6 +320,27 @@ customExports.timeDifference = (current, previous) => {
     } else {
         time = Math.round(elapsed / msPerYear)
         return `${time} ${time > 1 ? "years ago" : "year ago"}`
+    }
+}
+
+customExports.approvedStatus = value => {
+    switch(value) {
+        case '-2':
+            return 'Graveyard'
+        case '-1':
+            return 'WIP'
+        case '0':
+            return 'Pending'
+        case '1':
+            return 'Ranked'
+        case '2':
+            return 'Approved'
+        case '3':
+            return 'Qualified'
+        case '4':
+            return 'Loved'
+        default:
+            return value
     }
 }
 

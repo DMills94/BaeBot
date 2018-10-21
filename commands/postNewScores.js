@@ -146,7 +146,7 @@ const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, 
                     colour = "#cd7f32"
                     break
                 default:
-                    colour = "#c0c0c0"
+                    colour = "#0096CF"
                     break
             }
 
@@ -167,9 +167,18 @@ const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, 
                 for (let entry in trackedUsers) {
                     if (userInfo.username === trackedUsers[entry].osuName) {
                         const channelToSend = client.find('id', trackedUsers[entry].channel)
-                        channelToSend.send({
-                            embed: embed
-                        })
+
+                        try {
+                            channelToSend.send({
+                                embed: embed
+                            })
+                        }
+                        catch(err) {
+                            console.log('ChannelToSend not found!')
+                            console.log(trackedUsers[entry])
+                            console.log(userInfo.username)
+                            console.log(err)
+                        }
 
                         const guildID = client.get(trackedUsers[entry].channel).guild
 

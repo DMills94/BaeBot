@@ -1,33 +1,32 @@
-const axios = require('axios');
-const {osuApiKey, baeID} = require('../config.json');
+const axios = require('axios')
+const {osuApiKey, baeID} = require('../config.json')
 
 module.exports = {
     name: 'track',
     description: 'Adds a user to tracking',
     execute(m, args, db) {
         if (!m.channel.permissionsFor(m.member).has("ADMINISTRATOR") && m.author.id !== baeID) {
-            return m.reply('sorry brah, this is currently only a feature for your boy Bae');
+            return m.reply('sorry brah, this is currently only a feature for users with Administrative permissions.')
         }
-        ;
 
-        let existingLink = false;
+        let existingLink = false
 
         const dbTrack = db.ref(`/track/${m.guild.id}`)
 
         if (args[0] === '-help') {
-            let helpText = `Tracking Commands | \`track [command]`;
-            helpText += '\n ```\t-help : Hey, you are already here!';
-            helpText += '\n\t-add [osu username],[osu username]...: Adds a users to be tracked, separated by a comma';
-            helpText += '\n\t-delete [osu username] : Removes a user from being tracked';
-            helpText += '\n\t-list : List the users currently being tracked```';
+            let helpText = `Tracking Commands | \`track [command]`
+            helpText += '\n ```\t-help : Hey, you are already here!'
+            helpText += '\n\t-add [osu username],[osu username]...: Adds a users to be tracked, separated by a comma'
+            helpText += '\n\t-delete [osu username] : Removes a user from being tracked'
+            helpText += '\n\t-list : List the users currently being tracked```'
             helpText += '\nTracking is currently a test feature, it will only track osu standard and also will always track the top 100 scores of the user.'
 
             m.channel.send(helpText)
         }
         else if (args[0] === '-add') {
-            args.shift();
-            let argUsernamesRaw = args.join(' ').split(',');
-            let argUsernames = [];
+            args.shift()
+            let argUsernamesRaw = args.join(' ').split(',')
+            let argUsernames = []
             for (let user in argUsernamesRaw) {
                 newName = argUsernamesRaw[user].trim()
                 argUsernames.push(newName)
@@ -50,11 +49,10 @@ module.exports = {
                 })
                     .then(resp => {
                         if (resp.data.length < 1) {
-                            return m.reply(`The username ${username} doesn't exist! Please try again`);
+                            return m.reply(`The username ${username} doesn't exist! Please try again`)
                         }
-                        ;
 
-                        username = resp.data[0].username;
+                        username = resp.data[0].username
 
                         axios.get('api/get_user_best', {
                             params: {
@@ -64,7 +62,7 @@ module.exports = {
                             }
                         })
                             .then(resp => {
-                                const top100 = resp.data;
+                                const top100 = resp.data
 
                                 dbTrack.once('value', obj => {
 
@@ -87,12 +85,12 @@ module.exports = {
 
                                         dbTrack.push().set(trackInfo)
                                             .then(() => {
-                                                return m.channel.send(`\`${username}\` is now being tracked for new top100 osu! standard scores!`)
                                                 console.log("[TRACK] ADD - POST SUCCESS")
+                                                return m.channel.send(`\`${username}\` is now being tracked for new top100 osu! standard scores!`)
                                             })
                                             .catch(err => {
+                                                console.log(err)
                                                 return m.channel.send(`I'm sorry there's an issue adding users to tracking right now. Please try again later.`)
-                                                console.log(err);
                                             })
                                     }
                                     else {
@@ -114,7 +112,7 @@ module.exports = {
             }
         }
         else if (args[0] === '-delete') {
-            args.shift();
+            args.shift()
             let username = args.join('_')
 
             if (username === '--all') {
@@ -172,7 +170,7 @@ module.exports = {
 
                             for (let user in trackedUsers) {
                                 if (trackedUsers[user].osuName === username && m.channel.id === trackedUsers[user].channel) {
-                                    existingLink = true;
+                                    existingLink = true
                                     username = trackedUsers[user].osuName
                                     keyToDelete = trackedUsers[user].id
                                 }
@@ -184,12 +182,12 @@ module.exports = {
                             else {
                                 dbTrack.child(keyToDelete).remove()
                                     .then(() => {
-                                        console.log("[POST SUCCESS]");
-                                        m.channel.send(`\`${username}\` has been removed from tracking.`);
+                                        console.log("[POST SUCCESS]")
+                                        m.channel.send(`\`${username}\` has been removed from tracking.`)
                                     })
                                     .catch(err => {
                                         m.reply(`there's an error deleting users from track right now, please try again later!`)
-                                        console.log(err);
+                                        console.log(err)
                                     })
                             }
                         })
@@ -204,7 +202,7 @@ module.exports = {
 
                 for (let entry in obj.val()) {
                     if (m.channel.id === obj.val()[entry].channel) {
-                        usernameArr.push(obj.val()[entry].osuName);
+                        usernameArr.push(obj.val()[entry].osuName)
                     }
                 }
                 if (usernameArr.length > 0) {

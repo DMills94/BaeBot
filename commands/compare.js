@@ -112,14 +112,16 @@ module.exports = {
 
             let rankImage = rankingEmojis.find("name", score.rank)
 
+            const mapStatus = functions.approvedStatus(prevBeatmap.beatmap.approved)
+            
             let embed = new Discord.RichEmbed()
-                .setColor("#c0c0c0")
+                .setColor("#0096CF")
                 .setAuthor(`Best Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                 .setThumbnail("https://b.ppy.sh/thumb/" + prevBeatmap.beatmap.beatmapset_id + "l.jpg")
                 .setTitle(prevBeatmap.beatmap.artist + " - " + prevBeatmap.beatmap.title + " [" + prevBeatmap.beatmap.version + "]")
                 .setURL("https://osu.ppy.sh/b/" + prevBeatmap.beatmap.beatmap_id)
-                .addField(`\u2022 \:star: **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp~~" : "**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}x/**${prevBeatmap.beatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
-                .setFooter("Message sent: ")
+                .addField(`\u2022 \:star: **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp~~" : "**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.beatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}x/**${prevBeatmap.beatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
+                .setFooter(`${mapStatus} | Beatmap by ${prevBeatmap.beatmap.creator}  | Message sent: `)
                 .setTimestamp()
 
             //Send Embed to Channel

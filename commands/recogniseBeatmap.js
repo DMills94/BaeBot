@@ -128,9 +128,7 @@ const beatmapLookup = (urlInfo, m, mods, db) => {
             for (let i = 0; i < beatmapAPI.length; i++) {
 
                 for (let key in approvedRatings) {
-                    if (beatmapAPI[i].approved === approvedRatings[key]) {
-                        beatmapAPI[i].approved = key
-                    }
+                    functions.approvedStatus(beatmapAPI[i].approved)
                 }
 
                 beatmapAPI[i].total_length = convertToMinutes(beatmapAPI[i].total_length)
