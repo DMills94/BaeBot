@@ -176,7 +176,7 @@ client.on("message", message => {
             message.reply("begone thot.")
             console.log(`Called Wiqued a thot :)`)
         } else {
-            message.channel.send("I am sorry :( If i am not working correctly please contact my owner `@Bae#3308`")
+            message.channel.send("I am sorry :( If i am not working correctly please contact my owner <@Bae#3308>")
         }
     }
 
@@ -243,8 +243,8 @@ async function tracking(first, rankingEmojis, db) {
 
 //Database Auth
 admin.initializeApp({
-    credential: admin.credential.cert(config.serviceAccountKeyTest),
-    databaseURL: config.dbUrlTest
+    credential: admin.credential.cert(config.serviceAccountKey),
+    databaseURL: config.dbUrl
 })
 
 //Assign database
