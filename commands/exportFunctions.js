@@ -179,12 +179,7 @@ customExports.getNewTrackedScores = (first, db) => {
                             }
 
                             if (!scoreMatch) {
-                                let playDate = Date.parse(userBest[score].date)
-                                let currentDate = Date.now() - 3600000
-
-                                if (currentDate - playDate < 86400000) {
-                                    changedScoresArray.push(userBest[score])
-                                }
+                                changedScoresArray.push(userBest[score])
                             }
                         }
 
@@ -225,7 +220,7 @@ customExports.getNewTrackedScores = (first, db) => {
                         //Check existing 24 hour recent and remove scores >24 hours old
                         for (let recent in prevRecent) {
                             let playDate = Date.parse(prevRecent[recent].date)
-                            let currentDate = Date.now() - 3600000
+                            let currentDate = Date.now() - 0
 
                             if (currentDate - playDate < 86400000) {
                                 updatedRecent.push(prevRecent[recent])

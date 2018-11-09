@@ -78,7 +78,7 @@ module.exports = {
         recent.accuracy = functions.determineAcc(recent)
 
         let playDate = Date.parse(recent.date)
-        let currentDate = Date.now() - 3600000
+        let currentDate = Date.now() - 0
         recent.date = functions.timeDifference(currentDate, playDate)
 
         const ppInfo = await functions.calculate(beatmapInfo, recent)

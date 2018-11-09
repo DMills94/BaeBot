@@ -98,7 +98,7 @@ module.exports = {
             score.accuracy = functions.determineAcc(score)
 
             let playDate = Date.parse(score.date)
-            let currentDate = Date.now() - 3600000
+            let currentDate = Date.now() - 0
             score.date = functions.timeDifference(currentDate, playDate)
 
             const ppInfo = await functions.calculate(prevBeatmap.beatmap, score)

@@ -93,7 +93,6 @@ const convertToMinutes = seconds => {
 }
 
 const beatmapLookup = (urlInfo, m, mods, db) => {
-    let beatmap = {}
     let params = {}
     if (urlInfo.beatmapId) {
         params = {
@@ -127,9 +126,7 @@ const beatmapLookup = (urlInfo, m, mods, db) => {
 
             for (let i = 0; i < beatmapAPI.length; i++) {
 
-                for (let key in approvedRatings) {
-                    functions.approvedStatus(beatmapAPI[i].approved)
-                }
+                beatmapAPI[i].approved = functions.approvedStatus(beatmapAPI[i].approved)
 
                 beatmapAPI[i].total_length = convertToMinutes(beatmapAPI[i].total_length)
 

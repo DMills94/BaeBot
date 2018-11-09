@@ -52,7 +52,7 @@ module.exports = {
         usersScore.accuracy = functions.determineAcc(usersScore)
 
         let playDate = usersScore.date
-        let currentDate = Date.now() - 3600000
+        let currentDate = Date.now() - 0
         usersScore.date = functions.timeDifference(currentDate, playDate)
 
         const userInfo = await functions.getUser(username, 0)

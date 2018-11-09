@@ -32,6 +32,8 @@ client.on("ready", () => {
 
     const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis
 
+    //Check bot hasn't left any servers, if so remove their db entries
+
     console.log('Starting tracking..')
     tracking(true, rankingEmojis, db)
 
@@ -60,6 +62,9 @@ client.on("message", message => {
         let commandName = args.shift()
         let playNum
         let top5 = true
+
+        if (commandName.includes('`'))
+            return
 
         if (commandName === 'r') {
             commandName = 'recent'
@@ -144,7 +149,7 @@ client.on("message", message => {
         console.log(`Called Wiqued a thot :)`)
     }
 
-    if (uI.includes(":pepehands:")) {
+    if (uI.includes("pepehands")) {
         const emoji = client.emojis.find("name", "PepeHands")
         message.react(emoji)
     }
@@ -243,8 +248,8 @@ async function tracking(first, rankingEmojis, db) {
 
 //Database Auth
 admin.initializeApp({
-    credential: admin.credential.cert(config.serviceAccountKeyTest),
-    databaseURL: config.dbUrlTest
+    credential: admin.credential.cert(config.serviceAccountKey),
+    databaseURL: config.dbUrl
 })
 
 //Assign database

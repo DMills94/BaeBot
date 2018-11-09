@@ -1,5 +1,6 @@
 const axios = require('axios')
 const {osuApiKey, baeID} = require('../config.json')
+const functions = require('./exportFunctions')
 
 module.exports = {
     name: 'track',
@@ -84,6 +85,10 @@ module.exports = {
                             .then(resp => {
                                 const userBest = resp.data
 
+                                const userRecent = functions.getUserRecent(username)
+
+                                console.log(userRecent)
+
                                 dbTrack.once('value', obj => {
 
                                     const trackedUsers = obj.val()
@@ -101,7 +106,8 @@ module.exports = {
                                             osuName: username,
                                             channel: m.channel.id,
                                             limit: argUsernames[arg].limit,
-                                            userBest: userBest
+                                            userBest: userBest,
+                                            recent24hr: userRecent
                                         }
 
                                         dbTrack.push().set(trackInfo)
