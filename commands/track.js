@@ -1,6 +1,7 @@
 const axios = require('axios')
 const {osuApiKey, baeID} = require('../config.json')
-const functions = require('./exportFunctions')
+
+const functions = require('./exportFunctions.js')
 
 module.exports = {
     name: 'track',
@@ -17,7 +18,7 @@ module.exports = {
         if (args[0] === '-help') {
             let helpText = `Tracking Commands | \`track [command]`
             helpText += '\n ```\t-help : Hey, you are already here!'
-            helpText += '\n\t-add [osu username],[osu username]...: Adds a users to be tracked, separated by a comma'
+            helpText += '\n\t-add [osu username] [top=x],[osu username]...: Adds a users to be tracked, separated by a comma. `top=x` is optional parameter, default is 100.'
             helpText += '\n\t-delete [osu username] : Removes a user from being tracked'
             helpText += '\n\t-list : List the users currently being tracked```'
             helpText += '\nTracking is currently a test feature, it will only track osu standard and also will always track the top 100 scores of the user.'
@@ -86,8 +87,6 @@ module.exports = {
                                 const userBest = resp.data
 
                                 const userRecent = functions.getUserRecent(username)
-
-                                console.log(userRecent)
 
                                 dbTrack.once('value', obj => {
 
@@ -252,6 +251,7 @@ module.exports = {
                     m.channel.send("There are currently no users being tracked. Get started with ` `track -help`!")
                 }
             })
+                .catch(err => console.log(err))
         }
         else {
             return m.reply('invalid arguments! Lost? Try ` `track -help`')
