@@ -224,6 +224,8 @@ module.exports = {
         else if (args[0] === '-list') {
 
             dbTrack.once('value', obj => {
+                console.log(obj)
+                console.log(obj.val())
                 let usernameArr = []
                 let trackedText = ''
 
