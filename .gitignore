@@ -4,3 +4,8 @@ config.json
 #Node Modules
 node_modules/
 .idea/
+
+#Any firebase shit (for now)
+.firebaserc
+firebase.json
+database.rules.json

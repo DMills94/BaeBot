@@ -1,35 +1,53 @@
 const axios = require('axios')
 const {osuApiKey} = require('../config.json')
 const ojsama = require('ojsama')
+const database = require('../localdb.json')
 
 let customExports = module.exports = {}
 
 customExports.lookupUser = (authorID, db) => {
     return new Promise((resolve, reject) => {
-        const linkDB = db.ref('/linkedUsers/')
+        const linkDB = database.linkedUsers
+        
         let username
         let existingLink = false
 
-        linkDB.once('value', obj => {
-            const linkedUsers = obj.val()
+        // linkDB.once('value', obj => {
+        //     const linkedUsers = obj.val()
 
-            for (let user in linkedUsers) {
-                if (linkedUsers[user].discordID === authorID) {
-                    existingLink = true
-                    username = linkedUsers[user].osuName
-                }
-            }
+        //     for (let user in linkedUsers) {
+        //         if (linkedUsers[user].discordID === authorID) {
+        //             existingLink = true
+        //             username = linkedUsers[user].osuName
+        //         }
+        //     }
 
-            if (existingLink) {
-                resolve(username)
-            } else {
-                reject()
+        //     if (existingLink) {
+        //         resolve(username)
+        //     } else {
+        //         reject()
+        //     }
+        // })
+        //     .catch(() => {
+        //         console.log("There was an error checking for a linked account in the database!")
+        //     })
+
+        Object.keys(linkDB).forEach(link => {
+            if (authorID === link) {
+                console.log(link)
+                existingLink = true
+                username = linkDB[link].osuName
             }
         })
-            .catch(() => {
-                console.log("There was an error checking for a linked account in the database!")
-            })
 
+        console.log(username)
+
+        if (existingLink) {
+            resolve(username)
+        }
+        else {
+            reject()
+        }
     })
 }
 

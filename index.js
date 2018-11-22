@@ -59,12 +59,17 @@ client.on("message", message => {
     if (uI.startsWith(config.prefix)) {
 
         const args = uI.slice(config.prefix.length).split(" ")
+
+        console.log(args)
+
+        args.forEach(word => {
+            if (word.includes('`'))
+                return
+        })
+
         let commandName = args.shift()
         let playNum
         let top5 = true
-
-        if (commandName.includes('`'))
-            return
 
         if (commandName === 'r') {
             commandName = 'recent'
