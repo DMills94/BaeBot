@@ -8,7 +8,7 @@ module.exports = {
         let username
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id, db)
+            username = await functions.lookupUser(m.author.id)
                 .catch(err => {
                     m.reply("you do not have a linked account! Try ` `link [username]`")
                     return
@@ -19,7 +19,7 @@ module.exports = {
             if (discordId.startsWith("!")) {
                 discordId = discordId.slice(1)
             }
-            username = await functions.lookupUser(discordId, db)
+            username = await functions.lookupUser(discordId)
                 .catch(() => {
                     m.reply("they do not have a linked account so I cannot find their top plays :(")
                     return
@@ -124,6 +124,6 @@ module.exports = {
         //Send Embed to Channel
         m.channel.send({embed: embed})
 
-        functions.storeLastBeatmap(m.guild, beatmapInfo, recent, db)
+        functions.storeLastBeatmap(m.guild, beatmapInfo, recent)
     }
 }

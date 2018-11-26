@@ -301,7 +301,7 @@ const beatmapLookup = (urlInfo, m, mods, db) => {
 
                             m.channel.send({embed: embed})
 
-                            functions.storeLastBeatmap(m.guild, beatmapAPI[0], null, db)
+                            functions.storeLastBeatmap(m.guild, beatmapAPI[0], null)
                         }
 
                         counter++

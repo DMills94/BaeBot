@@ -35,10 +35,10 @@ client.on("ready", () => {
     //Check bot hasn't left any servers, if so remove their db entries
 
     console.log('Starting tracking..')
-    tracking(true, rankingEmojis, db)
+    tracking(false, rankingEmojis)
 
     setInterval(() => {
-        tracking(false, rankingEmojis, db)
+        tracking(false, rankingEmojis)
     }, 150000)
 })
 
@@ -59,8 +59,6 @@ client.on("message", message => {
     if (uI.startsWith(config.prefix)) {
 
         const args = uI.slice(config.prefix.length).split(" ")
-
-        console.log(args)
 
         args.forEach(word => {
             if (word.includes('`'))
@@ -186,7 +184,7 @@ client.on("message", message => {
             message.reply("begone thot.")
             console.log(`Called Wiqued a thot :)`)
         } else {
-            message.channel.send("I am sorry :( If i am not working correctly please contact my owner <@Bae#3308>")
+            message.channel.send(`<@122136963129147393> i'm being bullied \:sob:`)
         }
     }
 
@@ -226,10 +224,12 @@ const logCommand = (message, command, args = []) => {
     console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}]: ${command} ${args.join(' ') === '' ? '' : '[' + args.join(' ') + ']'} on ${date} at ${time}`)
 }
 
-async function tracking(first, rankingEmojis, db) {
+async function tracking(first, rankingEmojis) {
     let newScores
 
-    const newScoresDuplicates = await functions.getNewTrackedScores(first, db)
+    const newScoresDuplicates = await functions.getNewTrackedScores(first)
+
+    console.log('Finished detecting new scores!')
 
     newScores = newScoresDuplicates.filter((object, index) =>
         index === newScoresDuplicates.findIndex((obj) => (
@@ -244,7 +244,7 @@ async function tracking(first, rankingEmojis, db) {
         console.log(newScores)
         console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`)
         for (let score in newScores) {
-            client.commands.get("postnew").execute(newScores[score], db, rankingEmojis, client.channels)
+            client.commands.get("postnew").execute(newScores[score], null, rankingEmojis, client.channels)
         }
     } else {
         console.log(`[TRACKING] No new scores detected: ${date} at ${time}`)

@@ -182,7 +182,7 @@ const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, 
 
                         const guildID = client.get(trackedUsers[entry].channel).guild
 
-                        functions.storeLastBeatmap(guildID, prevBeatmap, score, db)
+                        functions.storeLastBeatmap(guildID, prevBeatmap, score)
                     }
                 }
             }
