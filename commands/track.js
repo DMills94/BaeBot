@@ -116,8 +116,6 @@ module.exports = {
                     }
                     else {
                         if (Object.keys(database.track[username].channels).includes(channelID)) {
-                            console.log(database.track[username].channels[channelID])
-                            console.log(argUsernames[arg].limit)
                             if (database.track[username].channels[channelID] === argUsernames[arg].limit) {
                                 m.channel.send(`\`${username}\` is already being tracked!`)
                             }

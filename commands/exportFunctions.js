@@ -8,24 +8,10 @@ let customExports = module.exports = {}
 
 customExports.lookupUser = (authorID) => {
     return new Promise((resolve, reject) => {
-        const linkDB = database.linkedUsers
-        
-        let username
-        let existingLink = false
-
-        Object.keys(linkDB).forEach(link => {
-            if (authorID === link) {
-                existingLink = true
-                username = linkDB[link].osuName
-            }
-        })
-
-        if (existingLink) {
-            resolve(username)
-        }
-        else {
+        if (Object.keys(database.linkedUsers).includes(authorID))
+            resolve(database.linkedUsers[authorID])
+        else
             reject()
-        }
     })
 }
 

@@ -9,7 +9,7 @@ module.exports = {
 
         if (args.length === 0) {
             username = await functions.lookupUser(m.author.id)
-                .catch(err => {
+                .catch(() => {
                     m.reply('you do not have a linked account! Try ` `link [username]`')
                     return
                 })
@@ -32,6 +32,7 @@ module.exports = {
         if (!username) {
             return
         }
+
 
         //osu API calls
         const userInfo = await functions.getUser(username, 0)
