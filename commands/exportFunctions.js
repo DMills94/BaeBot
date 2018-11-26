@@ -121,9 +121,8 @@ customExports.storeLastBeatmap = (guild, beatmap, performance) => {
     })
 }
 
-customExports.getNewTrackedScores = (first) => {
+customExports.getNewTrackedScores = first => {
     return new Promise(resolve => {
-        let usersToTrack = Object.keys(database.track).length
         let changedScoresArray = []
         let counter = 0
 
@@ -131,7 +130,6 @@ customExports.getNewTrackedScores = (first) => {
             //Get users Top 100
             const userBest = await customExports.getUserTop(user)
             const userRecent = await customExports.getUserRecent(user, 50)
-            let updatedRecent = []
 
             //Check for new recent data, if so, add to DB
             if (database.track[user].recent24hr === undefined)
@@ -152,64 +150,65 @@ customExports.getNewTrackedScores = (first) => {
                     if (!scoreMatch)
                         changedScoresArray.push(score)
                 })
-
-                fs.writeFileSync('localdb.json', JSON.stringify(database), err => {
-                    if (err) return console.log(err)
-                })
             }
             else {
                 //See if new recent scores exist and if they're in the new top 100
                 const prevRecent = database.track[user].recent24hr
-
                 //Get new recent
-                userRecent.forEach(newPlay => {
-                    let scoreMatch = false
+                const newRecent = userRecent.filter(newPlay => { //50 new plays max
+                    let match = false
 
                     prevRecent.forEach(oldPlay => {
-                        if (newPlay.date === oldPlay.date)
-                            scoreMatch = true
+                        if (newPlay.date === oldPlay.date) {
+                            match = true
+                            return
+                        }
                     })
-
-                    if (!scoreMatch)
-                        updatedRecent.push(newPlay)
+                        
+                    return match ? false : true
                 })
 
                 //Compare new recent scores to new top 100
-                updatedRecent.forEach(newR => {
-                    let scoreMatch = false
+                changedScoresArray = newRecent.filter(newPlay => {
+                    let match = false
 
-                    userBest.forEach(best => {
-                        if (newR.date === best.date)
-                            scoreMatch = true
+                    userBest.forEach(topPlay => {
+                        if (newPlay.date === topPlay.date) {
+                            match = true
+                            return
+                        }
                     })
 
-                    if (scoreMatch)
-                        changedScoresArray.push(newR)
+                    return match ? true : false
                 })
 
+
+                let updatedRecent = prevRecent.concat(newRecent)
+
                 //Check existing 24 hour recent and remove scores >24 hours old
-                prevRecent.forEach(prev => {
-                    let playDate = Date.parse(prev.date)
+                updatedRecent.forEach(score => {
+                    let playDate = Date.parse(score.date)
                     let currentDate = Date.now()
 
-                    if (currentDate - playDate < 86400000) {
-                        updatedRecent.push(prev)
+                    if (currentDate - playDate > 86400000) {
+                        updatedRecent = updatedRecent.filter(play => play !== score)
                     }
                 })
 
                 database.track[user].recent24hr = updatedRecent
             }
+            database.track[user].userBest = userBest
 
-            //Update counter
             counter++
-            if (counter == usersToTrack) {
+
+            if (counter === Object.keys(database.track).length) {
+                fs.writeFileSync('localdb.json', JSON.stringify(database), err => {
+                    if (err) return console.log(err)
+                })
+        
                 resolve(changedScoresArray)
             }
         }) 
-        
-        fs.writeFileSync('localdb.json', JSON.stringify(database), err => {
-            if (err) return console.log(err)
-        })
     })
 }
 

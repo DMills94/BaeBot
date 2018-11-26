@@ -5,7 +5,7 @@ const database = require('../localdb.json')
 module.exports = {
     name: "compare",
     description: "Compares the users best play against the last posted beatmap in that guild",
-    async execute(m, args, db, rankingEmojis) {
+    async execute(m, args, rankingEmojis) {
         let username
         let compMods = false
 

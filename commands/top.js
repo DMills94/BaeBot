@@ -4,7 +4,7 @@ const functions = require("./exportFunctions.js")
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
-    async execute(m, args, db, rankingEmojis, plays, top5) {
+    async execute(m, args, rankingEmojis, plays, top5) {
         let username
 
         if (args.length === 0) {

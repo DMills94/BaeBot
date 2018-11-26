@@ -1,53 +1,28 @@
+const fs = require('fs')
+const database = require('../localdb.json')
+
 module.exports = {
-    name: "unlink",
-    description: "unlinks a users discord id to an osu name",
-    execute(m, args, db) {
+    name: 'unlink',
+    description: 'unlinks a users discord id to an osu name',
+    execute(m) {
+        const userID = m.author.id
 
-        const userId = m.author.id;
-        let existingLink = false;
-        let linkedDB = [];
-        let username;
-        let keyToDelete;
+        if (!Object.keys(database.linkedUsers).includes(userID)) {
+            m.react('❎')
+            return m.channel.send('You have no linked account to unlink! Please use ``link [username]` to link an account!')
+        }
 
-        const dbLinked = db.ref("/linkedUsers")
+        const username = database.linkedUsers[userID]
+        delete database.linkedUsers[userID]
 
-        dbLinked.once("value", obj => {
-            const linkedUsers = obj.val()
-
-            for (let key in linkedUsers) {
-                linkedDB.push({
-                    ...linkedUsers[key],
-                    id: key
-                })
+        fs.writeFile('localdb.json', JSON.stringify(database), err => {
+            if (err) {
+                console.log(err)
+                m.react('❎')
+                return m.channel.send(`There was an error unlinking your account, please try again later!`)
             }
-
-            for (let link in linkedDB) {
-                if (userId === linkedDB[link].discordID) {
-                    existingLink = true
-                    username = linkedDB[link].osuName
-                    keyToDelete = linkedDB[link].id
-                }
-            }
-
-            if (!existingLink) {
-                return m.reply("you have no linked account to unlink! Please use ``link [username]` to link an account!")
-            }
-            else {
-                dbLinked.child(keyToDelete).remove()
-                    .then(() => {
-                        console.log("[POST SUCCESS]");
-                        m.channel.send(`You have been unlinked from \`${username}\``);
-                    })
-                    .catch(err => {
-                        m.reply("there's an error storing this data right now, please try again later!")
-                        console.log(err);
-                    })
-            }
-        }, err => {
-            m.reply("there's an error fetching stored data right now, please try again later!")
-            console.log(err.code)
+            m.react('✅')
+            return m.channel.send(`You have successfully unlinked from ${username}`)
         })
-
-
     }
-};
+}

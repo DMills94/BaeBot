@@ -1,190 +1,79 @@
-const axios = require("axios")
-const Discord = require("discord.js")
-const { osuApiKey } = require("../config.json")
-const ojsama = require("ojsama")
-const functions = require("./exportFunctions.js")
+const Discord = require('discord.js')
+const functions = require('./exportFunctions.js')
+const database = require('../localdb.json')
 
 module.exports = {
-    name: "postnew",
-    description: "Posts new scores from updating a users top 100",
-    execute(score, db, rankingEmojis, client) {
+    name: 'postnew',
+    description: 'Posts new scores from updating a users top 100',
+    async execute(score, rankingEmojis, client) {
 
-        //get user
-        axios.get('api/get_user', { params: {
-                k: osuApiKey,
-                u: score.user_id
+        //API Calls
+        const userInfo = await functions.getUser(score.user_id)
+        const beatmapInfo = (await functions.getBeatmap(score.beatmap_id))[0]
+        const topPlays = await functions.getUserTop(userInfo.username)
+
+        for (let play in topPlays) {
+            let scoreMatch = false
+
+            if (score.date === topPlays[play].date)
+                scoreMatch = true
+
+            if (scoreMatch) {
+                score.playNumber = parseInt(play) + 1
             }
-        })
-            .then(resp => {
-                const userInfo = resp.data[0]
-
-                axios.get('api/get_beatmaps', { params: {
-                        k: osuApiKey,
-                        b: score.beatmap_id
-                    }
-                })
-                    .then(resp => {
-                        const beatmapInfo = resp.data[0]
-
-                        axios.get('api/get_user_best', { params: {
-                                k: osuApiKey,
-                                u: score.user_id,
-                                limit: 100
-                            }
-                        })
-                            .then(resp => {
-                                const topPlays = resp.data
-
-                                for (let play in topPlays) {
-                                    let scoreMatch = false
-
-                                    if (score.date === topPlays[play].date)
-                                        scoreMatch = true
-
-                                    if (scoreMatch) {
-                                        score.playNumber = parseInt(play) + 1
-                                    }
-                                }
-
-                                score.enabled_mods = functions.determineMods(score)
-
-                                score.accuracy = functions.determineAcc(score)
-
-                                let playDate = Date.parse(score.date)
-                                let currentDate = Date.now() - 0
-
-                                score.date = functions.timeDifference(currentDate, playDate)
-
-                                calculate(beatmapInfo, score, userInfo, rankingEmojis, client, db)
-                            })
-                            .catch(err => {
-                                console.log(err)
-                            })
-                    })
-                    .catch(err => {
-                        console.log(err)
-                    })
-            })
-            .catch(err => {
-                console.log(err)
-            })
-    }
-}
-
-const calculate = (beatmap, performance, userInfo, rankingEmojis, client, db) => {
-
-    let cleanBeatmap
-
-    axios.get(`osu/${beatmap.beatmap_id}`, { params: {
-            credentials: "include"
         }
-    })
-        .then(resp => {
-            return resp.data
+
+        score.enabled_mods = functions.determineMods(score)
+
+        score.accuracy = functions.determineAcc(score)
+
+        let playDate = Date.parse(score.date)
+        let currentDate = Date.now()
+
+        score.date = functions.timeDifference(currentDate, playDate)
+
+        const ppInfo = await functions.calculate(beatmapInfo, score)
+
+        if (score.rank.length === 1) {
+            score.rank += '_'
+        }
+
+        let rankImage
+
+        rankImage = rankingEmojis.find('name', score.rank)
+        let colour
+
+        switch (score.playNumber) {
+            case 1:
+                colour = '#FFD700'
+                break
+            case 2:
+                colour = '#FFFFFF'
+                break
+            case 3:
+                colour = '#cd7f32'
+                break
+            default:
+                colour = '#0096CF'
+                break
+        }
+
+        let embed = new Discord.RichEmbed()
+            .setColor(colour)
+            .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
+            .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
+            .setTitle(`__PERSONAL BEST #${score.playNumber}__`)
+            .setDescription(`**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`)
+            .addField(`\u2022 \:star: **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString('en')} (${score.accuracy}%) | ${score.rank === 'F_' ? '~~**' + ppInfo.performancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${score.maxcombo === beatmapInfo.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}x/**${beatmapInfo.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
+            .setFooter('Message sent: ')
+            .setTimestamp()
+
+        //Send embed to channels where user tracked
+        const usersTrackedChannels = database.track[userInfo.username].channels
+
+        Object.keys(usersTrackedChannels).forEach(channel => {
+            if (score.playNumber <= usersTrackedChannels[channel])
+                client.get(channel).send({ embed })
         })
-        .then(raw => new ojsama.parser().feed(raw))
-        .then(({ map }) => {
-            cleanBeatmap = map
-
-            let usedMods = ojsama.modbits.from_string(performance.enabled_mods)
-
-            let stars = new ojsama.diff().calc({
-                map: cleanBeatmap,
-                mods: usedMods
-            })
-            let combo = parseInt(performance.maxcombo)
-            let nmiss = parseInt(performance.countmiss)
-            let acc_percent = parseFloat(performance.accuracy)
-
-            let recentPP = ojsama.ppv2({
-                stars: stars,
-                combo: combo,
-                nmiss: nmiss,
-                acc_percent: acc_percent
-            })
-
-            let maxPP = ojsama.ppv2({
-                stars: stars
-            })
-
-            const formattedStars = stars.toString().split(" ")[0]
-            const formattedPerformancePP = recentPP.toString().split(" ")[0]
-            const formattedMaxPP = maxPP.toString().split(" ")[0]
-
-            generateTrackScore(userInfo, beatmap, performance, formattedPerformancePP, formattedMaxPP, formattedStars, rankingEmojis, client, db)
-        })
-        .catch(err => {
-            console.log("Error in get /osu/beatmap_id")
-            console.log(err)
-            return
-        })
-}
-
-const generateTrackScore = (userInfo, prevBeatmap, score, performancePP, maxPP, stars, rankingEmojis, client, db) => {
-    const dbTrack = db.ref('/track/')
-
-    dbTrack.once('value', obj => {
-            const trackedGuilds = obj.val()
-
-            if (score.rank.length === 1) {
-                score.rank += "_"
-            }
-
-            let rankImage
-
-            rankImage = rankingEmojis.find("name", score.rank)
-            let colour
-
-            switch (score.playNumber) {
-                case 1:
-                    colour = "#FFD700"
-                    break
-                case 2:
-                    colour = "#FFFFFF"
-                    break
-                case 3:
-                    colour = "#cd7f32"
-                    break
-                default:
-                    colour = "#0096CF"
-                    break
-            }
-
-            let embed = new Discord.RichEmbed()
-                .setColor(colour)
-                .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
-                .setThumbnail("https://b.ppy.sh/thumb/" + prevBeatmap.beatmapset_id + "l.jpg")
-                .setTitle(`__PERSONAL BEST #${score.playNumber}__`)
-                .setDescription(`**[${prevBeatmap.artist} - ${prevBeatmap.title} [${prevBeatmap.version}]](https://osu.ppy.sh/b/${prevBeatmap.beatmap_id})**`)
-                .addField(`\u2022 \:star: **${stars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + performancePP + "pp**/" + maxPP + "pp~~" : "**" + performancePP + "pp**/" + maxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}x/**${prevBeatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
-                .setFooter("Message sent: ")
-                .setTimestamp()
-
-            //Send Embed to Channel where user is tracked
-
-            for (let guild in trackedGuilds) {
-                const trackedUsers = trackedGuilds[guild]
-                for (let entry in trackedUsers) {
-                    if (userInfo.username === trackedUsers[entry].osuName) {
-                        const channelToSend = client.find('id', trackedUsers[entry].channel)
-
-                        try {
-                            channelToSend.send({
-                                embed: embed
-                            })
-                        }
-                        catch(err) {
-                            console.log('ChannelToSend not found!')
-                            console.log(trackedUsers[entry])
-                            console.log(userInfo.username)
-                            console.log(err)
-                        }
-
-                        const guildID = client.get(trackedUsers[entry].channel).guild
-
-                        functions.storeLastBeatmap(guildID, prevBeatmap, score)
-                    }
-                }
-            }
-        })
+    }
 }

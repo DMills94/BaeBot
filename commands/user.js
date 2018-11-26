@@ -5,7 +5,7 @@ const { prefix } = require('../config')
 module.exports = {
     name: "user",
     description: "Returns stats on the user's osu profile",
-    async execute(m, args, db, rankingEmojis) {
+    async execute(m, args, rankingEmojis) {
 
         let username
         let mode = 0

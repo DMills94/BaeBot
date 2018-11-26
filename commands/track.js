@@ -8,7 +8,7 @@ const functions = require('./exportFunctions.js')
 module.exports = {
     name: 'track',
     description: 'Adds a user to tracking',
-    async execute(m, args, db) {
+    async execute(m, args) {
         const guildID = m.guild.id
         const channelID = m.channel.id
 
@@ -78,7 +78,7 @@ module.exports = {
 
                 const userBest = await functions.getUserTop(username, argUsernames[arg].limit)
 
-                const userRecent = await functions.getUserRecent(username)
+                const userRecent = await functions.getUserRecent(username, 50)
 
                 //CHECK IF TRACK IS EMPTY
                 const trackEmpty = Object.keys(database.track).length < 1
