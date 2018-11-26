@@ -1,3 +1,4 @@
+const fs = require('fs')
 const axios = require('axios')
 const {osuApiKey} = require('../config.json')
 const ojsama = require('ojsama')
@@ -5,42 +6,19 @@ const database = require('../localdb.json')
 
 let customExports = module.exports = {}
 
-customExports.lookupUser = (authorID, db) => {
+customExports.lookupUser = (authorID) => {
     return new Promise((resolve, reject) => {
         const linkDB = database.linkedUsers
         
         let username
         let existingLink = false
 
-        // linkDB.once('value', obj => {
-        //     const linkedUsers = obj.val()
-
-        //     for (let user in linkedUsers) {
-        //         if (linkedUsers[user].discordID === authorID) {
-        //             existingLink = true
-        //             username = linkedUsers[user].osuName
-        //         }
-        //     }
-
-        //     if (existingLink) {
-        //         resolve(username)
-        //     } else {
-        //         reject()
-        //     }
-        // })
-        //     .catch(() => {
-        //         console.log("There was an error checking for a linked account in the database!")
-        //     })
-
         Object.keys(linkDB).forEach(link => {
             if (authorID === link) {
-                console.log(link)
                 existingLink = true
                 username = linkDB[link].osuName
             }
         })
-
-        console.log(username)
 
         if (existingLink) {
             resolve(username)
@@ -129,135 +107,108 @@ customExports.getScores = (bmpId, username) => {
     })
 }
 
-customExports.storeLastBeatmap = (guild, beatmap, performance, db) => {
-    let beatmapObj = {
+customExports.storeLastBeatmap = (guild, beatmap, performance) => {
+    const beatmapObj = {
         beatmap: beatmap,
         performance: performance
     }
 
-    const lastBeatmap = db.ref(`/lastBeatmap/${guild.id}`)
-    lastBeatmap.update(beatmapObj)
-        .catch(() => {
-            console.log("There was an error storing beatmap ID, please try again later.")
-        })
+    const guildID = guild.id
+    database.lastBeatmap[guildID] = beatmapObj
+
+    fs.writeFileSync('localdb.json', JSON.stringify(database), err => {
+        if (err) return console.log(err)
+    })
 }
 
-customExports.getNewTrackedScores = (first, db) => {
+customExports.getNewTrackedScores = first => {
     return new Promise(resolve => {
-        let usersToTrack = 0
         let changedScoresArray = []
         let counter = 0
 
-        //Get tracked users
-        const dbTrack = db.ref('/track/')
+        Object.keys(database.track).forEach(async user => {
+            //Get users Top 100
+            const userBest = await customExports.getUserTop(user)
+            const userRecent = await customExports.getUserRecent(user, 50)
 
-        dbTrack.once('value', async obj => {
-            const trackedGuilds = obj.val()
+            //Check for new recent data, if so, add to DB
+            if (database.track[user].recent24hr === undefined)
+                database.track[user].recent24hr = userRecent
 
-            for (let id in trackedGuilds) {
-                usersToTrack += Object.keys(trackedGuilds[id]).length
+            if (first) {
+                //See if each of the new top 100 scores exist in the db top 100 scores
+                const prevTop100 = database.track[user].userBest
+
+                userBest.forEach(score => {
+                    let scoreMatch = false
+
+                    prevTop100.forEach(record => {
+                        if (score.date === record.date)
+                            scoreMatch = true
+                    })
+
+                    if (!scoreMatch)
+                        changedScoresArray.push(score)
+                })
             }
+            else {
+                //See if new recent scores exist and if they're in the new top 100
+                const prevRecent = database.track[user].recent24hr
+                //Get new recent
+                const newRecent = userRecent.filter(newPlay => { //50 new plays max
+                    let match = false
 
-            //Get users top 100
-
-            for (let guild in trackedGuilds) { //For each Guild
-                const trackedUsers = trackedGuilds[guild]
-                for (let user in trackedUsers) { //For each User
-
-                    const userBest = await customExports.getUserTop(trackedUsers[user].osuName, trackedUsers[user].limit)
-                    const usersRecent = await customExports.getUserRecent(trackedUsers[user].osuName, 50)
-                    let updatedRecent = []
-
-                    //Check if new no top 100 data, and if so, add it to the DB
-                    if (trackedUsers[user].userBest === undefined) {
-                        dbTrack.child(`/${guild}/${user}/userBest`).set(userBest)
-                            .catch(() => {
-                                isError = true
-                                console.log(`Error storing ${trackedUsers[user].osuName}'s top scores`)
-                            })
-                    }
-                    //Check if new no recent data, and if so, add it to the DB
-                    if (trackedUsers[user].recent24hr === undefined) {
-                        dbTrack.child(`/${guild}/${user}/recent24hr`).set(usersRecent)
-                    }
-
-                    if (first) {
-                        //See if each of the new top 100 scores exist in the db top 100 scores
-                        const prevTop100 = trackedUsers[user].userBest
-
-                        for (let score in userBest) { //For each score in NEW top 100
-                            let scoreMatch = false
-
-                            if (score === 2)
-                                break
-
-                            for (let record in prevTop100) {
-                                if (userBest[score].date === prevTop100[record].date)
-                                    scoreMatch = true
-                            }
-
-                            if (!scoreMatch) {
-                                changedScoresArray.push(userBest[score])
-                            }
+                    prevRecent.forEach(oldPlay => {
+                        if (newPlay.date === oldPlay.date) {
+                            match = true
+                            return
                         }
+                    })
+                        
+                    return match ? false : true
+                })
 
-                        dbTrack.child(`/${guild}/${user}/recent24hr`).set(usersRecent)
-                    }
-                    else {
-                        //See if new recent scores exist in the new top 100 scores
-                        const prevRecent = trackedUsers[user].recent24hr
+                //Compare new recent scores to new top 100
+                changedScoresArray = newRecent.filter(newPlay => {
+                    let match = false
 
-                        //Get new recent scores
-                        for (let newR in usersRecent) {
-                            let scoreMatch = false
-
-                            for (let prev in prevRecent) {
-                                if (usersRecent[newR].date === prevRecent[prev].date)
-                                    scoreMatch = true
-                            }
-
-                            if (!scoreMatch)
-                                updatedRecent.push(usersRecent[newR])
+                    userBest.forEach(topPlay => {
+                        if (newPlay.date === topPlay.date) {
+                            match = true
+                            return
                         }
+                    })
 
-                        //Compare new recent scores to new top 100
-                        for (let newR in updatedRecent) {
-                            let scoreMatch = false
-
-                            for (let prevBest in userBest) {
-                                if (updatedRecent[newR].date === userBest[prevBest].date)
-                                    scoreMatch = true
-                            }
+                    return match ? true : false
+                })
 
 
+                let updatedRecent = prevRecent.concat(newRecent)
 
-                            if (scoreMatch)
-                                changedScoresArray.push(updatedRecent[newR])
-                        }
+                //Check existing 24 hour recent and remove scores >24 hours old
+                updatedRecent.forEach(score => {
+                    let playDate = Date.parse(score.date)
+                    let currentDate = Date.now()
 
-                        //Check existing 24 hour recent and remove scores >24 hours old
-                        for (let recent in prevRecent) {
-                            let playDate = Date.parse(prevRecent[recent].date)
-                            let currentDate = Date.now() - 0
-
-                            if (currentDate - playDate < 86400000) {
-                                updatedRecent.push(prevRecent[recent])
-                            }
-                        }
-
-                        dbTrack.child(`/${guild}/${user}/recent24hr`).set(updatedRecent)
+                    if (currentDate - playDate > 86400000) {
+                        updatedRecent = updatedRecent.filter(play => play !== score)
                     }
+                })
 
-                    //Update database
-                    dbTrack.child(`/${guild}/${user}/userBest`).set(userBest)
-
-                    counter++
-                    if (counter === usersToTrack) {
-                        resolve(changedScoresArray)
-                    }
-                }
+                database.track[user].recent24hr = updatedRecent
             }
-        })
+            database.track[user].userBest = userBest
+
+            counter++
+
+            if (counter === Object.keys(database.track).length) {
+                fs.writeFileSync('localdb.json', JSON.stringify(database), err => {
+                    if (err) return console.log(err)
+                })
+        
+                resolve(changedScoresArray)
+            }
+        }) 
     })
 }
 

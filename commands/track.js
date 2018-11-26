@@ -1,40 +1,43 @@
-const axios = require('axios')
-const {osuApiKey, baeID} = require('../config.json')
+const fs = require('fs')
+const { baeID } = require('../config.json')
+const database = require('../localdb.json')
+const config = require('../config.json')
 
 const functions = require('./exportFunctions.js')
 
 module.exports = {
     name: 'track',
     description: 'Adds a user to tracking',
-    execute(m, args, db) {
+    async execute(m, args) {
+        const guildID = m.guild.id
+        const channelID = m.channel.id
+
         if (!m.channel.permissionsFor(m.member).has("ADMINISTRATOR") && m.author.id !== baeID) {
             return m.reply('sorry brah, this is currently only a feature for users with Administrative permissions.')
         }
 
-        let existingLink = false
+        let existingTrack = false
 
-        const dbTrack = db.ref(`/track/${m.guild.id}`)
-
-        if (args[0] === '-help') {
-            let helpText = `Tracking Commands | \`track [command]`
+        if (args[0] === '-help' || args[0] === '-h') {
+            let helpText = `Tracking Commands | ${config.prefix}track [command]`
             helpText += '\n ```\t-help : Hey, you are already here!'
-            helpText += '\n\t-add [osu username] [top=x],[osu username]...: Adds a users to be tracked, separated by a comma. `top=x` is optional parameter, default is 100.'
-            helpText += '\n\t-delete [osu username] : Removes a user from being tracked'
-            helpText += '\n\t-list : List the users currently being tracked```'
+            helpText += '\n\t-add/-a [osu username] [top=x],[osu username]...: Adds a users to be tracked, separated by a comma. top=x optional, default is 100.'
+            helpText += '\n\t-delete/-d [osu username] : Removes a user from being tracked'
+            helpText += '\n\t-list/-l : List the users currently being tracked```'
             helpText += '\nTracking is currently a test feature, it will only track osu standard and also will always track the top 100 scores of the user.'
 
             m.channel.send(helpText)
         }
-        else if (args[0] === '-add') {
+        else if (args[0] === '-add' || args[0] === '-a') {
             args.shift()
             let argUsernamesRaw = args.join(' ').split(',')
             let argUsernames = []
-            let trackLimit = 100
 
             for (let user in argUsernamesRaw) {
                 let nameToTrack
                 const userToTrack = argUsernamesRaw[user].trim()
                 const userToTrackArr = userToTrack.split(' ')
+                let trackLimit = 100
 
                 for (let index in userToTrackArr) {
                     if (userToTrackArr[index].startsWith('top=')) {
@@ -51,7 +54,6 @@ module.exports = {
                 }
 
                 argUsernames.push(trackInfo)
-                trackLimit = 100 //something
             }
 
             if (argUsernames.length > 10)
@@ -59,199 +61,171 @@ module.exports = {
 
             //multiadd
             for (let arg in argUsernames) {
+                //reset link match
+                existingTrack = false
 
-                let username = argUsernames[arg].username
+                username = argUsernames[arg].username
 
-                //check username exists
-                axios.get('api/get_user', {
-                    params: {
-                        k: osuApiKey,
-                        u: username
+                //check username exists + format correctly
+                usernameInfo = (await functions.getUser(username, 0))
+
+                if (!usernameInfo) {
+                    m.channel.send(`The username \`${username}\` doesn't exist!`)
+                    continue
+                }
+
+                username = usernameInfo.username
+
+                const userBest = await functions.getUserTop(username, argUsernames[arg].limit)
+
+                const userRecent = await functions.getUserRecent(username, 50)
+
+                //CHECK IF TRACK IS EMPTY
+                const trackEmpty = Object.keys(database.track).length < 1
+
+                if (trackEmpty) {
+                    const trackInfo = {
+                        channels: {
+                            [channelID]: argUsernames[arg].limit
+                        },
+                        userBest,
+                        recent24hr: userRecent
                     }
-                })
-                    .then(resp => {
-                        if (resp.data.length < 1) {
-                            return m.reply(`The username ${username} doesn't exist! Please try again`)
+
+                    database.track[username] = trackInfo
+                    m.channel.send(`\`${username}\` is being added to the tracking for osu! standard scores in their \`top ${argUsernames[arg].limit}\`!`)
+                }
+                else {
+                    //CHECK IF EXISTING USERNAME IN TRACK
+                    if (Object.keys(database.track).includes(username)) {
+                        existingTrack = true
+                    }
+
+                    //ADD IF NOT EXISTING, IF SO UPDATE CHANNELS
+                    if (!existingTrack) {
+                        const trackInfo = {
+                            channels: {
+                                [channelID]: argUsernames[arg].limit
+                            },
+                            userBest,
+                            recent24hr: userRecent
                         }
 
-                        username = resp.data[0].username
-
-                        axios.get('api/get_user_best', {
-                            params: {
-                                k: osuApiKey,
-                                u: username,
-                                limit: argUsernames[arg].limit
+                        database.track[username] = trackInfo
+                        m.channel.send(`\`${username}\` is being added to the tracking for osu! standard scores in their \`top ${argUsernames[arg].limit}\`!`)
+                    }
+                    else {
+                        if (Object.keys(database.track[username].channels).includes(channelID)) {
+                            console.log(database.track[username].channels[channelID])
+                            console.log(argUsernames[arg].limit)
+                            if (database.track[username].channels[channelID] === argUsernames[arg].limit) {
+                                m.channel.send(`\`${username}\` is already being tracked!`)
                             }
-                        })
-                            .then(resp => {
-                                const userBest = resp.data
+                            else {
+                                database.track[username].channels[channelID] = argUsernames[arg].limit
 
-                                const userRecent = functions.getUserRecent(username)
+                                m.channel.send(`\`${username}\` is being added to the tracking for osu! standard scores in their \`top ${argUsernames[arg].limit}\`!`)
+                            }
+                        }
+                        else {
+                            database.track[username].channels = {
+                                ...database.track[username].channels,
+                                [channelID]: argUsernames[arg].limit
+                            }
 
-                                dbTrack.once('value', obj => {
+                            m.channel.send(`\`${username}\` is being added to the tracking for osu! standard scores in their \`top ${argUsernames[arg].limit}\`!`)
+                        }
+                    }
+                }
 
-                                    const trackedUsers = obj.val()
-
-                                    for (let user in trackedUsers) {
-                                        if (trackedUsers[user].osuName === username && m.channel.id === trackedUsers[user].channel) {
-                                            existingLink = true
-                                            break
-                                        }
-                                    }
-
-                                    if (!existingLink) {
-
-                                        const trackInfo = {
-                                            osuName: username,
-                                            channel: m.channel.id,
-                                            limit: argUsernames[arg].limit,
-                                            userBest: userBest,
-                                            recent24hr: userRecent
-                                        }
-
-                                        dbTrack.push().set(trackInfo)
-                                            .then(() => {
-                                                console.log("[TRACK] ADD - POST SUCCESS")
-                                                return m.channel.send(`\`${username}\` is now being tracked for osu! standard scores in their \`top ${argUsernames[arg].limit}\`!`)
-                                            })
-                                            .catch(err => {
-                                                console.log(err)
-                                                return m.channel.send(`I'm sorry there's an issue adding users to tracking right now. Please try again later.`)
-                                            })
-                                    }
-                                    else {
-                                        return m.channel.send(`\`${username}\` is already being tracked!`)
-                                    }
-
-
-                                })
-                            })
-                            .catch(err => {
-                                console.log(err)
-                                m.channel.send("There was an error! More info: " + err)
-                            })
-                    })
-                    .catch(err => {
+                fs.writeFile('localdb.json', JSON.stringify(database), err => {
+                    if (err) {
                         console.log(err)
-                        m.channel.send("There was an error! More info: " + err)
-                    })
+                        return m.channel.send(`I'm sorry there's an issue adding users to tracking right now. Please try again later.`)
+                    }
+                    console.log("[TRACK] ADD - POST SUCCESS")
+                })
             }
         }
-        else if (args[0] === '-delete') {
+        else if (args[0] === '-delete' || args[0] === '-d') {
             args.shift()
             let username = args.join('_')
 
             if (username === '--all') {
 
-                dbTrack.once('value', obj => {
-                    const trackedUsers = []
-                    let error = false
-
-                    for (let key in obj.val()) {
-                        trackedUsers.push({
-                            ...obj.val()[key],
-                            id: key
-                        })
-                    }
-
-                    for (let user in trackedUsers) {
-                        if (m.channel.id === trackedUsers[user].channel) {
-                            dbTrack.child(trackedUsers[user].id).remove()
-                                .catch(err => {
-                                    error = true
-                                    console.log(`There was an error removing \`${trackedUsers[user].osuName}\` from track`)
-                                })
-                        }
-                    }
-
-                    if (error) {
-                        m.reply("there's an error deleting users from tracking right now, please try again later.")
-                    }
-                    else {
-                        m.channel.send(`All tracked users in this channel have been removed.`)
-                        console.log("[TRACK] DELETE POST SUCCESS")
+                Object.keys(database.track).forEach(user => {
+                    if (Object.keys(database.track[user].channels).includes(channelID)) {
+                        delete database.track[user].channels[channelID]
                     }
                 })
             }
             else {
-                axios.get('api/get_user', {
-                    params: {
-                        k: osuApiKey,
-                        u: username
-                    }
-                })
-                    .then(resp => {
-                        username = resp.data[0].username
-                        let keyToDelete
+                userInfo = await functions.getUser(username, 0)
 
-                        dbTrack.once('value', obj => {
-                            const trackedUsers = []
+                if (!userInfo) {
+                    return m.channel.send(`\`${username}\` is not a valid username, or being tracked! Please try again!`)
+                }
 
-                            for (let key in obj.val()) {
-                                trackedUsers.push({
-                                    ...obj.val()[key],
-                                    id: key
-                                })
-                            }
-
-                            for (let user in trackedUsers) {
-                                if (trackedUsers[user].osuName === username && m.channel.id === trackedUsers[user].channel) {
-                                    existingLink = true
-                                    username = trackedUsers[user].osuName
-                                    keyToDelete = trackedUsers[user].id
-                                }
-                            }
-
-                            if (!existingLink) {
-                                return m.reply("that username isn't being tracked!")
-                            }
-                            else {
-                                dbTrack.child(keyToDelete).remove()
-                                    .then(() => {
-                                        console.log("[POST SUCCESS]")
-                                        m.channel.send(`\`${username}\` has been removed from tracking.`)
-                                    })
-                                    .catch(err => {
-                                        m.reply(`there's an error deleting users from track right now, please try again later!`)
-                                        console.log(err)
-                                    })
-                            }
-                        })
-                    })
+                username = userInfo.username
+                delete database.track[username].channels[channelID]
+                console.log(`[TRACK] DELETE TRACK | POST SUCCESS`)
+                m.channel.send(`\`${username}\` has been removed from tracking!`)
             }
-        }
-        else if (args[0] === '-list') {
 
-            dbTrack.once('value', obj => {
-                console.log(obj)
-                console.log(obj.val())
-                let usernameArr = []
-                let trackedText = ''
-
-                for (let entry in obj.val()) {
-                    if (m.channel.id === obj.val()[entry].channel) {
-                        usernameArr.push({
-                            username: obj.val()[entry].osuName,
-                            limit: obj.val()[entry].limit
-                        })
-                    }
-                }
-                if (usernameArr.length > 0) {
-                    trackedText += `__List of tracked users in this channel__ \n\`\`\``
-
-                    for (let name in usernameArr) {
-                        trackedText += `\n - Top: ${(usernameArr[name].limit).toString().length === 2 ? usernameArr[name].limit + ' ' : usernameArr[name].limit} | ${usernameArr[name].username}`
-                    }
-
-                    trackedText += "```"
-
-                    m.channel.send(trackedText)
-                }
-                else {
-                    m.channel.send("There are currently no users being tracked. Get started with ` `track -help`!")
+            Object.keys(database.track).forEach(user => {
+                if (Object.keys(database.track[user].channels).length < 1) {
+                    delete database.track[user]
                 }
             })
-                .catch(err => console.log(err))
+
+            fs.writeFile('localdb.json', JSON.stringify(database), err => {
+                if (err) {
+                    console.log(err)
+                    return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
+                }
+                console.log(`[TRACK] DELETE ALL | POST SUCCESS`)
+                m.channel.send(`All tracked users in this channel have been successfully removed!`)
+            })
+        }
+        else if (args[0] === '-list' || args[0] === '-l') {
+            let usersTrack
+
+            try {
+                usersTrack = database.track
+            }
+            catch (err) {
+                return m.channel.send(`There are no users being tracked in this channel!`)
+            }
+
+            if (!usersTrack) {
+                return m.channel.send(`There are no users being tracked in this channel!`)
+            }
+
+            let usernameArr = []
+            let trackedText = ''
+
+            Object.keys(usersTrack).forEach(user => {
+                if (Object.keys(usersTrack[user].channels).includes(channelID)) {
+                    usernameArr.push({
+                        username: user,
+                        limit: usersTrack[user].channels[channelID]
+                    })
+                }
+            })
+
+            if (usernameArr.length < 1) {
+                return m.channel.send(`There are no tracked users in this channel!`)
+            }
+
+            trackedText += `__List of tracked users in this channel__ \n\`\`\``
+
+            for (let name in usernameArr) {
+                trackedText += `\n - Top: ${(usernameArr[name].limit).toString().length === 2 ? usernameArr[name].limit + ' ' : usernameArr[name].limit} | ${usernameArr[name].username}`
+            }
+
+            trackedText += "```"
+
+            m.channel.send(trackedText)
         }
         else {
             return m.reply('invalid arguments! Lost? Try ` `track -help`')

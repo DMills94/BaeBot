@@ -1,11 +1,11 @@
 const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
-const {prefix} = require('../config')
+const { prefix } = require('../config')
 
 module.exports = {
     name: "user",
     description: "Returns stats on the user's osu profile",
-    async execute(m, args, db, rankingEmojis) {
+    async execute(m, args, rankingEmojis) {
 
         let username
         let mode = 0
@@ -18,7 +18,7 @@ module.exports = {
         }
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id, db)
+            username = await functions.lookupUser(m.author.id)
                 .catch(() => {
                     m.reply("you do not have a linked account! Try ` `link [username]`")
                     return
@@ -29,7 +29,7 @@ module.exports = {
             if (discordId.startsWith("!")) {
                 discordId = discordId.slice(1)
             }
-            username = await functions.lookupUser(discordId, db)
+            username = await functions.lookupUser(discordId)
                 .catch(() => {
                     m.reply("they do not have a linked account so I cannot find their user information :(")
                     return

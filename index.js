@@ -1,13 +1,13 @@
-const fs = require("fs")
-const Discord = require("discord.js")
-const admin = require("firebase-admin")
-const config = require("./config.json")
+const fs = require('fs')
+const Discord = require('discord.js')
+const config = require('./config.json')
+const database = require('./localdb.json')
 
 const client = new Discord.Client()
 client.commands = new Discord.Collection()
 
-const commandFiles = fs.readdirSync("./commands")
-const functions = require("./commands/exportFunctions.js")
+const commandFiles = fs.readdirSync('./commands')
+const functions = require('./commands/exportFunctions.js')
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`)
@@ -17,37 +17,34 @@ for (const file of commandFiles) {
 let devMode
 let commandHistory = []
 
-client.on("ready", () => {
+client.on('ready', () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`)
 
-    const dbDev = db.ref('/devMode/')
-    dbDev.once('value', value => {
-        devMode = value.val()
-    })
+    let devMode = database.devMode
     if (devMode) {
         client.user.setActivity(`In dev mode`)
     } else {
         client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
     }
 
-    const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis
+    const rankingEmojis = client.guilds.find('id', '486497815367778304').emojis
 
     //Check bot hasn't left any servers, if so remove their db entries
 
     console.log('Starting tracking..')
-    tracking(true, rankingEmojis, db)
+    tracking(true, rankingEmojis)
 
     setInterval(() => {
-        tracking(false, rankingEmojis, db)
+        tracking(false, rankingEmojis)
     }, 150000)
 })
 
-client.on("error", err => {
+client.on('error', err => {
     console.log(err)
 })
 
 //Recording incoming messages
-client.on("message", message => {
+client.on('message', message => {
     //Bot ignores self
     if (message.author.bot)
         return
@@ -58,9 +55,7 @@ client.on("message", message => {
     //Check for config.prefix
     if (uI.startsWith(config.prefix)) {
 
-        const args = uI.slice(config.prefix.length).split(" ")
-
-        console.log(args)
+        const args = uI.slice(config.prefix.length).split(' ')
 
         args.forEach(word => {
             if (word.includes('`'))
@@ -76,59 +71,43 @@ client.on("message", message => {
         }
 
         //If specific top play remove numbers
-        if (commandName.includes("top") && commandName.length > 3) {
+        if (commandName.includes('top') && commandName.length > 3) {
             playNum = parseInt(commandName.slice(3))
             if (playNum < 1 || playNum > 100) {
                 return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}topx\``)
             }
-            commandName = "top"
+            commandName = 'top'
             top5 = false
-        } else if (commandName.includes("top")) {
+        } else if (commandName.includes('top')) {
             playNum = 5
         }
 
-        if (commandName.includes("rb") && commandName.length > 2) {
+        if (commandName.includes('rb') && commandName.length > 2) {
             playNum = parseInt(commandName.slice(2))
             if (playNum < 1 || playNum > 100) {
                 return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}rbx\``)
             }
-            commandName = "rb"
-        } else if (commandName.includes("rb")) {
+            commandName = 'rb'
+        } else if (commandName.includes('rb')) {
             playNum = 1
-        } else if (commandName === "toggledev") {
-            if (message.author.id === config.baeID) {
-                devMode = !devMode
-                const dbRoot = db.ref('/')
-                dbRoot.update({
-                    "devMode": devMode
-                })
-
-                if (devMode) {
-                    client.user.setActivity(`In dev mode`)
-                } else {
-                    client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
-                }
-                return message.channel.send(`Dev mode is now ${devMode ? 'active' : 'inactive'}`)
-            } else {
-                return message.channel.send("Sorry this command isn't for you!")
-            }
         }
 
         //config.prefix Commands
         if (!client.commands.has(commandName)) {
-            return message.channel.send("Sorry that's not command I have :( \nIf you need help try ` `help`!")
+            message.channel.send('Sorry that\'s not command I have :( \nIf you need help try ``help`!')
+            return
         }
 
         if (devMode && message.author.id !== config.baeID)
-            return message.channel.send("Bot is currently under maintenance, please try again later!")
+            return message.channel.send('Bot is currently under maintenance, please try again later!')
 
         const command = client.commands.get(commandName)
 
         try {
-            if (command.name !== "history") {
-                const rankingEmojis = client.guilds.find("id", "486497815367778304").emojis
+            if (command.name !== 'history') {
+                const rankingEmojis = client.guilds.find('id', '486497815367778304').emojis
 
-                command.execute(message, args, db, rankingEmojis, playNum, top5)
+                command.execute(message, args, rankingEmojis, playNum, top5)
 
                 //Update history
                 commandHistory.unshift(uI.slice(config.prefix.length))
@@ -143,80 +122,79 @@ client.on("message", message => {
 
         } catch (error) {
             console.error(error)
-            message.reply("There was an error with that command! Details: " + error)
+            message.reply('There was an error with that command! Details: ' + error)
         }
     }
 
     //No-config.prefix Commands
 
     if (message.isMentioned(client.user) && message.author.id === config.wiquedID) {
-        message.reply("begone thot.")
+        message.reply('begone thot.')
         console.log(`Called Wiqued a thot :)`)
     }
 
-    if (uI.includes("pepehands")) {
-        const emoji = client.emojis.find("name", "PepeHands")
+    if (uI.includes('pepehands')) {
+        const emoji = client.emojis.find('name', 'PepeHands')
         message.react(emoji)
     }
 
-    if (uI.startsWith("goodbye") || uI.startsWith("good bye")) {
+    if (uI.startsWith('goodbye') || uI.startsWith('good bye')) {
         if (message.author.id === config.wiquedID) {
             message.reply(`cya thot! \:middle_finger:`)
             console.log(`Called Wiqued a thot :)`)
         } else {
-            const konCha = client.emojis.find("name", "KonCha")
+            const konCha = client.emojis.find('name', 'KonCha')
             message.reply(`cya! ${konCha}`)
         }
     }
 
-    if (uI === "good bot" || uI === "goodbot") {
+    if (uI === 'good bot' || uI === 'goodbot') {
         if (message.author.id === config.baeID) {
-            message.channel.send("S...senpai owo")
+            message.channel.send('S...senpai owo')
         } else if (message.author.id === config.wiquedID) {
-            message.reply("begone thot.")
+            message.reply('begone thot.')
             console.log(`Called Wiqued a thot :)`)
         } else {
-            const itsbaeChamp = client.emojis.find("name", "itsbaeChamp")
+            const itsbaeChamp = client.emojis.find('name', 'itsbaeChamp')
             message.channel.send(`Thanks! ${itsbaeChamp}`)
         }
     }
 
-    if (uI === "bad bot" || uI === "badbot") {
+    if (uI === 'bad bot' || uI === 'badbot') {
         if (message.author.id === config.wiquedID) {
-            message.reply("begone thot.")
+            message.reply('begone thot.')
             console.log(`Called Wiqued a thot :)`)
         } else {
-            message.channel.send("I am sorry :( If i am not working correctly please contact my owner <@Bae#3308>")
+            message.channel.send(`<@122136963129147393> i'm being bullied \:sob:`)
         }
     }
 
     if (uI.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i)) {
-        client.commands.get("recognise beatmap").execute(message, uI, db)
-        logCommand(message, "Recognise Beatmap")
+        client.commands.get('recognise beatmap').execute(message, uI)
+        logCommand(message, 'Recognise Beatmap')
     }
 })
 
 client.on('guildDelete', guild => {
     console.log(`BaeBot was removed from ${guild.name}, deleting database entries....`)
     //Delete lastBeatmap
-    const dbLastBeatmap = db.ref('/lastBeatmap/')
-    dbLastBeatmap.child(guild.id).remove()
-        .then(() => {
-            console.log('--- Last beatmap deleted')
-        })
-        .catch(() => {
-            console.log(`--- Error deleting last beatmap (Guild ID: ${guild.id}`)
-        })
+    delete database.lastBeatmap[guild.id]
 
     //Delete tracked users
-    const dbTrack = db.ref('/track/')
-    dbTrack.child(guild.id).remove()
-        .then(() => {
-            console.log('--- Tracking deleted')
+    console.log(guild)
+
+    let guildChannels = []
+
+    guild.channels.forEach(channel => {
+        guildChannels.push(channel)
+    })
+
+    Object.keys(database.track).forEach(user => {
+        guildChannels.forEach(channel => {
+            if (Object.keys(database.track[user].channels).includes(channel))
+                delete database.track[user].channels[channel]
         })
-        .catch(() => {
-            console.log(`--- Error deleting last beatmap (Guild ID: ${guild.id}`)
-        })
+    })
 })
 
 const logCommand = (message, command, args = []) => {
@@ -226,10 +204,10 @@ const logCommand = (message, command, args = []) => {
     console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}]: ${command} ${args.join(' ') === '' ? '' : '[' + args.join(' ') + ']'} on ${date} at ${time}`)
 }
 
-async function tracking(first, rankingEmojis, db) {
+async function tracking(first, rankingEmojis) {
     let newScores
 
-    const newScoresDuplicates = await functions.getNewTrackedScores(first, db)
+    const newScoresDuplicates = await functions.getNewTrackedScores(first)
 
     newScores = newScoresDuplicates.filter((object, index) =>
         index === newScoresDuplicates.findIndex((obj) => (
@@ -244,21 +222,12 @@ async function tracking(first, rankingEmojis, db) {
         console.log(newScores)
         console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`)
         for (let score in newScores) {
-            client.commands.get("postnew").execute(newScores[score], db, rankingEmojis, client.channels)
+            client.commands.get('postnew').execute(newScores[score], rankingEmojis, client.channels)
         }
     } else {
         console.log(`[TRACKING] No new scores detected: ${date} at ${time}`)
     }
 }
-
-//Database Auth
-admin.initializeApp({
-    credential: admin.credential.cert(config.serviceAccountKey),
-    databaseURL: config.dbUrl
-})
-
-//Assign database
-const db = admin.database()
 
 //Start Bot
 client.login(config.token)

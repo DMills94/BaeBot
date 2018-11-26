@@ -4,11 +4,11 @@ const functions = require("./exportFunctions.js")
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
-    async execute(m, args, db, rankingEmojis, plays, top5) {
+    async execute(m, args, rankingEmojis, plays, top5) {
         let username
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id, db)
+            username = await functions.lookupUser(m.author.id)
                 .catch(() => {
                     return m.reply("you do not have a linked account! Try ` `link [username]`")
                 })
@@ -18,7 +18,7 @@ module.exports = {
             if (discordId.startsWith("!")) {
                 discordId = discordId.slice(1)
             }
-            username = await functions.lookupUser(discordId, db)
+            username = await functions.lookupUser(discordId)
                 .catch(() => {
                     return m.reply("they do not have a linked account so I cannot find their top plays :(")
                 })
@@ -113,7 +113,7 @@ module.exports = {
                 .setFooter(`${mapStatus} | Beatmap by ${beatmapList[0].creator} | Message sent: `)
                 .setTimestamp()
 
-            functions.storeLastBeatmap(m.guild, beatmapList[0], topPlays[0], db)
+            functions.storeLastBeatmap(m.guild, beatmapList[0], topPlays[0])
         }
 
         //Send Embed to Channel

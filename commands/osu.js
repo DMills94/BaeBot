@@ -1,14 +1,13 @@
 const axios = require('axios')
 const Discord = require('discord.js')
 const { prefix } = require('../config.json')
-const ojsama = require('ojsama')
 
 axios.defaults.baseURL = "https://osu.ppy.sh/"
 
 module.exports = {
     name: "osu",
     description: "All commands relating to osu and its API",
-    execute(m, args) {
+    execute(m) {
 
         //Help
         let embed = new Discord.RichEmbed()
