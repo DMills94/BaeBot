@@ -195,6 +195,14 @@ client.on('guildDelete', guild => {
                 delete database.track[user].channels[channel]
         })
     })
+
+    fs.writeFile('localdb.json', JSON.stringify(database), err => {
+        if (err) {
+            console.log(`There was an issue removing data from the guild: ${guild.name}`)
+            return console.log(err)
+        }
+        console.log(`Guild data removed for: ${guild.name}`)
+    })
 })
 
 const logCommand = (message, command, args = []) => {
@@ -205,22 +213,15 @@ const logCommand = (message, command, args = []) => {
 }
 
 async function tracking(first, rankingEmojis) {
-    let newScores
-
-    const newScoresDuplicates = await functions.getNewTrackedScores(first)
-
-    newScores = newScoresDuplicates.filter((object, index) =>
-        index === newScoresDuplicates.findIndex((obj) => (
-            obj.date === object.date
-        ))
-    )
+    const newScores = await functions.getNewTrackedScores(first)
 
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)
     const time = currentTime.toTimeString().slice(0, 9)
+
     if (newScores.length > 0) {
-        console.log(newScores)
         console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`)
+        console.log(newScores)
         for (let score in newScores) {
             client.commands.get('postnew').execute(newScores[score], rankingEmojis, client.channels)
         }

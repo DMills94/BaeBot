@@ -9,7 +9,6 @@ module.exports = {
     name: 'track',
     description: 'Adds a user to tracking',
     async execute(m, args) {
-        const guildID = m.guild.id
         const channelID = m.channel.id
 
         if (!m.channel.permissionsFor(m.member).has("ADMINISTRATOR") && m.author.id !== baeID) {
@@ -214,6 +213,8 @@ module.exports = {
             if (usernameArr.length < 1) {
                 return m.channel.send(`There are no tracked users in this channel!`)
             }
+
+            usernameArr.sort((a, b) => (a.username.toUpperCase() > b.username.toUpperCase()) ? 1 : ((b.username.toUpperCase() > a.username.toUpperCase()) ? -1 : 0))    
 
             trackedText += `__List of tracked users in this channel__ \n\`\`\``
 

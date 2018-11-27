@@ -108,22 +108,26 @@ customExports.storeLastBeatmap = (guild, beatmap, performance) => {
 }
 
 customExports.getNewTrackedScores = first => {
+    const trackdb = JSON.parse(fs.readFileSync('localdb.json', 'utf8'))
+
+    console.log(Object.keys(trackdb))
+
     return new Promise(resolve => {
         let changedScoresArray = []
         let counter = 0
 
-        Object.keys(database.track).forEach(async user => {
+        Object.keys(trackdb.track).forEach(async user => {
             //Get users Top 100
             const userBest = await customExports.getUserTop(user)
             const userRecent = await customExports.getUserRecent(user, 50)
 
             //Check for new recent data, if so, add to DB
-            if (database.track[user].recent24hr === undefined)
-                database.track[user].recent24hr = userRecent
+            if (trackdb.track[user].recent24hr === undefined)
+                trackdb.track[user].recent24hr = userRecent
 
             if (first) {
                 //See if each of the new top 100 scores exist in the db top 100 scores
-                const prevTop100 = database.track[user].userBest
+                const prevTop100 = trackdb.track[user].userBest
 
                 userBest.forEach(score => {
                     let scoreMatch = false
@@ -139,7 +143,7 @@ customExports.getNewTrackedScores = first => {
             }
             else {
                 //See if new recent scores exist and if they're in the new top 100
-                const prevRecent = database.track[user].recent24hr
+                const prevRecent = trackdb.track[user].recent24hr
                 //Get new recent
                 const newRecent = userRecent.filter(newPlay => { //50 new plays max
                     let match = false
@@ -182,14 +186,14 @@ customExports.getNewTrackedScores = first => {
                     }
                 })
 
-                database.track[user].recent24hr = updatedRecent
+                trackdb.track[user].recent24hr = updatedRecent
             }
-            database.track[user].userBest = userBest
+            trackdb.track[user].userBest = userBest
 
             counter++
 
-            if (counter === Object.keys(database.track).length) {
-                fs.writeFileSync('localdb.json', JSON.stringify(database), err => {
+            if (counter === Object.keys(trackdb.track).length) {
+                fs.writeFileSync('localdb.json', JSON.stringify(trackdb), err => {
                     if (err) return console.log(err)
                 })
         
@@ -198,6 +202,7 @@ customExports.getNewTrackedScores = first => {
         }) 
     })
 }
+
 
 customExports.determineMods = score => {
     let mods = ""
