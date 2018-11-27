@@ -155,7 +155,7 @@ customExports.getNewTrackedScores = first => {
                 })
 
                 //Compare new recent scores to new top 100
-                changedScoresArray = newRecent.filter(newPlay => {
+                newTopRecents = newRecent.filter(newPlay => {
                     let match = false
 
                     userBest.forEach(topPlay => {
@@ -168,6 +168,7 @@ customExports.getNewTrackedScores = first => {
                     return match ? true : false
                 })
 
+                changedScoresArray = changedScoresArray.concat(newTopRecents)
 
                 let updatedRecent = prevRecent.concat(newRecent)
 
