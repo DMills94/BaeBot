@@ -7,7 +7,7 @@ const client = new Discord.Client()
 client.commands = new Discord.Collection()
 
 const commandFiles = fs.readdirSync('./commands')
-const functions = require('./commands/exportFunctions.js')
+// const functions = require('./commands/exportFunctions.js')
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`)
@@ -31,12 +31,12 @@ client.on('ready', () => {
 
     //Check bot hasn't left any servers, if so remove their db entries
 
-    console.log('Starting tracking..')
-    tracking(true, rankingEmojis)
+    // console.log('Starting tracking..')
+    // tracking(true, rankingEmojis)
 
-    setInterval(() => {
-        tracking(false, rankingEmojis)
-    }, 150000)
+    // setInterval(() => {
+    //     tracking(false, rankingEmojis)
+    // }, 150000)
 })
 
 client.on('error', err => {
@@ -169,10 +169,10 @@ client.on('message', message => {
         }
     }
 
-    if (uI.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i)) {
-        client.commands.get('recognise beatmap').execute(message, uI)
-        logCommand(message, 'Recognise Beatmap')
-    }
+    // if (uI.match(/https?:\/\/(osu|new).ppy.sh\/([b]|beatmapsets)\//i)) {
+    //     client.commands.get('recognise beatmap').execute(message, uI)
+    //     logCommand(message, 'Recognise Beatmap')
+    // }
 })
 
 client.on('guildDelete', guild => {
@@ -196,7 +196,7 @@ client.on('guildDelete', guild => {
         })
     })
 
-    fs.writeFile('localdb.json', JSON.stringify(database), err => {
+    fs.writeFile('localdb.json', JSON.stringify(database, null, 4), err => {
         if (err) {
             console.log(`There was an issue removing data from the guild: ${guild.name}`)
             return console.log(err)
@@ -213,7 +213,7 @@ const logCommand = (message, command, args = []) => {
 }
 
 async function tracking(first, rankingEmojis) {
-    const newScores = await functions.getNewTrackedScores(first)
+    const newScores = await client.commands.get('getNewTrack').execute(first)
 
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)

@@ -5,7 +5,5 @@ config.json
 node_modules/
 .idea/
 
-#Any firebase shit (for now)
-.firebaserc
-firebase.json
-database.rules.json
+#localdb
+localdb.json

@@ -102,107 +102,10 @@ customExports.storeLastBeatmap = (guild, beatmap, performance) => {
     const guildID = guild.id
     database.lastBeatmap[guildID] = beatmapObj
 
-    fs.writeFileSync('localdb.json', JSON.stringify(database), err => {
+    fs.writeFile('localdb.json', JSON.stringify(database, null, 2), err => {
         if (err) return console.log(err)
     })
 }
-
-customExports.getNewTrackedScores = first => {
-    const trackdb = JSON.parse(fs.readFileSync('localdb.json', 'utf8'))
-
-    console.log(Object.keys(trackdb))
-
-    return new Promise(resolve => {
-        let changedScoresArray = []
-        let counter = 0
-
-        Object.keys(trackdb.track).forEach(async user => {
-            //Get users Top 100
-            const userBest = await customExports.getUserTop(user)
-            const userRecent = await customExports.getUserRecent(user, 50)
-
-            //Check for new recent data, if so, add to DB
-            if (trackdb.track[user].recent24hr === undefined)
-                trackdb.track[user].recent24hr = userRecent
-
-            if (first) {
-                //See if each of the new top 100 scores exist in the db top 100 scores
-                const prevTop100 = trackdb.track[user].userBest
-
-                userBest.forEach(score => {
-                    let scoreMatch = false
-
-                    prevTop100.forEach(record => {
-                        if (score.date === record.date)
-                            scoreMatch = true
-                    })
-
-                    if (!scoreMatch)
-                        changedScoresArray.push(score)
-                })
-            }
-            else {
-                //See if new recent scores exist and if they're in the new top 100
-                const prevRecent = trackdb.track[user].recent24hr
-                //Get new recent
-                const newRecent = userRecent.filter(newPlay => { //50 new plays max
-                    let match = false
-
-                    prevRecent.forEach(oldPlay => {
-                        if (newPlay.date === oldPlay.date) {
-                            match = true
-                            return
-                        }
-                    })
-                        
-                    return match ? false : true
-                })
-
-                //Compare new recent scores to new top 100
-                newTopRecents = newRecent.filter(newPlay => {
-                    let match = false
-
-                    userBest.forEach(topPlay => {
-                        if (newPlay.date === topPlay.date) {
-                            match = true
-                            return
-                        }
-                    })
-
-                    return match ? true : false
-                })
-
-                changedScoresArray = changedScoresArray.concat(newTopRecents)
-
-                let updatedRecent = prevRecent.concat(newRecent)
-
-                //Check existing 24 hour recent and remove scores >24 hours old
-                updatedRecent.forEach(score => {
-                    let playDate = Date.parse(score.date)
-                    let currentDate = Date.now()
-
-                    if (currentDate - playDate > 86400000) {
-                        updatedRecent = updatedRecent.filter(play => play !== score)
-                    }
-                })
-
-                trackdb.track[user].recent24hr = updatedRecent
-            }
-            trackdb.track[user].userBest = userBest
-
-            counter++
-
-            if (counter === Object.keys(trackdb.track).length) {
-                fs.writeFileSync('localdb.json', JSON.stringify(trackdb), err => {
-                    if (err) return console.log(err)
-                })
-        
-                resolve(changedScoresArray)
-            }
-        }) 
-    })
-}
-
 
 customExports.determineMods = score => {
     let mods = ""

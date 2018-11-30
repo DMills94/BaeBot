@@ -10,31 +10,38 @@ module.exports = {
     execute(m, args) {
 
         const splitArgs = args.split(' ')
+        let beatmapURL
         let uIMods = ''
 
-        const beatmapURL = splitArgs[0]
+        console.log(splitArgs)
+        console.log('splitArgs')
 
-        if (splitArgs[1] && splitArgs[1].startsWith('+')) {
-            uIMods = splitArgs[1].slice(1).toLowerCase()
-
-            uIModsParts = uIMods.match(/[\s\S]{1,2}/g)
-
-            for (let mod of uIModsParts) {
-                if (!['hd', 'hr', 'dt', 'nc', 'so', 'nf', 'fl', 'ht', 'ez'].includes(mod)) {
-                    return m.reply('invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `[beatmapURL] +[mods]`')
+        splitArgs.forEach(arg => {
+            if (arg.match(/https?:\/\/(osu|new).ppy.sh\/([b]|beatmapsets)\//i)) {
+                console.log(`Matching arg: ${arg}`)
+                beatmapURL = arg
+            }
+            if (arg.includes('+')) {
+                uIMods = arg.slice(1).toLowerCase()
+    
+                uIModsParts = uIMods.match(/[\s\S]{1,2}/g)
+    
+                for (let mod of uIModsParts) {
+                    if (!['hd', 'hr', 'dt', 'nc', 'so', 'nf', 'fl', 'ht', 'ez'].includes(mod)) {
+                        return m.reply('invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `[beatmapURL] +[mods]`')
+                    }
+                }
+    
+                if (uIMods.includes('hr') && uIMods.includes('ez')) {
+                    return m.reply('mods cannot include BOTH Hard Rock AND Easy! Please try again.')
+                }
+                if (uIMods.includes('dt') && uIMods.includes('nc') || uIMods.includes('dt') && uIMods.includes('ht') || uIMods.includes('ht') && uIMods.includes('nc')) {
+                        return m.reply('mods cannot include BOTH Double Time/Nightcore AND Half Time! Please try again.')
                 }
             }
+        })
 
-            if (uIMods.includes('hr') && uIMods.includes('ez')) {
-                return m.reply('mods cannot include BOTH Hard Rock AND Easy! Please try again.')
-            }
-            if (uIMods.includes('dt') && uIMods.includes('nc') || uIMods.includes('dt') && uIMods.includes('ht') || uIMods.includes('ht') && uIMods.includes('nc')) {
-                    return m.reply('mods cannot include BOTH Double Time/Nightcore AND Half Time! Please try again.')
-            }
-        }
-        else if (splitArgs[1] && !splitArgs[1].startsWith('+')) {
-            m.channel.send('Invalid mod entry!\nIf you want to add mods, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods like: `[beatmapURL] +[mods]`\nReturning result for `nomod`')
-        }
+        console.log(beatmapURL)
 
         // Extract Beatmap ID
         const urlInfo = {
@@ -46,7 +53,7 @@ module.exports = {
         }
 
         //Is old site URL
-        const fullUrl = beatmapURL.match(/^https?:\/\/(osu|new).ppy.sh\/([bs]|beatmapsets)\/(\d+)\/?(#osu\/\d+)?/i)
+        const fullUrl = beatmapURL.split('/')
 
         urlInfo.isOldLink = fullUrl[2] !== 'beatmapsets'
         urlInfo.isBeatmap = fullUrl[2] === 'b'  //Only used for old site links
@@ -62,7 +69,7 @@ module.exports = {
                 urlInfo.beatmapSetId = fullUrl[3]
                 urlInfo.beatmapId = beatmapId.substr(5)
             }
-
+            console.log(urlInfo)
             beatmapLookup(urlInfo, m, uIMods)
         }
         else { //Old Link
@@ -72,20 +79,10 @@ module.exports = {
             if (urlInfo.isSet) {
                 urlInfo.beatmapSetId = fullUrl[3]
             }
-
+            console.log(urlInfo)
             beatmapLookup(urlInfo, m, uIMods)
         }
     }
-}
-
-const approvedRatings = {
-    'Loved': '4',
-    'Qualified': '3',
-    'Approved': '2',
-    'Ranked': '1',
-    'Pending': '0',
-    'WIP': '-1',
-    'Graveyard': '-2'
 }
 
 const convertToMinutes = seconds => {

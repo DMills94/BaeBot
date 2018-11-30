@@ -32,7 +32,7 @@ module.exports = {
             [userID]: username
         }
 
-        fs.writeFile('localdb.json', JSON.stringify(database), err => {
+        fs.writeFile('localdb.json', JSON.stringify(database, null, 4), err => {
             if (err) {
                 console.log(err)
                 m.react('❎')

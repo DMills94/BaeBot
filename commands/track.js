@@ -1,5 +1,4 @@
 const fs = require('fs')
-const { baeID } = require('../config.json')
 const database = require('../localdb.json')
 const config = require('../config.json')
 
@@ -11,7 +10,7 @@ module.exports = {
     async execute(m, args) {
         const channelID = m.channel.id
 
-        if (!m.channel.permissionsFor(m.member).has("ADMINISTRATOR") && m.author.id !== baeID) {
+        if (!m.channel.permissionsFor(m.member).has("ADMINISTRATOR") && m.author.id !== config.baeID) {
             return m.reply('sorry brah, this is currently only a feature for users with Administrative permissions.')
         }
 
@@ -135,7 +134,7 @@ module.exports = {
                     }
                 }
 
-                fs.writeFile('localdb.json', JSON.stringify(database), err => {
+                fs.writeFile('localdb.json', JSON.stringify(database, null, 4), err => {
                     if (err) {
                         console.log(err)
                         return m.channel.send(`I'm sorry there's an issue adding users to tracking right now. Please try again later.`)
@@ -175,7 +174,7 @@ module.exports = {
                 }
             })
 
-            fs.writeFile('localdb.json', JSON.stringify(database), err => {
+            fs.writeFile('localdb.json', JSON.stringify(database, null, 4), err => {
                 if (err) {
                     console.log(err)
                     return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
