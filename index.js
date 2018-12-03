@@ -27,15 +27,15 @@ client.on('ready', () => {
         client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
     }
 
-    const rankingEmojis = client.guilds.find('id', '486497815367778304').emojis
+    const emojis = client.guilds.find('id', '486497815367778304').emojis
 
     //Check bot hasn't left any servers, if so remove their db entries
 
     // console.log('Starting tracking..')
-    // tracking(true, rankingEmojis)
+    // tracking(true, emojis)
 
     // setInterval(() => {
-    //     tracking(false, rankingEmojis)
+    //     tracking(false, emojis)
     // }, 150000)
 })
 
@@ -56,11 +56,10 @@ client.on('message', message => {
     if (uI.startsWith(config.prefix)) {
 
         const args = uI.slice(config.prefix.length).split(' ')
-
-        args.forEach(word => {
-            if (word.includes('`'))
+        for (let word in args) {
+            if (args[word].includes('`'))
                 return
-        })
+        }
 
         let commandName = args.shift()
         let playNum
@@ -105,9 +104,9 @@ client.on('message', message => {
 
         try {
             if (command.name !== 'history') {
-                const rankingEmojis = client.guilds.find('id', '486497815367778304').emojis
+                const emojis = client.guilds.find('id', '486497815367778304').emojis
 
-                command.execute(message, args, rankingEmojis, playNum, top5)
+                command.execute(message, args, emojis, playNum, top5)
 
                 //Update history
                 commandHistory.unshift(uI.slice(config.prefix.length))
@@ -169,10 +168,11 @@ client.on('message', message => {
         }
     }
 
-    // if (uI.match(/https?:\/\/(osu|new).ppy.sh\/([b]|beatmapsets)\//i)) {
-    //     client.commands.get('recognise beatmap').execute(message, uI)
-    //     logCommand(message, 'Recognise Beatmap')
-    // }
+    if (uI.match(/https?:\/\/(osu|new).ppy.sh\/([b]|[s]|beatmapsets)\//i)) {
+        const emojis = client.guilds.find('id', '486497815367778304').emojis
+        client.commands.get('recognise beatmap').execute(message, uI, emojis)
+        logCommand(message, 'Recognise Beatmap')
+    }
 })
 
 client.on('guildDelete', guild => {
@@ -209,10 +209,10 @@ const logCommand = (message, command, args = []) => {
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)
     const time = currentTime.toTimeString().slice(0, 9)
-    console.log(`[EXECUTED COMMAND] in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}]: ${command} ${args.join(' ') === '' ? '' : '[' + args.join(' ') + ']'} on ${date} at ${time}`)
+    console.log(`[EXECUTED COMMAND] ${command} ${args.join(' ') === '' ? '' : '[' + args.join(' ') + ']'}: in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}] on ${date} at ${time}`)
 }
 
-async function tracking(first, rankingEmojis) {
+async function tracking(first, emojis) {
     const newScores = await client.commands.get('getNewTrack').execute(first)
 
     const currentTime = new Date()
@@ -223,7 +223,7 @@ async function tracking(first, rankingEmojis) {
         console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`)
         console.log(newScores)
         for (let score in newScores) {
-            client.commands.get('postnew').execute(newScores[score], rankingEmojis, client.channels)
+            client.commands.get('postnew').execute(newScores[score], emojis, client.channels)
         }
     } else {
         console.log(`[TRACKING] No new scores detected: ${date} at ${time}`)

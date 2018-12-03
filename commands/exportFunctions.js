@@ -48,12 +48,12 @@ customExports.getUserTop = (username, limit = 100) => {
     })
 }
 
-customExports.getBeatmap = bmpId => {
+customExports.getBeatmap = (bmpId, type = 'b') => {
     return new Promise(resolve => {
         axios.get('api/get_beatmaps', {
             params: {
                 k: osuApiKey,
-                b: bmpId
+                [type]: bmpId
             }
         })
             .then(resp => {
@@ -203,6 +203,33 @@ customExports.approvedStatus = value => {
         default:
             return value
     }
+}
+
+customExports.difficultyImage = (stars, emojis) => {
+    let diffImage
+
+    switch (true) {
+        case (stars <= 1.5):
+            diffImage = emojis.find('name', 'Easy')
+            break
+        case (1.51 <= stars && stars <= 2.25):
+            diffImage = emojis.find('name', 'Normal')
+            break
+        case (2.26 <= stars && stars <= 3.75):
+            diffImage = emojis.find('name', 'Hard')
+            break
+        case (3.76 <= stars && stars <= 5.25):
+            diffImage = emojis.find('name', 'Insane')
+            break
+        case (5.26 <= stars && stars <= 6.75):
+            diffImage = emojis.find('name', 'Expert')
+            break
+        case (stars >= 6.76):
+            diffImage = emojis.find('name', 'ExpertPlus')
+            break
+    }
+
+    return diffImage
 }
 
 customExports.calculate = (beatmap, performance) => {

@@ -1,9 +1,9 @@
 # Config file with key in
 config.json
 
-#Node Modules
+# Node Modules
 node_modules/
 .idea/
 
-#localdb
+# localdb
 localdb.json

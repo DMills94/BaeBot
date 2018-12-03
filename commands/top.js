@@ -4,7 +4,7 @@ const functions = require("./exportFunctions.js")
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
-    async execute(m, args, rankingEmojis, plays, top5) {
+    async execute(m, args, emojis, plays, top5) {
         let username
 
         if (args.length === 0) {
@@ -78,11 +78,11 @@ module.exports = {
                 .setColor("#FFFFFF")
                 .setAuthor(`Top 5 Plays for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
                 .setThumbnail("https://a.ppy.sh/" + userInfo.user_id)
-                .addField("__PERSONAL BEST #1__", topInfoInfo(0, topPlays, beatmapList, rankingEmojis))
-                .addField("__PERSONAL BEST #2__", topInfoInfo(1, topPlays, beatmapList, rankingEmojis))
-                .addField("__PERSONAL BEST #3__", topInfoInfo(2, topPlays, beatmapList, rankingEmojis))
-                .addField("__PERSONAL BEST #4__", topInfoInfo(3, topPlays, beatmapList, rankingEmojis))
-                .addField("__PERSONAL BEST #5__", topInfoInfo(4, topPlays, beatmapList, rankingEmojis))
+                .addField("__PERSONAL BEST #1__", topInfoInfo(0, topPlays, beatmapList, emojis))
+                .addField("__PERSONAL BEST #2__", topInfoInfo(1, topPlays, beatmapList, emojis))
+                .addField("__PERSONAL BEST #3__", topInfoInfo(2, topPlays, beatmapList, emojis))
+                .addField("__PERSONAL BEST #4__", topInfoInfo(3, topPlays, beatmapList, emojis))
+                .addField("__PERSONAL BEST #5__", topInfoInfo(4, topPlays, beatmapList, emojis))
                 .setFooter("Message sent: ")
                 .setTimestamp()
         }
@@ -109,7 +109,7 @@ module.exports = {
                 .setColor(colour)
                 .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
                 .setThumbnail("https://b.ppy.sh/thumb/" + beatmapList[0].beatmapset_id + "l.jpg")
-                .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, topPlays, beatmapList, rankingEmojis))
+                .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, topPlays, beatmapList, emojis))
                 .setFooter(`${mapStatus} | Beatmap by ${beatmapList[0].creator} | Message sent: `)
                 .setTimestamp()
 
@@ -121,11 +121,12 @@ module.exports = {
     }
 }
 
-const topInfoInfo = (index, topPlays, maps, rankingEmojis) => {
+const topInfoInfo = (index, topPlays, maps, emojis) => {
     if (topPlays[index].rank.length === 1) {
         topPlays[index].rank += "_"
     }
-    const rankImage = rankingEmojis.find("name", topPlays[index].rank)
+    const rankImage = emojis.find("name", topPlays[index].rank)
+    const diffImage = functions.difficultyImage(topPlays[index].stars, emojis)
 
-    return `**[${maps[index].artist} - ${maps[index].title} [${maps[index].version}]](https://osu.ppy.sh/b/${maps[index].beatmap_id})** \n\u2022 \:star: **${topPlays[index].stars}*** ${topPlays[index].enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((topPlays[index].score)).toLocaleString("en")} (${topPlays[index].accuracy}%) | **${parseFloat(topPlays[index].pp).toFixed(2)}pp**/${topPlays[index].maxPP}pp \n\u2022 ${topPlays[index].maxcombo === maps[index].max_combo ? "**" + topPlays[index].maxcombo + "x**" : topPlays[index].maxcombo}/**${maps[index].max_combo}x** {${topPlays[index].count300}/${topPlays[index].count100}/${topPlays[index].count50}/${topPlays[index].countmiss}} | ${topPlays[index].date}`
+    return `**[${maps[index].artist} - ${maps[index].title} [${maps[index].version}]](https://osu.ppy.sh/b/${maps[index].beatmap_id})** \n\u2022 ${diffImage} **${topPlays[index].stars}*** ${topPlays[index].enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((topPlays[index].score)).toLocaleString("en")} (${topPlays[index].accuracy}%) | **${parseFloat(topPlays[index].pp).toFixed(2)}pp**/${topPlays[index].maxPP}pp \n\u2022 ${topPlays[index].maxcombo === maps[index].max_combo ? "**" + topPlays[index].maxcombo + "x**" : topPlays[index].maxcombo}/**${maps[index].max_combo}x** {${topPlays[index].count300}/${topPlays[index].count100}/${topPlays[index].count50}/${topPlays[index].countmiss}} | ${topPlays[index].date}`
 }

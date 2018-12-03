@@ -4,7 +4,7 @@ const functions = require('./exportFunctions.js')
 module.exports = {
     name: 'recent',
     description: `Returns a user's most recent play`,
-    async execute(m, args, rankingEmojis) {
+    async execute(m, args, emojis) {
         let username
 
         if (args.length === 0) {
@@ -88,7 +88,8 @@ module.exports = {
             recent.rank += '_'
         }
 
-        const rankImage = rankingEmojis.find('name', recent.rank)
+        const rankImage = emojis.find('name', recent.rank)
+        const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
         const mapStatus = functions.approvedStatus(beatmapInfo.approved)
 
@@ -97,7 +98,7 @@ module.exports = {
             .setAuthor(`Recent Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
             .setDescription(`**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`)
-            .addField(`\u2022 \:star: **${ppInfo.formattedStars}*** ${recent.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((recent.score)).toLocaleString('en')} (${recent.accuracy}%) | ${recent.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${recent.maxcombo === beatmapInfo.max_combo ? '**' + recent.maxcombo + '**' : recent.maxcombo}x/**${beatmapInfo.max_combo}x** {${recent.count300}/${recent.count100}/${recent.count50}/${recent.countmiss}} | ${recent.date}`)
+            .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${recent.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((recent.score)).toLocaleString('en')} (${recent.accuracy}%) | ${recent.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${recent.maxcombo === beatmapInfo.max_combo ? '**' + recent.maxcombo + '**' : recent.maxcombo}x/**${beatmapInfo.max_combo}x** {${recent.count300}/${recent.count100}/${recent.count50}/${recent.countmiss}} | ${recent.date}`)
             .setFooter(`${mapStatus} | Beatmap by ${beatmapInfo.creator} | Message sent: `)
             .setTimestamp()
 

@@ -5,7 +5,7 @@ const database = require('../localdb.json')
 module.exports = {
     name: "compare",
     description: "Compares the users best play against the last posted beatmap in that guild",
-    async execute(m, args, rankingEmojis) {
+    async execute(m, args, emojis) {
         let username
         let compMods = false
 
@@ -104,7 +104,8 @@ module.exports = {
             score.rank += "_"
         }
 
-        let rankImage = rankingEmojis.find("name", score.rank)
+        const rankImage = emojis.find("name", score.rank)
+        const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
         const mapStatus = functions.approvedStatus(prevBeatmap.beatmap.approved)
 
@@ -114,7 +115,7 @@ module.exports = {
             .setThumbnail("https://b.ppy.sh/thumb/" + prevBeatmap.beatmap.beatmapset_id + "l.jpg")
             .setTitle(prevBeatmap.beatmap.artist + " - " + prevBeatmap.beatmap.title + " [" + prevBeatmap.beatmap.version + "]")
             .setURL("https://osu.ppy.sh/b/" + prevBeatmap.beatmap.beatmap_id)
-            .addField(`\u2022 \:star: **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp~~" : "**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.beatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}x/**${prevBeatmap.beatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
+            .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp~~" : "**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.beatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}x/**${prevBeatmap.beatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
             .setFooter(`${mapStatus} | Beatmap by ${prevBeatmap.beatmap.creator}  | Message sent: `)
             .setTimestamp()
 

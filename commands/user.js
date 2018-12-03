@@ -5,7 +5,7 @@ const { prefix } = require('../config')
 module.exports = {
     name: "user",
     description: "Returns stats on the user's osu profile",
-    async execute(m, args, rankingEmojis) {
+    async execute(m, args, emojis) {
 
         let username
         let mode = 0
@@ -50,11 +50,11 @@ module.exports = {
 
         if (!more) {
 
-            let SSH = rankingEmojis.find('name', 'XH')
-            let SS = rankingEmojis.find('name', 'X_')
-            let SH = rankingEmojis.find('name', 'SH')
-            let S = rankingEmojis.find('name', 'S_')
-            let A = rankingEmojis.find('name', 'A_')
+            let SSH = emojis.find('name', 'XH')
+            let SS = emojis.find('name', 'X_')
+            let SH = emojis.find('name', 'SH')
+            let S = emojis.find('name', 'S_')
+            let A = emojis.find('name', 'A_')
 
             embed = new Discord.RichEmbed()
                 .setColor("#fcee03")
@@ -144,7 +144,7 @@ module.exports = {
                     **Preferred Map Max Combo:** ${Math.round(avgCombo)}`
                 )
                 .addField(`More Stats for ${user.username}`,
-                    `[osu!track](https://ameobea.me/osutrack/user/${user.username}) | [osu!stats](https://osustats.ppy.sh/u/${user.username}) | [osu!skills](http://osuskills.tk/user/${user.username}) | [osu!chan](https://syrin.me/osuchan/u/${user.user_id}) | [pp+](https://syrin.me/pp+/u/${user.user_id})`
+                    `[osu!track](https://ameobea.me/osutrack/user/${user.username}) | [osu!stats](https://osustats.ppy.sh/u/${user.username}) | [osu!skills](http://osuskills.com/user/${user.username}) | [osu!chan](https://syrin.me/osuchan/u/${user.user_id}) | [pp+](https://syrin.me/pp+/u/${user.user_id})`
                 )
                 .setFooter(`
                     Try [[ ${prefix}user ]] for account stats | Something missing you think you'd like? Contact @Bae#3308 with it!`

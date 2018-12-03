@@ -7,7 +7,7 @@ const functions = require('./exportFunctions.js')
 module.exports = {
     name: 'rb',
     description: 'Displays users recent best (default: most recent)',
-    async execute(m, args, rankingEmojis, rbNum) {
+    async execute(m, args, emojis, rbNum) {
         let username
 
         if (args.length === 0) {
@@ -70,9 +70,9 @@ module.exports = {
             usersScore.rank += '_'
         }
 
-        let rankImage
+        const rankImage = emojis.find('name', usersScore.rank)
+        const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
-        rankImage = rankingEmojis.find('name', usersScore.rank)
         let colour
 
         switch (usersScore.playNumber) {
@@ -98,7 +98,7 @@ module.exports = {
             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
             .setTitle(`__PERSONAL BEST #${usersScore.playNumber}__`)
             .setDescription(`**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`)
-            .addField(`\u2022 \:star: **${ppInfo.formattedStars}*** ${usersScore.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
+            .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${usersScore.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
             .setFooter(`${mapStatus} | Beatmap by ${beatmapInfo.creator} | Message sent: `)
             .setTimestamp()
 
