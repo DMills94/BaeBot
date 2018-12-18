@@ -1,38 +1,44 @@
 const Discord = require('discord.js')
-const { prefix } = require('../config.json')
 const functions = require('./exportFunctions.js')
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: 'rb',
     description: 'Displays users recent best (default: most recent)',
     async execute(m, args, emojis, rbNum) {
+        let user = []
         let username
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
-                .catch(() => {
-                    m.reply(`you do not have a linked account! Try \`${prefix}link [username]\``)
-                    return
-                })
-        } else if (args[0].startsWith('<@')) {
+            // username = await functions.lookupUser(m.author.id)
+            user = await database.checkForLink(m.author.id)
+        }
+        else if (args[0].startsWith('<@')) {
             let discordId = args[0].slice(2, args[0].length - 1)
             if (discordId.startsWith('!')) {
                 discordId = discordId.slice(1)
             }
-            username = await functions.lookupUser(discordId)
-                .catch(() => {
-                    m.reply('they do not have a linked account so I cannot find their top plays :(')
-                    return
-                })
-        } else {
+            // username = await functions.lookupUser(discordId)
+            user = await database.checkForLink(discordId)
+        }
+        else {
             username = args.join('_')
         }
-
+        
+        if (user.length >  0)
+            username = user[0].osuIGN
+        
         if (!username) {
-            return
+            m.react('❎')
+            return m.channel.send('No linked account could be found! I cannot find their top plays \:sob:')
         }
-
+        
         const unsortedTopScores = await functions.getUserTop(username)
+        
+        if (unsortedTopScores.length < 1) {
+            m.react('❎')
+            return m.channel.send(`\`${username}\` doesn't appear to play osu! Perhaps you made a spelling mistake? Please try again!`)
+        }
 
         for (let score in unsortedTopScores) {
             unsortedTopScores[score].playNumber = parseInt(score) + 1
@@ -56,6 +62,7 @@ module.exports = {
         const userInfo = await functions.getUser(username, 0)
 
         if (!userInfo) {
+            m.react('❎')
             return m.channel.send(`The username provided doesn't exist! Please try again.`)
         }
 
@@ -102,6 +109,6 @@ module.exports = {
             embed: embed
         })
 
-        functions.storeLastBeatmap(m.guild, beatmapInfo, usersScore)
+        database.storeBeatmap(m.channel.id, beatmapInfo, usersScore)
     }
 }

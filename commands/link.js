@@ -1,4 +1,3 @@
-const fs = require('fs')
 const { prefix } = require('../config.json')
 const database = require('../databases/requests.js')
 const functions = require('./exportFunctions.js')

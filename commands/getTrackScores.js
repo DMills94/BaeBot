@@ -1,5 +1,5 @@
 const fs = require('fs')
-const database = require('../localdb.json')
+const database = require('../databases/requests.js')
 const functions = require('./exportFunctions.js')
 
 module.exports = {

@@ -20,7 +20,6 @@ exports.getDevMode = () => {
 }
 
 exports.toggleDev = (devStatus, m) => {
-    console.log('requests.js: ', devStatus)
     db.devMode.update({ devMode: !devStatus}, {$set: {devMode: devStatus}}, {}, err => {
         if (err) {
             console.log(err)
@@ -29,6 +28,39 @@ exports.toggleDev = (devStatus, m) => {
         }
         m.react('✅')
         return m.channel.send(`Dev mode is now ${devStatus ? 'active' : 'inactive'}`)
+    })
+}
+
+//Last Beatmap
+exports.storeBeatmap = (channelid, beatmap, performance) => {
+
+    db.lastBeatmap.find({ channelid }, (err, docs) => {
+        if (err) console.log(err)
+        if (docs.length < 1) { //New guild
+            const beatmapObj = {
+                channelid,
+                beatmap: beatmap,
+                performance: performance
+            }
+
+            db.lastBeatmap.insert(beatmapObj, err => {
+                if (err) console.log(err)
+            })
+        }
+        else {
+            db.lastBeatmap.update({ channelid }, { $set: { beatmap, performance } }, {}, err => {
+                if (err) console.log(err)
+            })
+        }
+    })
+}
+
+exports.fetchBeatmap = channelid => {
+    return new Promise(resolve => {
+        db.lastBeatmap.find({ channelid }, (err, docs) => {
+            if (err) resolve([])
+            resolve(docs[0])
+        })
     })
 }
 
@@ -63,7 +95,7 @@ exports.deleteLink = (discordid, osuIGN, m) => {
 
 exports.checkForLink = discordid => {
     return new Promise(resolve => {
-        db.linkedUsers.find({discordid}, (err, docs) => {
+        db.linkedUsers.find( { discordid }, (err, docs) => {
             if (err) console.log(err)
             resolve(docs)
         })
@@ -71,3 +103,110 @@ exports.checkForLink = discordid => {
 }
 
 //Tracking
+exports.checkForTrack = username => {
+    return new Promise(resolve => {
+        db.track.find({ username }, (err, docs) => {
+            if (err) resolve([])
+            if (docs.length < 1) resolve(false)
+            else resolve(docs[0])
+        })
+    })
+}
+
+exports.addNewTrack = (m, channelid, trackInfo, action) => {
+    //check for username
+    db.track.find( { username: trackInfo.username }, (err, docs) => {
+        if (err) console.log(err)
+        if (action === 'add') {
+            console.log('adding new track')
+            let data = {
+                username: trackInfo.username,
+                channels: {
+                    [channelid]: trackInfo.limit
+                },
+                userBest: trackInfo.userBest,
+                recent24hr: trackInfo.recent24hr
+            }
+            db.track.insert(data, err => {
+                if (err) {
+                    console.log(err)
+                    return m.channel.send(`There was an error adding \`${trackInfo.username}\` to tracking. Please try again later!`)
+                }
+                m.channel.send(`\`${trackInfo.username}\` is being added to the tracking for osu! standard scores in their \`top ${trackInfo.limit}\`! \:tada:`)
+            })
+        }
+        else if (action === 'update') { //Update'
+            db.track.find({ username: trackInfo.username }, (err, docs) => {
+                if (err) console.log(err)
+                let newChannels = {...docs[0].channels} 
+                newChannels[channelid] = trackInfo.limit
+                
+                db.track.update({ username: trackInfo.username }, { $set: { channels: newChannels } }, {}, err => {
+                    if (err) console.log(err)
+                })
+            })
+
+        }
+    })
+}
+
+exports.deleteTrack = (m, size, channelid, username = '') => {
+    if (size === 'all') {
+        db.track.find({ $where: function() { return Object.keys(this.channels).includes(channelid) }}, async (err, docs) => {
+            if (err) {
+                console.log(err) 
+                m.react('❎')
+                return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`) 
+            }
+
+            const deleteMessage = await m.channel.send("Deleting entries..")
+            
+            for (let user in docs) {
+                let username = docs[user].username
+                let newChannels = {...docs[user].channels}
+                delete newChannels[channelid]
+
+                db.track.update({ username }, { $set: { channels: newChannels } }, {}, err => {
+                    if (err) {
+                        console.log(err)
+                        m.channel.send(`Unable to delete ${username} \:sob:`)
+                    }
+                })
+            }
+
+            deleteMessage.edit('Finished deleting entries, any issues will be posted below! \:tada:')
+        })
+    }
+    else if (size === 'one') {
+        db.track.find({ username }, (err, docs) => {
+            if (err) {
+                console.log(err)
+                m.react('❎')
+                return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)        
+            }
+            const usersToEdit = docs[0]
+            
+            let newChannels = {...usersToEdit.channels} 
+            delete newChannels[channelid]
+
+            db.track.update({ username }, { $set: { channels: newChannels } }, {}, err => {
+                if (err) {
+                    console.log(err)
+                    m.react('❎')
+                    return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)        
+                }
+                m.react('✅')
+                return m.channel.send(`\`${username}\` has been removed from tracking! \:tada:`)
+            })
+        })
+    }
+}
+
+exports.trackList = channelid => {
+    return new Promise(resolve => {
+        db.track.find({ $where: function() { return Object.keys(this.channels).includes(channelid) }}, (err, docs) => {
+            if (err) console.log(err)
+            resolve(docs)
+        })
+    })
+}

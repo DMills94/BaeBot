@@ -1,42 +1,46 @@
 const Discord = require("discord.js")
 const functions = require("./exportFunctions.js")
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
     async execute(m, args, emojis, plays, top5) {
+        let user = []
         let username
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
-                .catch(() => {
-                    return m.reply("you do not have a linked account! Try ` `link [username]`")
-                })
+            // username = await functions.lookupUser(m.author.id)
+            user = await database.checkForLink(m.author.id)
         }
-        else if (args[0].startsWith("<@")) {
+        else if (args[0].startsWith('<@')) {
             let discordId = args[0].slice(2, args[0].length - 1)
-            if (discordId.startsWith("!")) {
+            if (discordId.startsWith('!')) {
                 discordId = discordId.slice(1)
             }
-            username = await functions.lookupUser(discordId)
-                .catch(() => {
-                    return m.reply("they do not have a linked account so I cannot find their top plays :(")
-                })
+            // username = await functions.lookupUser(discordId)
+            user = await database.checkForLink(discordId)
         }
         else {
-            username = args.join("_")
+            username = args.join('_')
         }
-
-        if (!username) {
-            return
+        
+        if (user.length >  0)
+            username = user[0].osuIGN
+        
+        if (!username){
+            m.react('❎')
+            return m.channel.send('No linked account could be found! I cannot find their top plays \:sob:')
         }
 
         //osu API calls
         const userInfo = await functions.getUser(username, 0)
 
-        if (!userInfo)
+        if (!userInfo){
+            m.react('❎')
             return m.reply("That username does not exist! Please try again.")
-
+        }
+        
         let topPlays = await functions.getUserTop(username, plays)
 
         if (!top5) {
@@ -118,7 +122,7 @@ module.exports = {
                 .setFooter(`${mapStatus} | Beatmap by ${beatmapList[0].creator} | Message sent: `)
                 .setTimestamp()
 
-            functions.storeLastBeatmap(m.guild, beatmapList[0], topPlays[0])
+            database.storeBeatmap(m.channel.id, beatmapList[0], topPlays[0])
         }
 
         //Send Embed to Channel

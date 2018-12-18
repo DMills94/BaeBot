@@ -2,6 +2,7 @@ const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
 const axios = require('axios')
 const ojsama = require('ojsama')
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: 'recognise beatmap',
@@ -264,7 +265,7 @@ module.exports = {
 
                             mapInfo += `\n----------------------------`
                             mapInfo += `\n${diffImage} __**Difficulty: ${beatmapAPI[i].version}**__ ${mods != '' ? '**+' + mods.toUpperCase() + '**' : ''}`
-                            mapInfo += `\n\n\u2022 **AR:** ${beatmapAPI[i].diff_approach} \u2022 **OD:** ${beatmapAPI[i].diff_overall} \u2022 **HP:** ${beatmapAPI[i].diff_drain} \u2022 **CS:** ${beatmapAPI[i].diff_size}`
+                            mapInfo += `\n\n\u2022 **CS:** ${beatmapAPI[i].diff_size} \u2022 **AR:** ${beatmapAPI[i].diff_approach} \u2022 **OD:** ${beatmapAPI[i].diff_overall} \u2022 **HP:** ${beatmapAPI[i].diff_drain}`
                             mapInfo += `\n\u2022 **Length:** ${beatmapAPI[i].total_length} \u2022 **BPM:** ${Math.floor(beatmapAPI[i].bpm)}`
                             mapInfo += `\n\u2022 **Star Rating:** ${starRating}* \u2022 **Max Combo:** ${beatmapAPI[i].max_combo}x`
                             mapInfo += `\n\n __Performance Values__ \n \u2022 **95%:** ${beatmapAPI[i].ppAccValues[0]}pp \u2022 **99%:** ${beatmapAPI[i].ppAccValues[1]}pp \u2022 **100%:** ${beatmapAPI[i].ppAccValues[2]}pp`
@@ -281,7 +282,7 @@ module.exports = {
 
                         m.channel.send({ embed: embed })
 
-                        functions.storeLastBeatmap(m.guild, beatmapAPI[0], null)
+                        database.storeBeatmap(m.channel.id, beatmapAPI[0], null)
                     }
 
                     counter++

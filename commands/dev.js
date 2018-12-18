@@ -1,4 +1,3 @@
-const fs = require('fs')
 const config = require('../config.json')
 const database = require('../databases/requests.js')
 
@@ -10,7 +9,6 @@ module.exports = {
 
             let devModeOld = await database.getDevMode()
             let devMode = !devModeOld
-            console.log('dev.js: ', devMode)
 
             if (devMode) {
                 m.client.user.setActivity(`In dev mode`)

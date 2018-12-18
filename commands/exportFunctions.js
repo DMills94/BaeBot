@@ -1,4 +1,3 @@
-const fs = require('fs')
 const axios = require('axios')
 const {osuApiKey} = require('../config.json')
 const ojsama = require('ojsama')
@@ -90,20 +89,6 @@ customExports.getScores = (bmpId, username) => {
             .then(resp => {
                 resolve(resp.data)
             })
-    })
-}
-
-customExports.storeLastBeatmap = (guild, beatmap, performance) => {
-    const beatmapObj = {
-        beatmap: beatmap,
-        performance: performance
-    }
-
-    const guildID = guild.id
-    database.lastBeatmap[guildID] = beatmapObj
-
-    fs.writeFile('localdb.json', JSON.stringify(database, null, 2), err => {
-        if (err) return console.log(err)
     })
 }
 
