@@ -7,4 +7,4 @@ node_modules/
 
 # database commands
 localdb.json
-database/
+databases/stores/
