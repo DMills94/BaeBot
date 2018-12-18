@@ -1,7 +1,7 @@
 const fs = require('fs')
 const Discord = require('discord.js')
 const config = require('./config.json')
-const database = require('./localdb.json')
+const database = require('./databases/requests.js')
 
 const client = new Discord.Client()
 client.commands = new Discord.Collection()
@@ -17,13 +17,14 @@ for (const file of commandFiles) {
 let devMode
 let commandHistory = []
 
-client.on('ready', () => {
+client.on('ready', async () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`)
 
-    let devMode = database.devMode
+    let devMode = await database.getDevMode()
     if (devMode) {
         client.user.setActivity(`In dev mode`)
-    } else {
+    }
+    else {
         client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
     }
 

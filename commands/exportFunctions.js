@@ -267,9 +267,9 @@ customExports.calculate = (beatmap, performance) => {
                     stars: stars
                 })
 
-                results.formattedStars = stars.toString().split(" ")[0]
-                results.formattedPerformancePP = recentPP.toString().split(" ")[0]
-                results.formattedMaxPP = maxPP.toString().split(" ")[0]
+                results.formattedStars = stars.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
+                results.formattedPerformancePP = recentPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
+                results.formattedMaxPP = maxPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
 
                 resolve(results)
 

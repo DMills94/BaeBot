@@ -1,5 +1,6 @@
 const fs = require('fs')
-const database = require('../localdb.json')
+const { prefix } = require('../config.json')
+const database = require('../databases/requests.js')
 const functions = require('./exportFunctions.js')
 
 module.exports = {
@@ -8,14 +9,16 @@ module.exports = {
     async execute(m, args) {
         const userID = m.author.id
 
-        if (Object.keys(database.linkedUsers).includes(userID))
-            return m.channel.send(`Your account is already linked to \`${database.linkedUsers[userID]}\``)
+        const link = await database.checkForLink(userID)
+
+        if (link.length > 0)
+            return m.channel.send(`Your account is already link to \`${link[0].osuIGN}\``)
         
         const osuIGN = args.join('_')
 
         if (!osuIGN) {
             m.react('❎')
-            return m.channel.send('please specify a osu! username to link with: ``link [username]`')
+            return m.channel.send(`please specify a osu! username to link with: \`${prefix}link [username]\``)
         }
 
         const userInfo = await functions.getUser(osuIGN)
@@ -24,22 +27,7 @@ module.exports = {
             m.react('❎')
             return m.channel.send('That username does not exist! Please try again.')
         }
-        
-        let username = userInfo.username
-        
-        database.linkedUsers = {
-            ...database.linkedUsers,
-            [userID]: username
-        }
 
-        fs.writeFile('localdb.json', JSON.stringify(database, null, 4), err => {
-            if (err) {
-                console.log(err)
-                m.react('❎')
-                return m.channel.send(`There was an issue linking your account! Please try again later.`)
-            }
-            m.react('✅')
-            return m.channel.send(`You have successfully been linked to ${username}`)
-        })
+        await database.newLink(userID, userInfo.username, m)
     }
 }

@@ -90,6 +90,13 @@ module.exports = {
             }
         }
 
+        const userTop = await functions.getUserTop(score.username)
+
+        for (let top in userTop) {
+            if (userTop[top].date === score.date)
+                score.playNumber = parseInt(top) + 1
+        }
+
         score.enabled_mods = functions.determineMods(score)
 
         score.accuracy = functions.determineAcc(score)
@@ -118,6 +125,27 @@ module.exports = {
             .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp~~" : "**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.beatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}x/**${prevBeatmap.beatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
             .setFooter(`${mapStatus} | Beatmap by ${prevBeatmap.beatmap.creator}  | Message sent: `)
             .setTimestamp()
+
+            if (score.playNumber) {
+                switch (score.playNumber) {
+                    case 1:
+                        colour = '#FFD700'
+                        break
+                    case 2:
+                        colour = '#FFFFFF'
+                        break
+                    case 3:
+                        colour = '#cd7f32'
+                        break
+                    default:
+                        colour = '#0096CF'
+                        break
+                }
+    
+                embed
+                    .setDescription(`__**PERSONAL BEST #${score.playNumber}**__`)
+                    .setColor(colour)
+            }
 
         //Send Embed to Channel
         m.channel.send({

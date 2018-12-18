@@ -1,28 +1,21 @@
 const fs = require('fs')
-const database = require('../localdb.json')
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: 'unlink',
     description: 'unlinks a users discord id to an osu name',
-    execute(m) {
+    async execute(m) {
         const userID = m.author.id
 
-        if (!Object.keys(database.linkedUsers).includes(userID)) {
+        const link = await database.checkForLink(userID)
+
+        if (link.length < 1) {
             m.react('❎')
             return m.channel.send('You have no linked account to unlink! Please use ``link [username]` to link an account!')
         }
 
-        const username = database.linkedUsers[userID]
-        delete database.linkedUsers[userID]
+        const username = link[0].osuIGN
 
-        fs.writeFile('localdb.json', JSON.stringify(database, null, 4), err => {
-            if (err) {
-                console.log(err)
-                m.react('❎')
-                return m.channel.send(`There was an error unlinking your account, please try again later!`)
-            }
-            m.react('✅')
-            return m.channel.send(`You have successfully unlinked from ${username}`)
-        })
+        database.deleteLink(userID, username, m)
     }
 }

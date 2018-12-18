@@ -78,6 +78,9 @@ module.exports = {
 
                 const userRecent = await functions.getUserRecent(username, 50)
 
+                if (!database.track)
+                    database.track = {}
+
                 //CHECK IF TRACK IS EMPTY
                 const trackEmpty = Object.keys(database.track).length < 1
 
@@ -213,7 +216,7 @@ module.exports = {
                 return m.channel.send(`There are no tracked users in this channel!`)
             }
 
-            usernameArr.sort((a, b) => (a.username.toUpperCase() > b.username.toUpperCase()) ? 1 : ((b.username.toUpperCase() > a.username.toUpperCase()) ? -1 : 0))    
+            usernameArr.sort((a, b) => (a.username.toUpperCase() > b.username.toUpperCase()) ? 1 : ((b.username.toUpperCase() > a.username.toUpperCase()) ? -1 : 0))
 
             trackedText += `__List of tracked users in this channel__ \n\`\`\``
 

@@ -69,6 +69,7 @@ module.exports = {
             const ppInfo = await functions.calculate(beatmapInfo, topPlays[score])
 
             topPlays[score].maxPP = ppInfo.formattedMaxPP
+            topPlays[score].pp = ppInfo.formattedPerformancePP
             topPlays[score].stars = ppInfo.formattedStars
         }
 
@@ -87,7 +88,7 @@ module.exports = {
                 .setTimestamp()
         }
         else {
-            let colour
+            let colour = "#0096CF"
             switch (plays) {
                 case 1:
                     colour = "#FFD700"
@@ -98,18 +99,22 @@ module.exports = {
                 case 3:
                     colour = "#cd7f32"
                     break
-                default:
-                    colour = "#0096CF"
-                    break
             }
 
             const mapStatus = functions.approvedStatus(beatmapList[0].approved)
+            const usersScore = topPlays[0]
+            const beatmapInfo = beatmapList[0]
+            const rankImage = emojis.find("name", usersScore.rank)
+            const diffImage = functions.difficultyImage(usersScore.stars, emojis)
 
             embed
                 .setColor(colour)
                 .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
                 .setThumbnail("https://b.ppy.sh/thumb/" + beatmapList[0].beatmapset_id + "l.jpg")
-                .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, topPlays, beatmapList, emojis))
+                .setTitle(`${beatmapList[0].artist} ${beatmapList[0].title} [${beatmapList[0].version}]`)
+                .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
+                .setDescription(`__**PERSONAL BEST #${plays}**__`)
+                .addField(`\u2022 ${diffImage} **${usersScore.stars}*** ${usersScore.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp~~' : '**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp'}`, `\u2022 ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
                 .setFooter(`${mapStatus} | Beatmap by ${beatmapList[0].creator} | Message sent: `)
                 .setTimestamp()
 
