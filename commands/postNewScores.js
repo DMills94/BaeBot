@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
-const database = require('../localdb.json')
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: 'postnew',
@@ -65,7 +65,7 @@ module.exports = {
             .setTimestamp()
 
         //Send embed to channels where user tracked
-        const usersTrackedChannels = database.track[userInfo.username].channels
+        const usersTrackedChannels = (await database.userTrack(userInfo.username)).channels
 
         Object.keys(usersTrackedChannels).forEach(channel => {
             if (score.playNumber <= usersTrackedChannels[channel])

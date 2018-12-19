@@ -118,7 +118,6 @@ exports.addNewTrack = (m, channelid, trackInfo, action) => {
     db.track.find( { username: trackInfo.username }, (err, docs) => {
         if (err) console.log(err)
         if (action === 'add') {
-            console.log('adding new track')
             let data = {
                 username: trackInfo.username,
                 channels: {
@@ -165,13 +164,23 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
                 let username = docs[user].username
                 let newChannels = {...docs[user].channels}
                 delete newChannels[channelid]
-
-                db.track.update({ username }, { $set: { channels: newChannels } }, {}, err => {
-                    if (err) {
-                        console.log(err)
-                        m.channel.send(`Unable to delete ${username} \:sob:`)
-                    }
-                })
+                 
+                if (Object.keys(newChannels).length < 1) {
+                    db.track.remove({ username }, {}, err => {
+                        if (err) {
+                            console.log(err)
+                            m.channel.send(`Unable to delete ${username} \:sob:`)
+                        }
+                    })
+                }
+                else {
+                    db.track.update({ username }, { $set: { channels: newChannels } }, {}, err => {
+                        if (err) {
+                            console.log(err)
+                            m.channel.send(`Unable to delete ${username} \:sob:`)
+                        }
+                    })
+                }
             }
 
             deleteMessage.edit('Finished deleting entries, any issues will be posted below! \:tada:')
@@ -184,22 +193,52 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
                 m.react('❎')
                 return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)        
             }
-            const usersToEdit = docs[0]
+            const userToEdit = docs[0]
             
-            let newChannels = {...usersToEdit.channels} 
+            let newChannels = {...userToEdit.channels} 
             delete newChannels[channelid]
 
-            db.track.update({ username }, { $set: { channels: newChannels } }, {}, err => {
-                if (err) {
-                    console.log(err)
-                    m.react('❎')
-                    return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)        
-                }
+            if (Object.keys(newChannels).length < 1) {
+                db.track.remove({ username }, {}, err => {
+                    if (err) {
+                        console.log(err)
+                        m.channel.send(`Unable to delete ${username} \:sob:`)
+                    }
+                })
                 m.react('✅')
                 return m.channel.send(`\`${username}\` has been removed from tracking! \:tada:`)
-            })
+            }
+            else {
+                db.track.update({ username }, { $set: { channels: newChannels } }, {}, err => {
+                    if (err) {
+                        console.log(err)
+                        m.react('❎')
+                        return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)        
+                    }
+                    m.react('✅')
+                    return m.channel.send(`\`${username}\` has been removed from tracking! \:tada:`)
+                })
+            }
         })
     }
+}
+
+exports.allTracks = () => {
+    return new Promise(resolve => {
+        db.track.find({}, (err, docs) => {
+            if (err) console.log(err)
+            resolve(docs)
+        })
+    })
+}
+
+exports.userTrack = (username) => {
+    return new Promise(resolve => {
+        db.track.find({ username }, (err, docs) => {
+            if (err) console.log(err)
+            resolve(docs[0])
+        })
+    })
 }
 
 exports.trackList = channelid => {
@@ -208,5 +247,13 @@ exports.trackList = channelid => {
             if (err) console.log(err)
             resolve(docs)
         })
+    })
+}
+
+exports.updateTrack = (username, userBest) => {
+    console.log(userBest.length)
+    db.track.update({ username }, { $set: { userBest: userBest } }, {}, err => {
+        if (err) console.log(err)
+        console.log(`updated db for ${username}`)
     })
 }

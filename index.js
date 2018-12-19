@@ -32,12 +32,12 @@ client.on('ready', async () => {
 
     //Check bot hasn't left any servers, if so remove their db entries
 
-    // console.log('Starting tracking..')
-    // tracking(true, emojis)
+    console.log('Starting tracking..')
+    tracking(emojis)
 
-    // setInterval(() => {
-    //     tracking(false, emojis)
-    // }, 150000)
+    setInterval(() => {
+        tracking(emojis)
+    }, 150000)
 })
 
 client.on('error', err => {
@@ -225,8 +225,8 @@ const logCommand = (client, message, command, args = []) => {
     client.channels.get(config.privChannel).send({ embed: embed })
 }
 
-async function tracking(first, emojis) {
-    const newScores = await client.commands.get('getNewTrack').execute(first)
+async function tracking(emojis) {
+    const newScores = await client.commands.get('getNewTrack').execute()
 
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)

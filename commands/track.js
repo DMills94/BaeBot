@@ -63,7 +63,7 @@ module.exports = {
                 usernameInfo = await functions.getUser(username, 0)
 
                 if (!usernameInfo) {
-                    m.channel.send(`The username \`${username}\` doesn't exist!`)
+                    m.channel.send(`The username \`${username}\` doesn't exist! \:angry:`)
                     continue
                 }
 
@@ -79,8 +79,7 @@ module.exports = {
                 const trackInfo = {
                     username,
                     limit: argUsernames[arg].limit,
-                    userBest,
-                    recent24hr: userRecent
+                    userBest
                 }
 
                 //ADD IF NOT EXISTING, IF SO UPDATE CHANNELS
