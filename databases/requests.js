@@ -256,7 +256,9 @@ exports.trackList = channelid => {
     })
 }
 
-exports.updateTrack = (username, score, index) => {
-    console.log(username)
-    console.log(score, index)
+exports.updateTrack = (username, scoreDates, index) => {
+    db.track.update({ username }, { $set : { userBest: scoreDates } }, {}, err => {
+        if (err) console.log(err)
+        console.log(`[TRACKING] updated ${username}`)
+    })
 }

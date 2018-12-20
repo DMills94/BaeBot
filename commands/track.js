@@ -72,9 +72,9 @@ module.exports = {
 
                 username = usernameInfo.username
                 
-                const userBest = await functions.getUserTop(username, argUsernames[arg].limit)
-
-                const userRecent = await functions.getUserRecent(username, 50)
+                const userBest = (await functions.getUserTop(username, argUsernames[arg].limit)).map(top => {
+                    return top.date
+                })
 
                 //CHECK IF EXISTING USERNAME IN TRACK
                 const existingTrack = await database.checkForTrack(username)

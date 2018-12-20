@@ -27,7 +27,7 @@ module.exports = {
                     let scoreMatch = false
 
                     for (let record in prevTop100) {
-                        if (newTop100[score].date === prevTop100[record].date) {
+                        if (newTop100[score].date === prevTop100[record]) {
                             scoreMatch = true
                             break
                         }
@@ -35,7 +35,10 @@ module.exports = {
 
                     if (!scoreMatch) {
                         changedScoresArray.push(newTop100[score])
-                        database.updateTrack(userInfo.username, newTop100[score], score)
+                        let dbTop100 = newTop100.map(top => {
+                            return top.date
+                        })
+                        database.updateTrack(userInfo.username, dbTop100, score)
                     }
                 }
 
