@@ -10,7 +10,6 @@ module.exports = {
         let username
 
         if (args.length === 0) {
-            // username = await functions.lookupUser(m.author.id)
             user = await database.checkForLink(m.author.id)
         }
         else if (args[0].startsWith('<@')) {
@@ -18,7 +17,6 @@ module.exports = {
             if (discordId.startsWith('!')) {
                 discordId = discordId.slice(1)
             }
-            // username = await functions.lookupUser(discordId)
             user = await database.checkForLink(discordId)
         }
         else {

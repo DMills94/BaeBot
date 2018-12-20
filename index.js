@@ -7,7 +7,6 @@ const client = new Discord.Client()
 client.commands = new Discord.Collection()
 
 const commandFiles = fs.readdirSync('./commands')
-// const functions = require('./commands/exportFunctions.js')
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`)
@@ -222,11 +221,14 @@ const logCommand = (client, message, command, args = []) => {
         .setDescription(`Executed By: **${message.author.username}#${message.author.discriminator}**`)
         .setFooter(`${date} at ${time}`, message.author.avatarURL)
 
+        if (args.length > 0)
+            embed.addField('Arguments', args.join(' '))
+
     client.channels.get(config.privChannel).send({ embed: embed })
 }
 
 async function tracking(emojis) {
-    const newScores = await client.commands.get('getNewTrack').execute()
+    const newScores = await client.commands.get('getTrackScores').execute()
 
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)
@@ -234,7 +236,7 @@ async function tracking(emojis) {
 
     if (newScores.length > 0) {
         console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`)
-        console.log(newScores)
+        // console.log(newScores)
         for (let score in newScores) {
             client.commands.get('postnew').execute(newScores[score], emojis, client.channels)
         }

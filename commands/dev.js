@@ -6,21 +6,28 @@ module.exports = {
     description: 'Toggles dev mode',
     async execute(m) {
         if (m.author.id === config.baeID) {
-
             let devModeOld = await database.getDevMode()
-            let devMode = !devModeOld
+            let devModeNew
 
-            if (devMode) {
+            if (!devModeOld) {
+                database.addDevMode()
+                devModeNew = false
+            }
+            else {
+                devModeNew = !devModeOld.devMode
+            }
+
+            if (devModeNew) {
                 m.client.user.setActivity(`In dev mode`)
             }
             else {
                 m.client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
             }
 
-            database.toggleDev(devMode, m)
+            database.toggleDev(devModeNew, m)
         }
         else {
-            return m.channel.send(`Sorry this command isn't for you!`)
+            return m.channel.send(`Sorry this command isn't for you! \:scream:`)
         }
     }
 }

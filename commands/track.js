@@ -59,6 +59,9 @@ module.exports = {
             for (let arg in argUsernames) {
                 username = argUsernames[arg].username
 
+                if (username === '')
+                    continue
+
                 //check username exists + format correctly
                 usernameInfo = await functions.getUser(username, 0)
 

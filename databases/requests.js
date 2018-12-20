@@ -8,12 +8,18 @@ db.linkedUsers = new Datastore({ filename: './databases/stores/links', autoload:
 db.track = new Datastore({ filename: './databases/stores/track', autoload: true })
 
 //Dev Mode
+exports.addDevMode = () => {
+    db.devMode.insert({devMode: false}, err => {
+        if (err) console.log(err)
+    })
+}
+
 exports.getDevMode = () => {
     return new Promise(resolve => {
-        db.devMode.find({ devMode: true }, (err, docs) => {
+        db.devMode.find({}, (err, docs) => {
             if (err) console.log(err)
             if (docs.length > 0)
-                resolve(true)
+                resolve(docs[0])
             else resolve(false)
         })
     })
@@ -24,10 +30,10 @@ exports.toggleDev = (devStatus, m) => {
         if (err) {
             console.log(err)
             m.react('❎')
-            return m.channel.send(`Unable to enable dev mode right now!`)
+            return m.channel.send(`Unable to toggle dev mode right now! \:slight_frown:`)
         }
         m.react('✅')
-        return m.channel.send(`Dev mode is now ${devStatus ? 'active' : 'inactive'}`)
+        return m.channel.send(`Dev mode is now ${devStatus ? 'active' : 'inactive'} \:sunglasses:`)
     })
 }
 
@@ -250,10 +256,7 @@ exports.trackList = channelid => {
     })
 }
 
-exports.updateTrack = (username, userBest) => {
-    console.log(userBest.length)
-    db.track.update({ username }, { $set: { userBest: userBest } }, {}, err => {
-        if (err) console.log(err)
-        console.log(`updated db for ${username}`)
-    })
+exports.updateTrack = (username, score, index) => {
+    console.log(username)
+    console.log(score, index)
 }

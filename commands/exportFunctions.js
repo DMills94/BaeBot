@@ -1,18 +1,8 @@
 const axios = require('axios')
 const {osuApiKey} = require('../config.json')
 const ojsama = require('ojsama')
-const database = require('../localdb.json')
 
 let customExports = module.exports = {}
-
-customExports.lookupUser = (authorID) => {
-    return new Promise((resolve, reject) => {
-        if (Object.keys(database.linkedUsers).includes(authorID))
-            resolve(database.linkedUsers[authorID])
-        else
-            reject()
-    })
-}
 
 customExports.getUser = (username, mode) => {
     return new Promise(resolve => {
