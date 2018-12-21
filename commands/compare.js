@@ -50,7 +50,7 @@ module.exports = {
 
         if (userScores.length < 1){
             m.react('❎')
-            return m.reply('Go play the map first, dumb bitch - Belial 2018')
+            return m.channel.send('Go play the map first, dumb bitch - Belial 2018')
         }
 
         let score

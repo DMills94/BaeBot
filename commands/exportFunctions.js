@@ -2,6 +2,8 @@ const axios = require('axios')
 const {osuApiKey} = require('../config.json')
 const ojsama = require('ojsama')
 
+axios.defaults.baseURL = "https://osu.ppy.sh/"
+
 let customExports = module.exports = {}
 
 customExports.getUser = (username, mode) => {

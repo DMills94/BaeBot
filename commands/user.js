@@ -44,7 +44,7 @@ module.exports = {
         const userInfo = await functions.getUser(username, mode)
 
         if (userInfo === undefined)
-            return m.reply("that username does not exist! Please try again.")
+            return m.channel.send("that username does not exist! Please try again.")
 
         if (!more) {
 
@@ -111,12 +111,12 @@ module.exports = {
                 scores = scores - 1
 
                 if (scores % 8 === 0)
-                    message.edit(`Processing top scores for \`${user.username}\`, this can take a while... (${scores}/100)`)
+                    message.edit(`Processing top scores for \`${userInfo.username}\`, this can take a while... | \`${scores}/100\``)
             }
 
             zeroMissPerc = zeroMiss / top100.length * 100
             ppAvg = (cumulativePP / top100.length).toFixed(2)
-            ppPerPlay = parseFloat(cumulativePP / parseInt(user.playcount)).toFixed(2)
+            ppPerPlay = parseFloat(cumulativePP / parseInt(userInfo.playcount)).toFixed(2)
             avgLengthMin = Math.floor((totalMapLength / top100.length) / 60)
             avgLengthSec = Math.round((totalMapLength / top100.length) - avgLengthMin * 60)
             avgCombo = totalMapCombo / top100.length
@@ -134,7 +134,7 @@ module.exports = {
                     `**PP Range:** ${maxPP}pp - ${minPP}pp = ${ppRange}pp
                     **PP Average:** ${ppAvg}pp
                     **Perfect plays in top 100:** ${zeroMiss}
-                    **Cumulative unweighted PP:** ${parseFloat(cumulativePP).toLocaleString('en')}pp
+                    **Cumulative unweighted PP:** ${parseFloat(cumulativePP).toLocaleString('en', { maximumFractionDigits: 2 })}pp
                     **Play Count:** ${parseFloat(userInfo.playcount).toLocaleString('en')}
                     **Average unweighted PP per play:** ${ppPerPlay}
                     **Preferred Map Length:** ${avgLengthMin}:${avgLengthSec}

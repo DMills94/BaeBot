@@ -83,7 +83,7 @@ exports.newLink = (discordid, osuIGN, m) => {
             return m.channel.send(`There was an issue linking your account! Please try again later.`)
         }
         m.react('✅')
-        return m.channel.send(`You have successfully been linked to \`${osuIGN}\``)
+        return m.channel.send(`You have successfully been linked to \`${osuIGN}\` \:tada:`)
     })
 }
 
@@ -95,7 +95,7 @@ exports.deleteLink = (discordid, osuIGN, m) => {
             return m.channel.send(`There was an error unlinking your account, please try again later!`)
         }
         m.react('✅')
-        return m.channel.send(`You have successfully unlinked from ${osuIGN}`)
+        return m.channel.send(`You have successfully unlinked from ${osuIGN} \:tada:`)
     })
 }
 
@@ -259,6 +259,5 @@ exports.trackList = channelid => {
 exports.updateTrack = (username, scoreDates, index) => {
     db.track.update({ username }, { $set : { userBest: scoreDates } }, {}, err => {
         if (err) console.log(err)
-        console.log(`[TRACKING] updated ${username}`)
     })
 }

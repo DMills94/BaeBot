@@ -36,12 +36,12 @@ module.exports = {
         const userInfo = await functions.getUser(username, 0)
 
         if (!userInfo)
-            return m.reply('That username does not exist! Please try again.')
+            return m.channel.send('That username does not exist! Please try again.')
 
         const recent = (await functions.getUserRecent(username))[0]
 
         if (!recent)
-            return m.reply(`That user has not played a loved or ranked map in the previous 24 hours so I can't find their score! :(`)
+            return m.channel.send(`That user has not played a loved or ranked map in the previous 24 hours so I can't find their score! :(`)
 
         const beatmapInfo = (await functions.getBeatmap(recent.beatmap_id))[0]
 

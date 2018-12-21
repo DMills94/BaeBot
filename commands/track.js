@@ -72,7 +72,7 @@ module.exports = {
 
                 username = usernameInfo.username
                 
-                const userBest = (await functions.getUserTop(username, argUsernames[arg].limit)).map(top => {
+                const userBest = (await functions.getUserTop(username)).map(top => {
                     return top.date
                 })
 
@@ -105,7 +105,7 @@ module.exports = {
                     else {
 
                         database.addNewTrack(m, channelID, trackInfo, 'update')
-                        m.channel.send(`\`${username}\` is being added to the tracking for osu! standard scores in their \`top ${argUsernames[arg].limit}\`! \:tada:`)
+                        m.channel.send(`\`${username}\` is being added to tracking for osu! standard scores in their \`top ${argUsernames[arg].limit}\`! \:tada:`)
                     }
                 }
             }
