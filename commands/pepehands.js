@@ -4,10 +4,10 @@ module.exports = {
      execute(m, args) {
         if (m.channel.guild.name === "Bae Station") {
             const emoji = m.guild.emojis.find("name", "PepeHands")
-            m.react(emoji);
+            m.react(emoji)
         }
         else {
-            return;
+            return
         }
     },
-};
+}

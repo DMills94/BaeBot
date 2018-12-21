@@ -1,40 +1,42 @@
-const axios = require('axios')
 const Discord = require('discord.js')
-const { osuApiKey } = require('../config.json')
-const ojsama = require('ojsama')
 const functions = require('./exportFunctions.js')
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: 'rb',
     description: 'Displays users recent best (default: most recent)',
     async execute(m, args, emojis, rbNum) {
+        let user = []
         let username
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
-                .catch(() => {
-                    m.reply('you do not have a linked account! Try ` `link [username]`')
-                    return
-                })
-        } else if (args[0].startsWith('<@')) {
+            user = await database.checkForLink(m.author.id)
+        }
+        else if (args[0].startsWith('<@')) {
             let discordId = args[0].slice(2, args[0].length - 1)
             if (discordId.startsWith('!')) {
                 discordId = discordId.slice(1)
             }
-            username = await functions.lookupUser(discordId)
-                .catch(() => {
-                    m.reply('they do not have a linked account so I cannot find their top plays :(')
-                    return
-                })
-        } else {
+            user = await database.checkForLink(discordId)
+        }
+        else {
             username = args.join('_')
         }
-
+        
+        if (user.length >  0)
+            username = user[0].osuIGN
+        
         if (!username) {
-            return
+            m.react('❎')
+            return m.channel.send('No linked account could be found! I cannot find their top plays \:sob:')
         }
-
+        
         const unsortedTopScores = await functions.getUserTop(username)
+        
+        if (unsortedTopScores.length < 1) {
+            m.react('❎')
+            return m.channel.send(`\`${username}\` doesn't appear to play osu! Perhaps you made a spelling mistake? Please try again!`)
+        }
 
         for (let score in unsortedTopScores) {
             unsortedTopScores[score].playNumber = parseInt(score) + 1
@@ -58,6 +60,7 @@ module.exports = {
         const userInfo = await functions.getUser(username, 0)
 
         if (!userInfo) {
+            m.react('❎')
             return m.channel.send(`The username provided doesn't exist! Please try again.`)
         }
 
@@ -73,8 +76,7 @@ module.exports = {
         const rankImage = emojis.find('name', usersScore.rank)
         const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
-        let colour
-
+        let colour = "#0096CF"
         switch (usersScore.playNumber) {
             case 1:
                 colour = '#FFD700'
@@ -85,9 +87,6 @@ module.exports = {
             case 3:
                 colour = '#cd7f32'
                 break
-            default:
-                colour = '#0096CF'
-                break
         }
 
         const mapStatus = functions.approvedStatus(beatmapInfo.approved)
@@ -96,8 +95,9 @@ module.exports = {
             .setColor(colour)
             .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
-            .setTitle(`__PERSONAL BEST #${usersScore.playNumber}__`)
-            .setDescription(`**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`)
+            .setTitle(`${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]`)
+            .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
+            .setDescription(`__**PERSONAL BEST #${usersScore.playNumber}**__`)
             .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${usersScore.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
             .setFooter(`${mapStatus} | Beatmap by ${beatmapInfo.creator} | Message sent: `)
             .setTimestamp()
@@ -107,6 +107,6 @@ module.exports = {
             embed: embed
         })
 
-        functions.storeLastBeatmap(m.guild, beatmapInfo, usersScore)
+        database.storeBeatmap(m.channel.id, beatmapInfo, usersScore)
     }
 }

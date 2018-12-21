@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
-const database = require('../localdb.json')
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: 'postnew',
@@ -41,7 +41,7 @@ module.exports = {
         const rankImage = emojis.find('name', score.rank)
         const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
-        let colour
+        let colour = "#0096CF"
         switch (score.playNumber) {
             case 1:
                 colour = '#FFD700'
@@ -52,23 +52,21 @@ module.exports = {
             case 3:
                 colour = '#cd7f32'
                 break
-            default:
-                colour = '#0096CF'
-                break
         }
 
         let embed = new Discord.RichEmbed()
             .setColor(colour)
             .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
-            .setTitle(`__PERSONAL BEST #${score.playNumber}__`)
-            .setDescription(`**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`)
+            .setTitle(`${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]`)
+            .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
+            .setDescription(`__**PERSONAL BEST #${score.playNumber}**__`)
             .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString('en')} (${score.accuracy}%) | ${score.rank === 'F_' ? '~~**' + ppInfo.performancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${score.maxcombo === beatmapInfo.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}x/**${beatmapInfo.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
             .setFooter('Message sent: ')
             .setTimestamp()
 
         //Send embed to channels where user tracked
-        const usersTrackedChannels = database.track[userInfo.username].channels
+        const usersTrackedChannels = (await database.userTrack(userInfo.username)).channels
 
         Object.keys(usersTrackedChannels).forEach(channel => {
             if (score.playNumber <= usersTrackedChannels[channel])

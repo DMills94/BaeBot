@@ -1,42 +1,44 @@
 const Discord = require("discord.js")
 const functions = require("./exportFunctions.js")
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
     async execute(m, args, emojis, plays, top5) {
+        let user = []
         let username
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
-                .catch(() => {
-                    return m.reply("you do not have a linked account! Try ` `link [username]`")
-                })
+            user = await database.checkForLink(m.author.id)
         }
-        else if (args[0].startsWith("<@")) {
+        else if (args[0].startsWith('<@')) {
             let discordId = args[0].slice(2, args[0].length - 1)
-            if (discordId.startsWith("!")) {
+            if (discordId.startsWith('!')) {
                 discordId = discordId.slice(1)
             }
-            username = await functions.lookupUser(discordId)
-                .catch(() => {
-                    return m.reply("they do not have a linked account so I cannot find their top plays :(")
-                })
+            user = await database.checkForLink(discordId)
         }
         else {
-            username = args.join("_")
+            username = args.join('_')
         }
-
-        if (!username) {
-            return
+        
+        if (user.length >  0)
+            username = user[0].osuIGN
+        
+        if (!username){
+            m.react('❎')
+            return m.channel.send('No linked account could be found! I cannot find their top plays \:sob:')
         }
 
         //osu API calls
         const userInfo = await functions.getUser(username, 0)
 
-        if (!userInfo)
-            return m.reply("That username does not exist! Please try again.")
-
+        if (!userInfo){
+            m.react('❎')
+            return m.channel.send("That username does not exist! Please try again.")
+        }
+        
         let topPlays = await functions.getUserTop(username, plays)
 
         if (!top5) {
@@ -69,6 +71,7 @@ module.exports = {
             const ppInfo = await functions.calculate(beatmapInfo, topPlays[score])
 
             topPlays[score].maxPP = ppInfo.formattedMaxPP
+            topPlays[score].pp = ppInfo.formattedPerformancePP
             topPlays[score].stars = ppInfo.formattedStars
         }
 
@@ -87,7 +90,7 @@ module.exports = {
                 .setTimestamp()
         }
         else {
-            let colour
+            let colour = "#0096CF"
             switch (plays) {
                 case 1:
                     colour = "#FFD700"
@@ -98,22 +101,26 @@ module.exports = {
                 case 3:
                     colour = "#cd7f32"
                     break
-                default:
-                    colour = "#0096CF"
-                    break
             }
 
             const mapStatus = functions.approvedStatus(beatmapList[0].approved)
+            const usersScore = topPlays[0]
+            const beatmapInfo = beatmapList[0]
+            const rankImage = emojis.find("name", usersScore.rank)
+            const diffImage = functions.difficultyImage(usersScore.stars, emojis)
 
             embed
                 .setColor(colour)
                 .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
                 .setThumbnail("https://b.ppy.sh/thumb/" + beatmapList[0].beatmapset_id + "l.jpg")
-                .addField(`__PERSONAL BEST #${plays}__`, topInfoInfo(0, topPlays, beatmapList, emojis))
+                .setTitle(`${beatmapList[0].artist} ${beatmapList[0].title} [${beatmapList[0].version}]`)
+                .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
+                .setDescription(`__**PERSONAL BEST #${plays}**__`)
+                .addField(`\u2022 ${diffImage} **${usersScore.stars}*** ${usersScore.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp~~' : '**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp'}`, `\u2022 ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
                 .setFooter(`${mapStatus} | Beatmap by ${beatmapList[0].creator} | Message sent: `)
                 .setTimestamp()
 
-            functions.storeLastBeatmap(m.guild, beatmapList[0], topPlays[0])
+            database.storeBeatmap(m.channel.id, beatmapList[0], topPlays[0])
         }
 
         //Send Embed to Channel

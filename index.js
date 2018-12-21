@@ -1,13 +1,12 @@
 const fs = require('fs')
 const Discord = require('discord.js')
 const config = require('./config.json')
-const database = require('./localdb.json')
+const database = require('./databases/requests.js')
 
 const client = new Discord.Client()
 client.commands = new Discord.Collection()
 
 const commandFiles = fs.readdirSync('./commands')
-// const functions = require('./commands/exportFunctions.js')
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`)
@@ -17,26 +16,27 @@ for (const file of commandFiles) {
 let devMode
 let commandHistory = []
 
-client.on('ready', () => {
+client.on('ready', async () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`)
 
-    let devMode = database.devMode
+    let devMode = await database.getDevMode()
     if (devMode) {
         client.user.setActivity(`In dev mode`)
-    } else {
+    }
+    else {
         client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
     }
 
-    const emojis = client.guilds.find('id', '486497815367778304').emojis
+    const emojis = client.guilds.find('id', config.privServer).emojis
 
     //Check bot hasn't left any servers, if so remove their db entries
 
-    // console.log('Starting tracking..')
-    // tracking(true, emojis)
+    console.log('Starting tracking..')
+    tracking(emojis)
 
-    // setInterval(() => {
-    //     tracking(false, emojis)
-    // }, 150000)
+    setInterval(() => {
+        tracking(emojis)
+    }, 150000)
 })
 
 client.on('error', err => {
@@ -104,7 +104,7 @@ client.on('message', message => {
 
         try {
             if (command.name !== 'history') {
-                const emojis = client.guilds.find('id', '486497815367778304').emojis
+                const emojis = client.guilds.find('id', config.privServer).emojis
 
                 command.execute(message, args, emojis, playNum, top5)
 
@@ -114,10 +114,10 @@ client.on('message', message => {
                     commandHistory.pop()
                 }
             } else {
-                command.execute(message, args, commandHistory)
+                command.execute(message, commandHistory)
             }
 
-            logCommand(message, command.name, args)
+            logCommand(client, message, command.name, args)
 
         } catch (error) {
             console.error(error)
@@ -164,56 +164,71 @@ client.on('message', message => {
             message.reply('begone thot.')
             console.log(`Called Wiqued a thot :)`)
         } else {
-            message.channel.send(`<@122136963129147393> i'm being bullied \:sob:`)
+            message.channel.send(`<@${config.baeID}> i'm being bullied \:sob:`)
         }
     }
 
     if (uI.match(/https?:\/\/(osu|new).ppy.sh\/([b]|[s]|beatmapsets)\//i)) {
-        const emojis = client.guilds.find('id', '486497815367778304').emojis
+        const emojis = client.guilds.find('id', config.privServer).emojis
         client.commands.get('recognise beatmap').execute(message, uI, emojis)
-        logCommand(message, 'Recognise Beatmap')
+        logCommand(client, message, 'Recognise Beatmap')
     }
 })
 
 client.on('guildDelete', guild => {
     console.log(`BaeBot was removed from ${guild.name}, deleting database entries....`)
+    client.channels.get(config.privChannel).send(`<@${config.baeID}> BaeBot was removed from ${guild.name}, please remove it's database entries!`)
     //Delete lastBeatmap
-    delete database.lastBeatmap[guild.id]
+    // delete database.lastBeatmap[guild.id]
 
-    //Delete tracked users
-    console.log(guild)
+    // //Delete tracked users
+    // console.log(guild)
 
-    let guildChannels = []
+    // let guildChannels = []
 
-    guild.channels.forEach(channel => {
-        guildChannels.push(channel)
-    })
+    // guild.channels.forEach(channel => {
+    //     guildChannels.push(channel)
+    // })
 
-    Object.keys(database.track).forEach(user => {
-        guildChannels.forEach(channel => {
-            if (Object.keys(database.track[user].channels).includes(channel))
-                delete database.track[user].channels[channel]
-        })
-    })
+    // Object.keys(database.track).forEach(user => {
+    //     guildChannels.forEach(channel => {
+    //         if (Object.keys(database.track[user].channels).includes(channel))
+    //             delete database.track[user].channels[channel]
+    //     })
+    // })
 
-    fs.writeFile('localdb.json', JSON.stringify(database, null, 4), err => {
-        if (err) {
-            console.log(`There was an issue removing data from the guild: ${guild.name}`)
-            return console.log(err)
-        }
-        console.log(`Guild data removed for: ${guild.name}`)
-    })
+    // fs.writeFile('localdb.json', JSON.stringify(database, null, 4), err => {
+    //     if (err) {
+    //         console.log(`There was an issue removing data from the guild: ${guild.name}`)
+    //         return console.log(err)
+    //     }
+    //     console.log(`Guild data removed for: ${guild.name}`)
+    // })
 })
 
-const logCommand = (message, command, args = []) => {
+const logCommand = (client, message, command, args = []) => {
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)
     const time = currentTime.toTimeString().slice(0, 9)
-    console.log(`[EXECUTED COMMAND] ${command} ${args.join(' ') === '' ? '' : '[' + args.join(' ') + ']'}: in [${message.channel.guild.name}] for [${message.author.username}#${message.author.discriminator}] on ${date} at ${time}`)
+
+    let embed = new Discord.RichEmbed()
+
+    embed
+        .setColor("#964B00")
+        .setAuthor(`Server: ${message.channel.guild.name}`, message.channel.guild.iconURL)
+        .setTitle(`Command: ${command}`)
+        .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
+        .setDescription(`Executed By: **${message.author.username}#${message.author.discriminator}**`)
+        .setFooter(`${date} at ${time}`, message.author.avatarURL)
+
+        if (args.length > 0)
+            embed.addField('Arguments', args.join(' '))
+
+    client.channels.get(config.privChannel).send({ embed: embed })
 }
 
-async function tracking(first, emojis) {
-    const newScores = await client.commands.get('getNewTrack').execute(first)
+async function tracking(emojis) {
+    const newScores = await client.commands.get('getTrackScores').execute()
 
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)
@@ -221,7 +236,7 @@ async function tracking(first, emojis) {
 
     if (newScores.length > 0) {
         console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`)
-        console.log(newScores)
+        // console.log(newScores)
         for (let score in newScores) {
             client.commands.get('postnew').execute(newScores[score], emojis, client.channels)
         }

@@ -1,36 +1,34 @@
 const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
+const database = require('../databases/requests.js')
 
 module.exports = {
     name: 'recent',
     description: `Returns a user's most recent play`,
     async execute(m, args, emojis) {
+        let user = []
         let username
 
         if (args.length === 0) {
-            username = await functions.lookupUser(m.author.id)
-                .catch(() => {
-                    m.reply('you do not have a linked account! Try ` `link [username]`')
-                    return
-                })
+            user = await database.checkForLink(m.author.id)
         }
         else if (args[0].startsWith('<@')) {
             let discordId = args[0].slice(2, args[0].length - 1)
             if (discordId.startsWith('!')) {
                 discordId = discordId.slice(1)
             }
-            username = await functions.lookupUser(discordId)
-                .catch(() => {
-                    m.reply('they do not have a linked account so I cannot find their top plays :(')
-                    return
-                })
+            user = await database.checkForLink(discordId)
         }
         else {
             username = args.join('_')
         }
-
-        if (!username) {
-            return
+        
+        if (user.length >  0)
+            username = user[0].osuIGN
+        
+        if (!username){
+            m.react('❎')
+            return m.channel.send('No linked account could be found! I cannot find their top plays \:sob:')
         }
 
 
@@ -38,12 +36,12 @@ module.exports = {
         const userInfo = await functions.getUser(username, 0)
 
         if (!userInfo)
-            return m.reply('That username does not exist! Please try again.')
+            return m.channel.send('That username does not exist! Please try again.')
 
         const recent = (await functions.getUserRecent(username))[0]
 
         if (!recent)
-            return m.reply(`That user has not played a loved or ranked map in the previous 24 hours so I can't find their score! :(`)
+            return m.channel.send(`That user has not played a loved or ranked map in the previous 24 hours so I can't find their score! :(`)
 
         const beatmapInfo = (await functions.getBeatmap(recent.beatmap_id))[0]
 
@@ -97,7 +95,8 @@ module.exports = {
             .setColor('#0096CF')
             .setAuthor(`Recent Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
-            .setDescription(`**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`)
+            .setTitle(`${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]`)
+            .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
             .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${recent.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((recent.score)).toLocaleString('en')} (${recent.accuracy}%) | ${recent.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${recent.maxcombo === beatmapInfo.max_combo ? '**' + recent.maxcombo + '**' : recent.maxcombo}x/**${beatmapInfo.max_combo}x** {${recent.count300}/${recent.count100}/${recent.count50}/${recent.countmiss}} | ${recent.date}`)
             .setFooter(`${mapStatus} | Beatmap by ${beatmapInfo.creator} | Message sent: `)
             .setTimestamp()
@@ -119,13 +118,13 @@ module.exports = {
             }
 
             embed
-                .setTitle(`__PERSONAL BEST #${recent.playNumber}__`)
+                .setDescription(`__**PERSONAL BEST #${recent.playNumber}**__`)
                 .setColor(colour)
         }
 
         //Send Embed to Channel
         m.channel.send({ embed })
 
-        functions.storeLastBeatmap(m.guild, beatmapInfo, recent)
+        database.storeBeatmap(m.channel.id, beatmapInfo, recent)
     }
 }

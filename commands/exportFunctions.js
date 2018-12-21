@@ -1,19 +1,10 @@
-const fs = require('fs')
 const axios = require('axios')
 const {osuApiKey} = require('../config.json')
 const ojsama = require('ojsama')
-const database = require('../localdb.json')
+
+axios.defaults.baseURL = "https://osu.ppy.sh/"
 
 let customExports = module.exports = {}
-
-customExports.lookupUser = (authorID) => {
-    return new Promise((resolve, reject) => {
-        if (Object.keys(database.linkedUsers).includes(authorID))
-            resolve(database.linkedUsers[authorID])
-        else
-            reject()
-    })
-}
 
 customExports.getUser = (username, mode) => {
     return new Promise(resolve => {
@@ -90,20 +81,6 @@ customExports.getScores = (bmpId, username) => {
             .then(resp => {
                 resolve(resp.data)
             })
-    })
-}
-
-customExports.storeLastBeatmap = (guild, beatmap, performance) => {
-    const beatmapObj = {
-        beatmap: beatmap,
-        performance: performance
-    }
-
-    const guildID = guild.id
-    database.lastBeatmap[guildID] = beatmapObj
-
-    fs.writeFile('localdb.json', JSON.stringify(database, null, 2), err => {
-        if (err) return console.log(err)
     })
 }
 
@@ -267,9 +244,9 @@ customExports.calculate = (beatmap, performance) => {
                     stars: stars
                 })
 
-                results.formattedStars = stars.toString().split(" ")[0]
-                results.formattedPerformancePP = recentPP.toString().split(" ")[0]
-                results.formattedMaxPP = maxPP.toString().split(" ")[0]
+                results.formattedStars = stars.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
+                results.formattedPerformancePP = recentPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
+                results.formattedMaxPP = maxPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
 
                 resolve(results)
 
