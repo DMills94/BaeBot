@@ -1,4 +1,5 @@
 const Discord = require('discord.js')
+const { trackChannel } = require('../config.json')
 const functions = require('./exportFunctions.js')
 const database = require('../databases/requests.js')
 
@@ -54,6 +55,8 @@ module.exports = {
                 break
         }
 
+        const mapStatus = await functions.approvedStatus(beatmapInfo.approved)
+
         let embed = new Discord.RichEmbed()
             .setColor(colour)
             .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
@@ -62,7 +65,7 @@ module.exports = {
             .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
             .setDescription(`__**PERSONAL BEST #${score.playNumber}**__`)
             .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString('en')} (${score.accuracy}%) | ${score.rank === 'F_' ? '~~**' + ppInfo.performancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${score.maxcombo === beatmapInfo.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}x/**${beatmapInfo.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
-            .setFooter('Message sent: ')
+            .setFooter(`${mapStatus} | Beatmap by ${beatmapInfo.creator} | Message sent: `)
             .setTimestamp()
 
         //Send embed to channels where user tracked
@@ -71,6 +74,7 @@ module.exports = {
         Object.keys(usersTrackedChannels).forEach(channel => {
             if (score.playNumber <= usersTrackedChannels[channel])
                 client.get(channel).send({ embed })
+                functions.logCommand(client, channel, 'Tracking', 'track', embed)
         })
     }
 }

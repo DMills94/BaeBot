@@ -1,5 +1,6 @@
+const Discord = require('discord.js')
 const axios = require('axios')
-const {osuApiKey} = require('../config.json')
+const { osuApiKey, logChannel, trackChannel } = require('../config.json')
 const ojsama = require('ojsama')
 
 axios.defaults.baseURL = "https://osu.ppy.sh/"
@@ -255,6 +256,34 @@ customExports.calculate = (beatmap, performance) => {
                 console.log(`There was an error! More info: + ${err}`)
             })
     })
+}
+
+customExports.logCommand = (client, message, command, type, args = []) => {
+    const currentTime = new Date()
+    const date = currentTime.toDateString().slice(4, 10)
+    const time = currentTime.toTimeString().slice(0, 9)
+
+    let embed = new Discord.RichEmbed()
+    
+    if (type === 'command') {
+        embed
+            .setColor("#964B00")
+            .setAuthor(`Server: ${message.channel.guild.name}`, message.channel.guild.iconURL)
+            .setTitle(`Command: ${command.toUpperCase()}`)
+            .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
+            .setDescription(`Executed By: **${message.author.username}#${message.author.discriminator}**`)
+            .setFooter(`${date} at ${time}`, message.author.avatarURL)
+
+        if (args.length > 0)
+            embed.addField('Arguments', args.join(' '))
+        client.get(logChannel).send({ embed: embed })
+
+    }
+    else if (type === 'track') {
+        embed = args
+        client.get(trackChannel).send(`Posted in \`${client.get(message).guild.name}\` -> \`${client.get(message).name}\`:`, { embed: embed })
+    }
+
 }
 
 let modnames = [{

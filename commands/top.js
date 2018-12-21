@@ -26,7 +26,7 @@ module.exports = {
         if (user.length >  0)
             username = user[0].osuIGN
         
-        if (!username){
+        if (!username) {
             m.react('❎')
             return m.channel.send('No linked account could be found! I cannot find their top plays \:sob:')
         }
@@ -34,7 +34,7 @@ module.exports = {
         //osu API calls
         const userInfo = await functions.getUser(username, 0)
 
-        if (!userInfo){
+        if (!userInfo) {
             m.react('❎')
             return m.channel.send("That username does not exist! Please try again.")
         }

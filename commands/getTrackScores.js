@@ -38,7 +38,7 @@ module.exports = {
                         let dbTop100 = newTop100.map(top => {
                             return top.date
                         })
-                        database.updateTrack(userInfo.username, dbTop100, score)
+                        database.updateTrack(userInfo.username, dbTop100)
                     }
                 }
 

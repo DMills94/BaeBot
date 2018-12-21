@@ -9,7 +9,7 @@ db.track = new Datastore({ filename: './databases/stores/track', autoload: true 
 
 //Dev Mode
 exports.addDevMode = () => {
-    db.devMode.insert({devMode: false}, err => {
+    db.devMode.insert({ devMode: false }, err => {
         if (err) console.log(err)
     })
 }
@@ -26,7 +26,7 @@ exports.getDevMode = () => {
 }
 
 exports.toggleDev = (devStatus, m) => {
-    db.devMode.update({ devMode: !devStatus}, {$set: {devMode: devStatus}}, {}, err => {
+    db.devMode.update({ devMode: !devStatus }, { $set: { devMode: devStatus } }, {}, err => {
         if (err) {
             console.log(err)
             m.react('❎')
@@ -88,7 +88,7 @@ exports.newLink = (discordid, osuIGN, m) => {
 }
 
 exports.deleteLink = (discordid, osuIGN, m) => {
-    db.linkedUsers.remove({discordid}, {}, err => {
+    db.linkedUsers.remove({ discordid }, {}, err => {
         if (err) {
             console.log(err)
             m.react('❎')
@@ -101,7 +101,7 @@ exports.deleteLink = (discordid, osuIGN, m) => {
 
 exports.checkForLink = discordid => {
     return new Promise(resolve => {
-        db.linkedUsers.find( { discordid }, (err, docs) => {
+        db.linkedUsers.find({ discordid }, (err, docs) => {
             if (err) console.log(err)
             resolve(docs)
         })
@@ -121,7 +121,7 @@ exports.checkForTrack = username => {
 
 exports.addNewTrack = (m, channelid, trackInfo, action) => {
     //check for username
-    db.track.find( { username: trackInfo.username }, (err, docs) => {
+    db.track.find({ username: trackInfo.username }, (err, docs) => {
         if (err) console.log(err)
         if (action === 'add') {
             let data = {
@@ -143,9 +143,9 @@ exports.addNewTrack = (m, channelid, trackInfo, action) => {
         else if (action === 'update') { //Update'
             db.track.find({ username: trackInfo.username }, (err, docs) => {
                 if (err) console.log(err)
-                let newChannels = {...docs[0].channels} 
+                let newChannels = { ...docs[0].channels }
                 newChannels[channelid] = trackInfo.limit
-                
+
                 db.track.update({ username: trackInfo.username }, { $set: { channels: newChannels } }, {}, err => {
                     if (err) console.log(err)
                 })
@@ -157,20 +157,20 @@ exports.addNewTrack = (m, channelid, trackInfo, action) => {
 
 exports.deleteTrack = (m, size, channelid, username = '') => {
     if (size === 'all') {
-        db.track.find({ $where: function() { return Object.keys(this.channels).includes(channelid) }}, async (err, docs) => {
+        db.track.find({ $where: function () { return Object.keys(this.channels).includes(channelid) } }, async (err, docs) => {
             if (err) {
-                console.log(err) 
+                console.log(err)
                 m.react('❎')
-                return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`) 
+                return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
             }
 
             const deleteMessage = await m.channel.send("Deleting entries..")
-            
+
             for (let user in docs) {
                 let username = docs[user].username
-                let newChannels = {...docs[user].channels}
+                let newChannels = { ...docs[user].channels }
                 delete newChannels[channelid]
-                 
+
                 if (Object.keys(newChannels).length < 1) {
                     db.track.remove({ username }, {}, err => {
                         if (err) {
@@ -197,11 +197,11 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
             if (err) {
                 console.log(err)
                 m.react('❎')
-                return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)        
+                return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
             }
             const userToEdit = docs[0]
-            
-            let newChannels = {...userToEdit.channels} 
+
+            let newChannels = { ...userToEdit.channels }
             delete newChannels[channelid]
 
             if (Object.keys(newChannels).length < 1) {
@@ -219,7 +219,7 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
                     if (err) {
                         console.log(err)
                         m.react('❎')
-                        return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)        
+                        return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
                     }
                     m.react('✅')
                     return m.channel.send(`\`${username}\` has been removed from tracking! \:tada:`)
@@ -249,15 +249,52 @@ exports.userTrack = (username) => {
 
 exports.trackList = channelid => {
     return new Promise(resolve => {
-        db.track.find({ $where: function() { return Object.keys(this.channels).includes(channelid) }}, (err, docs) => {
+        db.track.find({ $where: function () { return Object.keys(this.channels).includes(channelid) } }, (err, docs) => {
             if (err) console.log(err)
             resolve(docs)
         })
     })
 }
 
-exports.updateTrack = (username, scoreDates, index) => {
-    db.track.update({ username }, { $set : { userBest: scoreDates } }, {}, err => {
+exports.updateTrack = (username, scoreDates) => {
+    db.track.update({ username }, { $set: { userBest: scoreDates } }, {}, err => {
         if (err) console.log(err)
     })
+}
+
+// Delete Guild information
+exports.deleteGuild = guild => {
+    guildChannels = guild.channels.map(chan => chan.id)
+
+    for (let chanid in guildChannels) {
+        //Last Beatmap
+        db.lastBeatmap.remove({ channelid: guildChannels[chanid] }, {}, err => {
+            if (err) console.log(err)
+        })
+
+        //Tracking
+        db.track.find({}, (err, docs) => {
+            if (err) console.log(err)
+
+            for (let user in docs) {
+                if (Object.keys(docs[user].channels).includes(guildChannels[chanid])){
+                    newChannels = { ...docs[user].channels }
+                    delete newChannels[guildChannels[chanid]]
+
+                    if (Object.keys(newChannels).length === 0) {
+                        db.track.remove({ username: docs[user].username }, {}, err => {
+                            if (err) console.log(err)
+                        })
+                    }
+                    else {
+                        db.track.update({ username: docs[user].username }, { $set: { channels: newChannels } }, {}, err => {
+                            if (err) console.log(err)
+                        })
+                    }
+                }
+            }
+        })
+    }
+
+
 }
