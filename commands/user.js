@@ -46,6 +46,8 @@ module.exports = {
         if (userInfo === undefined)
             return m.channel.send("that username does not exist! Please try again.")
 
+        const currentDate = Date.now()
+
         if (!more) {
 
             let SSH = emojis.find('name', 'XH')
@@ -57,12 +59,11 @@ module.exports = {
             embed = new Discord.RichEmbed()
                 .setColor("#fcee03")
                 .setAuthor(`osu! Standard stats for ${userInfo.username}`, undefined, "https://osu.ppy.sh/users/" + userInfo.user_id)
-                .setThumbnail("https://a.ppy.sh/" + userInfo.user_id)
+                .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
                 .addField(`${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp \:earth_africa: #${parseInt(userInfo.pp_rank).toLocaleString('en')} \:flag_${userInfo.country.toLowerCase()}: #${userInfo.pp_country_rank}`,
                     `**Ranked Score:** ${parseFloat(userInfo.ranked_score).toLocaleString('en')}\n**Accuracy:** ${parseFloat(userInfo.accuracy).toFixed(2)}%\n**Play Count:** ${parseInt(userInfo.playcount).toLocaleString('en')}\n**Playtime:** ${parseFloat(userInfo.total_seconds_played / 60 / 60).toFixed(2)} hours\n**Total Score:** ${parseInt(userInfo.total_score).toLocaleString('en')}\n**Account Level:** ${parseFloat(userInfo.level).toFixed(2)}\n**Total Hits:** ${parseInt(parseInt(userInfo.count300) + parseInt(userInfo.count100) + parseInt(userInfo.count50)).toLocaleString('en')}\n${SSH}: ${userInfo.count_rank_ssh} ${SS}: ${userInfo.count_rank_ss} ${SH}: ${userInfo.count_rank_sh} ${S}: ${userInfo.count_rank_s} ${A}: ${userInfo.count_rank_a}`
                 )
-                .setFooter(`Try [[ ${prefix}user -pp ]] for performance stats | Something missing you think you'd like? Contact @Bae#3308 with it!`)
-                .setTimestamp()
+                .setFooter(`Try [[ ${prefix}user -pp ]] for performance stats • Something missing you think you'd like? Contact @Bae#3308 with it!`)
 
             m.channel.send({ embed: embed })
         }
@@ -94,8 +95,20 @@ module.exports = {
                 const beatmapInfoRaw = await functions.getBeatmap(top100[play].beatmap_id)
                 const beatmapInfo = beatmapInfoRaw[0]
 
+                const enabledMods = await functions.determineMods(top100[play])
+
                 cumulativePP += parseFloat(top100[play].pp)
-                totalMapLength += parseInt(beatmapInfo.total_length)
+                
+                if (enabledMods.includes('DT') || enabledMods.includes('NC')) {
+                    totalMapLength += parseInt(beatmapInfo.total_length / 1.5)
+                }
+                else if (enabledMods.includes('HT')) {
+                    totalMapLength += parseInt(beatmapInfo.total_length * (1 + 1 / 3))
+                }
+                else {
+                    totalMapLength += parseInt(beatmapInfo.total_length)
+                }
+
                 totalMapCombo += parseInt(beatmapInfo.max_combo)
 
                 if (top100[play].perfect === "1")
@@ -122,17 +135,10 @@ module.exports = {
             embed = new Discord.RichEmbed()
                 .setColor("#fcee03")
                 .setAuthor(`osu! Standard stats for ${userInfo.username}`, undefined, "https://osu.ppy.sh/users/" + userInfo.user_id)
-                .setThumbnail("https://a.ppy.sh/" + userInfo.user_id)
-                .addField(`${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp \:earth_africa: #${parseInt(userInfo.pp_rank).toLocaleString('en')} \:flag_${userInfo.country.toLowerCase()}: #${userInfo.pp_country_rank}`,
-                    `**PP Range:** ${maxPP}pp - ${minPP}pp = ${ppRange}pp\n**PP Average:** ${ppAvg}pp\n**Perfect plays in top 100:** ${zeroMiss}\n**Cumulative unweighted PP:** ${parseFloat(cumulativePP).toLocaleString('en', { maximumFractionDigits: 2 })}pp\n**Play Count:** ${parseFloat(userInfo.playcount).toLocaleString('en')}\n**Average unweighted PP per play:** ${ppPerPlay}\n**Preferred Map Length:** ${avgLengthMin}:${avgLengthSec}\n**Preferred Map Max Combo:** ${Math.round(avgCombo)}`
-                )
-                .addField(`More Stats for ${userInfo.username}`,
-                    `[osu!track](https://ameobea.me/osutrack/user/${userInfo.username}) | [osu!stats](https://osustats.ppy.sh/u/${userInfo.username}) | [osu!skills](http://osuskills.com/user/${userInfo.username}) | [osu!chan](https://syrin.me/osuchan/u/${userInfo.user_id}) | [pp+](https://syrin.me/pp+/u/${userInfo.user_id})`
-                )
-                .setFooter(`
-                    Try [[ ${prefix}user ]] for account stats | Something missing you think you'd like? Contact @Bae#3308 with it!`
-                )
-                .setTimestamp()
+                .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
+                .addField(`${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp \:earth_africa: #${parseInt(userInfo.pp_rank).toLocaleString('en')} \:flag_${userInfo.country.toLowerCase()}: #${userInfo.pp_country_rank}`, `**PP Range:** ${maxPP}pp - ${minPP}pp = ${ppRange}pp\n**PP Average:** ${ppAvg}pp\n**Perfect plays in top 100:** ${zeroMiss}\n**Cumulative unweighted PP:** ${parseFloat(cumulativePP).toLocaleString('en', { maximumFractionDigits: 2 })}pp\n**Play Count:** ${parseFloat(userInfo.playcount).toLocaleString('en')}\n**Average unweighted PP per play:** ${ppPerPlay}\n**Preferred Map Length:** ${avgLengthMin}:${avgLengthSec}\n**Preferred Map Max Combo:** ${Math.round(avgCombo)}`)
+                .addField(`More Stats for ${userInfo.username}`, `[osu!track](https://ameobea.me/osutrack/user/${userInfo.username}) • [osu!stats](https://osustats.ppy.sh/u/${userInfo.username}) • [osu!skills](http://osuskills.com/user/${userInfo.username}) • [osu!chan](https://syrin.me/osuchan/u/${userInfo.user_id}) • [pp+](https://syrin.me/pp+/u/${userInfo.user_id})`)
+                .setFooter(`• Try [[ ${prefix}user ]] for account stats • Something missing you think you'd like? Contact @Bae#3308 with it!`)
 
             message.edit({ embed: embed })
         }

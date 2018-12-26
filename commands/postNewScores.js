@@ -39,6 +39,8 @@ module.exports = {
             score.rank += '_'
         }
 
+        const mapRank = await functions.checkMapRank(userInfo.username, beatmapInfo.beatmap_id)
+
         const rankImage = emojis.find('name', score.rank)
         const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
@@ -59,22 +61,23 @@ module.exports = {
 
         let embed = new Discord.RichEmbed()
             .setColor(colour)
-            .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
+            .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
             .setTitle(`${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]`)
             .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
             .setDescription(`__**PERSONAL BEST #${score.playNumber}**__`)
-            .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((score.score)).toLocaleString('en')} (${score.accuracy}%) | ${score.rank === 'F_' ? '~~**' + ppInfo.performancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${score.maxcombo === beatmapInfo.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}x/**${beatmapInfo.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
-            .setFooter(`${mapStatus} | Beatmap by ${beatmapInfo.creator} | Message sent: `)
-            .setTimestamp()
+            .addField(`• ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \t\t ${mapRank ? '\:medal: Rank __#' + mapRank + '__' : ''} \n• ${rankImage} | Score: ${parseInt((score.score)).toLocaleString('en')} (${score.accuracy}%) | ${score.rank === 'F_' ? '~~**' + ppInfo.performancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `• ${score.maxcombo === beatmapInfo.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}x/**${beatmapInfo.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
+            .setFooter(`${mapStatus} • Beatmap by ${beatmapInfo.creator}`)
 
         //Send embed to channels where user tracked
         const usersTrackedChannels = (await database.userTrack(userInfo.username)).channels
 
         Object.keys(usersTrackedChannels).forEach(channel => {
-            if (score.playNumber <= usersTrackedChannels[channel])
+            if (score.playNumber <= usersTrackedChannels[channel]) {
                 client.get(channel).send({ embed })
                 functions.logCommand(client, channel, 'Tracking', 'track', embed)
+                database.storeBeatmap(channel, beatmapInfo, score)
+            }
         })
     }
 }

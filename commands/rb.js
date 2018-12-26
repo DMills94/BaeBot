@@ -54,7 +54,7 @@ module.exports = {
         usersScore.accuracy = functions.determineAcc(usersScore)
 
         let playDate = usersScore.date
-        let currentDate = Date.now() - 0
+        let currentDate = Date.now()
         usersScore.date = functions.timeDifference(currentDate, playDate)
 
         const userInfo = await functions.getUser(username, 0)
@@ -72,6 +72,8 @@ module.exports = {
         if (usersScore.rank.length === 1) {
             usersScore.rank += '_'
         }
+        
+        const mapRank = await functions.checkMapRank(userInfo.username, beatmapInfo.beatmap_id)
 
         const rankImage = emojis.find('name', usersScore.rank)
         const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
@@ -93,14 +95,13 @@ module.exports = {
 
         let embed = new Discord.RichEmbed()
             .setColor(colour)
-            .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
+            .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
             .setTitle(`${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]`)
             .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
             .setDescription(`__**PERSONAL BEST #${usersScore.playNumber}**__`)
-            .addField(`\u2022 ${diffImage} **${ppInfo.formattedStars}*** ${usersScore.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
-            .setFooter(`${mapStatus} | Beatmap by ${beatmapInfo.creator} | Message sent: `)
-            .setTimestamp()
+            .addField(`• ${diffImage} **${ppInfo.formattedStars}*** ${usersScore.enabled_mods} \t\t ${mapRank ? '\:medal: Rank __#' + mapRank + '__' : ''} \n• ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `• ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
+            .setFooter(`${mapStatus} • Beatmap by ${beatmapInfo.creator}`)
 
         //Send Embed to Channel
         m.channel.send({

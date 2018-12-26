@@ -70,6 +70,28 @@ customExports.getUserRecent = (username, limit = 10) => {
     })
 }
 
+customExports.checkMapRank = (username, beatmapid) => {
+    return new Promise(resolve => {
+        axios.get('api/get_scores', {
+            params: {
+                k: osuApiKey,
+                b: beatmapid,
+                limit: 100
+            }
+        })
+            .then(resp => {
+                const scores = resp.data
+                for (let player in scores) {
+                    if (scores[player].username === username) {
+                        return resolve(Number(player) + 1)
+                    }
+                }
+
+                resolve(false)
+            })
+    })
+}
+
 customExports.getScores = (bmpId, username) => {
     return new Promise(resolve => {
         axios.get('api/get_scores', {
@@ -109,9 +131,11 @@ customExports.modsToBitNum = mods => {
     mods = mods.toLowerCase()
     if (mods === "mods") {
         return "mods"
-    } else if (mods === "nomod" || mods === "") {
+    }
+    else if (mods === "nomod" || mods === "") {
         return 0
-    } else {
+    }
+    else {
         const modsSplit = mods.match(/[\s\S]{1,2}/g)
         for (let mod in modsSplit) {
             for (let obj in modnames) {
@@ -248,6 +272,7 @@ customExports.calculate = (beatmap, performance) => {
                 results.formattedStars = stars.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
                 results.formattedPerformancePP = recentPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
                 results.formattedMaxPP = maxPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
+                results.beatmapInfo = cleanBeatmap
 
                 resolve(results)
 

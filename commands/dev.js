@@ -9,12 +9,12 @@ module.exports = {
             let devModeOld = await database.getDevMode()
             let devModeNew
 
-            if (!devModeOld) {
+            if (devModeOld === undefined) {
                 database.addDevMode()
                 devModeNew = false
             }
             else {
-                devModeNew = !devModeOld.devMode
+                devModeNew = !devModeOld
             }
 
             if (devModeNew) {

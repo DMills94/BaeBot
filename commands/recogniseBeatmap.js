@@ -264,12 +264,14 @@ module.exports = {
                             let diffImage = functions.difficultyImage(starRating, emojis)
 
                             mapInfo += `\n----------------------------`
-                            mapInfo += `\n${diffImage} __**Difficulty: ${beatmapAPI[i].version}**__ ${mods != '' ? '**+' + mods.toUpperCase() + '**' : ''}`
-                            mapInfo += `\n\n\u2022 **CS:** ${beatmapAPI[i].diff_size} \u2022 **AR:** ${beatmapAPI[i].diff_approach} \u2022 **OD:** ${beatmapAPI[i].diff_overall} \u2022 **HP:** ${beatmapAPI[i].diff_drain}`
-                            mapInfo += `\n\u2022 **Length:** ${beatmapAPI[i].total_length} \u2022 **BPM:** ${Math.floor(beatmapAPI[i].bpm)}`
-                            mapInfo += `\n\u2022 **Star Rating:** ${starRating}* \u2022 **Max Combo:** ${beatmapAPI[i].max_combo}x`
-                            mapInfo += `\n\n __Performance Values__ \n \u2022 **95%:** ${beatmapAPI[i].ppAccValues[0]}pp \u2022 **99%:** ${beatmapAPI[i].ppAccValues[1]}pp \u2022 **100%:** ${beatmapAPI[i].ppAccValues[2]}pp`
-                            mapInfo += `\n\n **Downloads:** [Map](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}) - [No Video](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}n) - [Bloodcat](https://bloodcat.com/osu/s/${beatmapAPI[i].beatmapset_id})`
+                            mapInfo += `\n${diffImage} __**[Difficulty: ${beatmapAPI[i].version}](https://osu.ppy.sh/beatmapsets/${beatmapAPI[i].beatmapset_id}#osu/${beatmapAPI[i].beatmap_id})**__ ${mods != '' ? '**+' + mods.toUpperCase() + '**' : ''}`
+                            mapInfo += `\n\n\:dart: **CS:** ${beatmapAPI[i].diff_size} \t ${beatmapAPI[i].diff_approach > 9.5 ? '\:rabbit:' : '\:turtle:'} **AR:** ${beatmapAPI[i].diff_approach} \t \:notes: **OD:** ${beatmapAPI[i].diff_overall} \t \:heart: **HP:** ${beatmapAPI[i].diff_drain}`
+                            mapInfo += `\n• **Length:** ${beatmapAPI[i].total_length} •  **BPM:** ${Math.floor(beatmapAPI[i].bpm)}`
+                            mapInfo += `\n• **Star Rating:** ${starRating}* •  **Max Combo:** ${beatmapAPI[i].max_combo}x`
+                            mapInfo += `\n\n __Performance Values__ \n •  **95%:** ${beatmapAPI[i].ppAccValues[0]}pp •  **99%:** ${beatmapAPI[i].ppAccValues[1]}pp •  **100%:** ${beatmapAPI[i].ppAccValues[2]}pp`
+                            
+                            if (i === 2)
+                                mapInfo += `\n\n **Downloads:** [Map](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}) - [No Video](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}n) - [Bloodcat](https://bloodcat.com/osu/s/${beatmapAPI[i].beatmapset_id})`
                         }
 
                         let embed = new Discord.RichEmbed()
@@ -278,7 +280,6 @@ module.exports = {
                             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapAPI[0].beatmapset_id + 'l.jpg')
                             .setDescription(mapInfo)
                             .setFooter(`Status: ${beatmapAPI[0].approved}`)
-                            .setTimestamp()
 
                         m.channel.send({ embed: embed })
 

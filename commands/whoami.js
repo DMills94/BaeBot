@@ -52,7 +52,6 @@ module.exports = {
             .addField("Discord Join Date", discordJoined, true)
             .addField("Server Join Date", serverJoined, true)
             .setFooter(`Generated in: ${m.channel.guild.name}`, m.channel.guild.iconURL)
-            .setTimestamp()
 
         m.channel.send(leadMessage, {embed: embed})
     }

@@ -13,14 +13,13 @@ for (const file of commandFiles) {
     const command = require(`./commands/${file}`)
     client.commands.set(command.name, command)
 }
-
-let devMode
 let commandHistory = []
 
 client.on('ready', async () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`)
 
-    let devMode = await database.getDevMode()
+    const devMode = await database.getDevMode()
+
     if (devMode) {
         client.user.setActivity(`In dev mode`)
     }
@@ -45,7 +44,7 @@ client.on('error', err => {
 })
 
 //Recording incoming messages
-client.on('message', message => {
+client.on('message', async message => {
     //Bot ignores self
     if (message.author.bot)
         return
@@ -97,9 +96,10 @@ client.on('message', message => {
             message.channel.send('Sorry that\'s not command I have :( \nIf you need help try ``help`!')
             return
         }
-
+        
+        const devMode = await database.getDevMode()
         if (devMode && message.author.id !== config.baeID)
-            return message.channel.send('Bot is currently under maintenance, please try again later!')
+            return message.channel.send('Bot is currently under maintenance, we will be back soon, promise!')
 
         const command = client.commands.get(commandName)
 

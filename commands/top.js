@@ -44,6 +44,9 @@ module.exports = {
         if (!top5) {
             topPlays = [topPlays[topPlays.length - 1]]
         }
+        else {
+            topPlays = topPlays.slice(0, 5)
+        }
 
         //Determine Mods used for topPlays
         for (let score in topPlays) {
@@ -58,7 +61,7 @@ module.exports = {
         //Time Since Playcount
         for (let score in topPlays) {
             let playDate = Date.parse(topPlays[score].date)
-            let currentDate = Date.now() - 0
+            let currentDate = Date.now()
             topPlays[score].date = functions.timeDifference(currentDate, playDate)
         }
 
@@ -75,19 +78,26 @@ module.exports = {
             topPlays[score].stars = ppInfo.formattedStars
         }
 
+        let mapRanks = []
+        for (let i = 0; i < topPlays.length; i++) {
+            const mapRank = await functions.checkMapRank(userInfo.username, topPlays[i].beatmap_id)
+            
+            mapRanks.push(mapRank)
+        }
+
+        const currentDate = Date.now()
+
         let embed = new Discord.RichEmbed()
         if (top5) {
             embed
                 .setColor("#FFFFFF")
-                .setAuthor(`Top 5 Plays for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
-                .setThumbnail("https://a.ppy.sh/" + userInfo.user_id)
-                .addField("__PERSONAL BEST #1__", topInfoInfo(0, topPlays, beatmapList, emojis))
-                .addField("__PERSONAL BEST #2__", topInfoInfo(1, topPlays, beatmapList, emojis))
-                .addField("__PERSONAL BEST #3__", topInfoInfo(2, topPlays, beatmapList, emojis))
-                .addField("__PERSONAL BEST #4__", topInfoInfo(3, topPlays, beatmapList, emojis))
-                .addField("__PERSONAL BEST #5__", topInfoInfo(4, topPlays, beatmapList, emojis))
-                .setFooter("Message sent: ")
-                .setTimestamp()
+                .setAuthor(`Top 5 Plays for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, "https://osu.ppy.sh/users/" + userInfo.user_id)
+                .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
+                .addField("__PERSONAL BEST #1__", topInfoInfo(0, topPlays, beatmapList, emojis, mapRanks))
+                .addField("__PERSONAL BEST #2__", topInfoInfo(1, topPlays, beatmapList, emojis, mapRanks))
+                .addField("__PERSONAL BEST #3__", topInfoInfo(2, topPlays, beatmapList, emojis, mapRanks))
+                .addField("__PERSONAL BEST #4__", topInfoInfo(3, topPlays, beatmapList, emojis, mapRanks))
+                .addField("__PERSONAL BEST #5__", topInfoInfo(4, topPlays, beatmapList, emojis, mapRanks))
         }
         else {
             let colour = "#0096CF"
@@ -111,14 +121,13 @@ module.exports = {
 
             embed
                 .setColor(colour)
-                .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}`, "https://osu.ppy.sh/users/" + userInfo.user_id)
+                .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, "https://osu.ppy.sh/users/" + userInfo.user_id)
                 .setThumbnail("https://b.ppy.sh/thumb/" + beatmapList[0].beatmapset_id + "l.jpg")
                 .setTitle(`${beatmapList[0].artist} ${beatmapList[0].title} [${beatmapList[0].version}]`)
                 .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
                 .setDescription(`__**PERSONAL BEST #${plays}**__`)
-                .addField(`\u2022 ${diffImage} **${usersScore.stars}*** ${usersScore.enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp~~' : '**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp'}`, `\u2022 ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
-                .setFooter(`${mapStatus} | Beatmap by ${beatmapList[0].creator} | Message sent: `)
-                .setTimestamp()
+                .addField(`• ${diffImage} **${usersScore.stars}*** ${usersScore.enabled_mods} \t\t ${mapRanks[0] ? '\:medal: Rank __#' + mapRanks[0] + '__' : ''} \n• ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp~~' : '**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp'}`, `• ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
+                .setFooter(`${mapStatus} • Beatmap by ${beatmapList[0].creator}`)
 
             database.storeBeatmap(m.channel.id, beatmapList[0], topPlays[0])
         }
@@ -128,12 +137,12 @@ module.exports = {
     }
 }
 
-const topInfoInfo = (index, topPlays, maps, emojis) => {
+const topInfoInfo = (index, topPlays, maps, emojis, mapRanks) => {
     if (topPlays[index].rank.length === 1) {
         topPlays[index].rank += "_"
     }
     const rankImage = emojis.find("name", topPlays[index].rank)
     const diffImage = functions.difficultyImage(topPlays[index].stars, emojis)
 
-    return `**[${maps[index].artist} - ${maps[index].title} [${maps[index].version}]](https://osu.ppy.sh/b/${maps[index].beatmap_id})** \n\u2022 ${diffImage} **${topPlays[index].stars}*** ${topPlays[index].enabled_mods} \n\u2022 ${rankImage} | Score: ${parseInt((topPlays[index].score)).toLocaleString("en")} (${topPlays[index].accuracy}%) | **${parseFloat(topPlays[index].pp).toFixed(2)}pp**/${topPlays[index].maxPP}pp \n\u2022 ${topPlays[index].maxcombo === maps[index].max_combo ? "**" + topPlays[index].maxcombo + "x**" : topPlays[index].maxcombo}/**${maps[index].max_combo}x** {${topPlays[index].count300}/${topPlays[index].count100}/${topPlays[index].count50}/${topPlays[index].countmiss}} | ${topPlays[index].date}`
+    return `**[${maps[index].artist} - ${maps[index].title} [${maps[index].version}]](https://osu.ppy.sh/b/${maps[index].beatmap_id}) \n• ${diffImage} ${topPlays[index].stars}* ${topPlays[index].enabled_mods} ${mapRanks[index] ? '\:medal: Rank __#' + mapRanks[index] + '__' : ''} \n• ${rankImage} | Score: ${parseInt((topPlays[index].score)).toLocaleString("en")} (${topPlays[index].accuracy}%) | **${parseFloat(topPlays[index].pp).toFixed(2)}pp**/${topPlays[index].maxPP}pp** \n• ${topPlays[index].maxcombo === maps[index].max_combo ? "**" + topPlays[index].maxcombo + "x**" : topPlays[index].maxcombo}/**${maps[index].max_combo}x** {${topPlays[index].count300}/${topPlays[index].count100}/${topPlays[index].count50}/${topPlays[index].countmiss}} | ${topPlays[index].date}`
 }

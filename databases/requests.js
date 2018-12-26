@@ -19,8 +19,8 @@ exports.getDevMode = () => {
         db.devMode.find({}, (err, docs) => {
             if (err) console.log(err)
             if (docs.length > 0)
-                resolve(docs[0])
-            else resolve(false)
+                resolve(docs[0].devMode)
+            else resolve(undefined)
         })
     })
 }

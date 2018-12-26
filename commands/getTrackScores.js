@@ -20,6 +20,10 @@ module.exports = {
                 //Get users Top 100
                 const newTop100 = await functions.getUserTop(userInfo.username)
 
+                if (newTop100.length < 1) {
+                    return
+                }
+
                 //See if each of the new top 100 scores exist in the db top 100 scores
                 const prevTop100 = userInfo.userBest
 
