@@ -126,6 +126,7 @@ exports.addNewTrack = (m, channelid, trackInfo, action) => {
         if (action === 'add') {
             let data = {
                 username: trackInfo.username,
+                pp: trackInfo.pp,
                 channels: {
                     [channelid]: trackInfo.limit
                 },
@@ -193,36 +194,39 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
         })
     }
     else if (size === 'one') {
-        db.track.find({ username }, (err, docs) => {
+        let searchName = new RegExp(username, "i")
+        db.track.find({ username: searchName }, (err, docs) => {
             if (err) {
                 console.log(err)
                 m.react('❎')
                 return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
             }
+            if (docs.length < 1)
+                return m.channel.send(`Oh, they don't appear to be tracked \:flushed:`)
             const userToEdit = docs[0]
 
             let newChannels = { ...userToEdit.channels }
             delete newChannels[channelid]
 
             if (Object.keys(newChannels).length < 1) {
-                db.track.remove({ username }, {}, err => {
+                db.track.remove({ username: searchName }, {}, err => {
                     if (err) {
                         console.log(err)
-                        m.channel.send(`Unable to delete ${username} \:sob:`)
+                        m.channel.send(`Unable to delete ${userToEdit.username} \:sob:`)
                     }
                 })
                 m.react('✅')
-                return m.channel.send(`\`${username}\` has been removed from tracking! \:tada:`)
+                return m.channel.send(`\`${userToEdit.username}\` has been removed from tracking! \:tada:`)
             }
             else {
-                db.track.update({ username }, { $set: { channels: newChannels } }, {}, err => {
+                db.track.update({ username: searchName }, { $set: { channels: newChannels } }, {}, err => {
                     if (err) {
                         console.log(err)
                         m.react('❎')
                         return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
                     }
                     m.react('✅')
-                    return m.channel.send(`\`${username}\` has been removed from tracking! \:tada:`)
+                    return m.channel.send(`\`${userToEdit.username}\` has been removed from tracking! \:tada:`)
                 })
             }
         })
@@ -256,10 +260,18 @@ exports.trackList = channelid => {
     })
 }
 
-exports.updateTrack = (username, scoreDates) => {
-    db.track.update({ username }, { $set: { userBest: scoreDates } }, {}, err => {
-        if (err) console.log(err)
-    })
+exports.updateTrack = (username, scoreDates, pp) => {
+    if (scoreDates != null) {
+        db.track.update({ username }, { $set: { userBest: scoreDates } }, {}, err => {
+            if (err) console.log(err)
+        })
+    }
+    else if (pp != null) {
+        db.track.update({ username }, { $set: { pp } }, {}, err => {
+            if (err) console.log(err)
+        })
+    }
+
 }
 
 // Delete Guild information

@@ -81,6 +81,7 @@ module.exports = {
 
                 const trackInfo = {
                     username,
+                    pp: usernameInfo.pp_raw,
                     limit: argUsernames[arg].limit,
                     userBest
                 }
@@ -118,14 +119,6 @@ module.exports = {
                 database.deleteTrack(m, 'all', channelID)
             }
             else {
-                userInfo = await functions.getUser(username, 0)
-
-                if (!userInfo) {
-                    return m.channel.send(`\`${username}\` is not a valid username, or being tracked! Please try again!`)
-                }
-
-                username = userInfo.username
-
                 database.deleteTrack(m, 'one', channelID, username)
             }
         }

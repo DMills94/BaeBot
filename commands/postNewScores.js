@@ -1,5 +1,4 @@
 const Discord = require('discord.js')
-const { trackChannel } = require('../config.json')
 const functions = require('./exportFunctions.js')
 const database = require('../databases/requests.js')
 
@@ -8,22 +7,28 @@ module.exports = {
     description: 'Posts new scores from updating a users top 100',
     async execute(score, emojis, client) {
 
+
         //API Calls
         const userInfo = await functions.getUser(score.user_id)
         const beatmapInfo = (await functions.getBeatmap(score.beatmap_id))[0]
         const topPlays = await functions.getUserTop(userInfo.username)
 
         for (let play in topPlays) {
-            let scoreMatch = false
-
-            if (score.date === topPlays[play].date)
-                scoreMatch = true
-
-            if (scoreMatch) {
+            if (score.date === topPlays[play].date) {
                 score.playNumber = parseInt(play) + 1
+                break
             }
         }
 
+        const newPP = userInfo.pp_raw
+
+        const userDB = await database.userTrack(userInfo.username)
+        let oldPP = userDB.pp
+
+        if (!oldPP)
+            oldPP = newPP
+
+        let updatedPP = (Number(newPP) - Number(oldPP)).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         score.enabled_mods = functions.determineMods(score)
 
         score.accuracy = functions.determineAcc(score)
@@ -61,7 +66,7 @@ module.exports = {
 
         let embed = new Discord.RichEmbed()
             .setColor(colour)
-            .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
+            .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en' , { minimumFractionDigits: 2, maximumFractionDigits: 2 })}pp +${updatedPP >= 0 ? '+' + updatedPP : updatedPP} (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapInfo.beatmapset_id + 'l.jpg')
             .setTitle(`${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]`)
             .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
@@ -70,12 +75,13 @@ module.exports = {
             .setFooter(`${mapStatus} • Beatmap by ${beatmapInfo.creator}`)
 
         //Send embed to channels where user tracked
-        const usersTrackedChannels = (await database.userTrack(userInfo.username)).channels
+        const usersTrackedChannels = userDB.channels
 
         Object.keys(usersTrackedChannels).forEach(channel => {
             if (score.playNumber <= usersTrackedChannels[channel]) {
                 client.get(channel).send({ embed })
                 functions.logCommand(client, channel, 'Tracking', 'track', embed)
+                database.updateTrack(userInfo.username, null, newPP)
                 database.storeBeatmap(channel, beatmapInfo, score)
             }
         })

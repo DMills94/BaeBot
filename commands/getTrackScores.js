@@ -21,7 +21,7 @@ module.exports = {
                 const newTop100 = await functions.getUserTop(userInfo.username)
 
                 if (newTop100.length < 1) {
-                    return
+                    return console.log(`${userInfo.username} has changed username, or been removed!`)
                 }
 
                 //See if each of the new top 100 scores exist in the db top 100 scores
