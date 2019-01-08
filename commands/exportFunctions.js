@@ -70,7 +70,7 @@ customExports.getUserRecent = (username, limit = 10) => {
     })
 }
 
-customExports.checkMapRank = (username, beatmapid) => {
+customExports.checkMapRank = (score, beatmapid) => {
     return new Promise(resolve => {
         axios.get('api/get_scores', {
             params: {
@@ -82,7 +82,7 @@ customExports.checkMapRank = (username, beatmapid) => {
             .then(resp => {
                 const scores = resp.data
                 for (let player in scores) {
-                    if (scores[player].username === username) {
+                    if (scores[player].date === score.date || scores[player].username === score) {
                         return resolve(Number(player) + 1)
                     }
                 }

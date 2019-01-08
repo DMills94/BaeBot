@@ -74,7 +74,6 @@ module.exports = {
         }
         else {
             let bitNumMods = functions.modsToBitNum(modsToCompare)
-            console.log(bitNumMods)
             if (bitNumMods === "invalid") {
                 m.react('❎')
                 return m.reply("invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `compare +mods/[mods]`")
@@ -111,7 +110,7 @@ module.exports = {
                 score.playNumber = parseInt(top) + 1
         }
 
-        mapRank = await functions.checkMapRank(userInfo.username, prevBeatmap.beatmap.beatmap_id)
+        mapRank = await functions.checkMapRank(score, prevBeatmap.beatmap.beatmap_id)
 
         score.enabled_mods = functions.determineMods(score)
 

@@ -40,7 +40,7 @@ module.exports = {
 
         for (let score in unsortedTopScores) {
             unsortedTopScores[score].playNumber = parseInt(score) + 1
-            unsortedTopScores[score].date = Date.parse(unsortedTopScores[score].date)
+            unsortedTopScores[score].date = Date.parse(unsortedTopScores[score].date) 
         }
 
         const topScores = unsortedTopScores.sort((a, b) => {
@@ -49,9 +49,13 @@ module.exports = {
 
         usersScore = topScores[rbNum - 1]
 
+        const beatmapInfo = (await functions.getBeatmap(usersScore.beatmap_id))[0]
+
         usersScore.enabled_mods = functions.determineMods(usersScore)
 
         usersScore.accuracy = functions.determineAcc(usersScore)
+        
+        const mapRank = await functions.checkMapRank(username, beatmapInfo.beatmap_id)
 
         let playDate = usersScore.date
         let currentDate = Date.now()
@@ -64,16 +68,12 @@ module.exports = {
             return m.channel.send(`The username provided doesn't exist! Please try again.`)
         }
 
-        const beatmapInfo = (await functions.getBeatmap(usersScore.beatmap_id))[0]
-
         const ppInfo = await functions.calculate(beatmapInfo, usersScore)
 
 
         if (usersScore.rank.length === 1) {
             usersScore.rank += '_'
         }
-        
-        const mapRank = await functions.checkMapRank(userInfo.username, beatmapInfo.beatmap_id)
 
         const rankImage = emojis.find('name', usersScore.rank)
         const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)

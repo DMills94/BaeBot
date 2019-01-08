@@ -75,6 +75,8 @@ client.on('message', async message => {
             if (playNum < 1 || playNum > 100) {
                 return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}topx\``)
             }
+            if (!Number.isInteger(playNum))
+                return message.channel.send(`Please use the follow format \`${config.prefix}top[x]\`\` where \`x\` is a number between 1 and 100, or \`${config.prefix}top\` to view the users top 5!`)
             commandName = 'top'
             top5 = false
         } else if (commandName.includes('top')) {
@@ -84,8 +86,10 @@ client.on('message', async message => {
         if (commandName.includes('rb') && commandName.length > 2) {
             playNum = parseInt(commandName.slice(2))
             if (playNum < 1 || playNum > 100) {
-                return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}rbx\``)
+                return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}rb[x]\``)
             }
+            if (!Number.isInteger(playNum))
+                return message.channel.send(`Please use the follow format \`${config.prefix}rb[x]\` where \`x\` is a number between 1 and 100!`)
             commandName = 'rb'
         } else if (commandName.includes('rb')) {
             playNum = 1

@@ -1,4 +1,5 @@
 const Datastore = require('nedb')
+const functions = require('../commands/exportFunctions')
 
 let db = {}
 
@@ -307,6 +308,4 @@ exports.deleteGuild = guild => {
             }
         })
     }
-
-
 }

@@ -6,6 +6,7 @@ module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
     async execute(m, args, emojis, plays, top5) {
+        m.channel.startTyping()
         let user = []
         let username
 
@@ -58,6 +59,14 @@ module.exports = {
             topPlays[score].accuracy = functions.determineAcc(topPlays[score])
         }
 
+        let mapRanks = []
+
+        for (let i = 0; i < topPlays.length; i++) {
+            const mapRank = await functions.checkMapRank(topPlays[i], topPlays[i].beatmap_id)
+            
+            mapRanks.push(mapRank)
+        }
+
         //Time Since Playcount
         for (let score in topPlays) {
             let playDate = Date.parse(topPlays[score].date)
@@ -76,13 +85,6 @@ module.exports = {
             topPlays[score].maxPP = ppInfo.formattedMaxPP
             topPlays[score].pp = ppInfo.formattedPerformancePP
             topPlays[score].stars = ppInfo.formattedStars
-        }
-
-        let mapRanks = []
-        for (let i = 0; i < topPlays.length; i++) {
-            const mapRank = await functions.checkMapRank(userInfo.username, topPlays[i].beatmap_id)
-            
-            mapRanks.push(mapRank)
         }
 
         const currentDate = Date.now()
@@ -116,6 +118,9 @@ module.exports = {
             const mapStatus = functions.approvedStatus(beatmapList[0].approved)
             const usersScore = topPlays[0]
             const beatmapInfo = beatmapList[0]
+            if (usersScore.rank.length === 1) {
+                usersScore.rank += "_"
+            }
             const rankImage = emojis.find("name", usersScore.rank)
             const diffImage = functions.difficultyImage(usersScore.stars, emojis)
 
@@ -133,6 +138,7 @@ module.exports = {
         }
 
         //Send Embed to Channel
+        m.channel.stopTyping()
         m.channel.send({embed: embed})
     }
 }

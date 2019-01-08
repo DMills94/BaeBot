@@ -45,7 +45,7 @@ module.exports = {
 
         const beatmapInfo = (await functions.getBeatmap(recent.beatmap_id))[0]
         
-        const mapRank = await functions.checkMapRank(userInfo.username, beatmapInfo.beatmap_id)
+        const mapRank = await functions.checkMapRank(recent, beatmapInfo.beatmap_id)
 
         recent.enabled_mods = functions.determineMods(recent)
 
