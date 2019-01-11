@@ -5,7 +5,7 @@ const database = require('../databases/requests.js')
 module.exports = {
     name: 'postnew',
     description: 'Posts new scores from updating a users top 100',
-    async execute(score, emojis, client) {
+    async execute(score, emojis, client, country) {
 
 
         //API Calls
@@ -21,8 +21,21 @@ module.exports = {
         }
 
         const newPP = userInfo.pp_raw
+        let userDB
 
-        const userDB = await database.userTrack(userInfo.username)
+        if (country) {
+            countryDB = await database.countryTracks(userInfo.country)
+
+            for (let count in countryDB) {
+                if (userDB[player].username = userInfo.username)
+                    userDB = userDB[player]
+                    break
+            }
+        }
+        else {
+            userDB = await database.userTrack(userInfo.username)
+        }
+        
         let oldPP = userDB.pp
 
         if (!oldPP)

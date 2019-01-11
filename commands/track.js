@@ -1,6 +1,7 @@
-const fs = require('fs')
 const database = require('../databases/requests.js')
 const config = require('../config.json')
+const countries = require('../databases/countries.json')
+
 
 const functions = require('./exportFunctions.js')
 
@@ -24,8 +25,80 @@ module.exports = {
 
             m.channel.send(helpText)
         }
+        else if (args[0] === '-country' || args[0] === '-c') {
+            args.shift()
+
+            let filters = {
+                limit: undefined,
+                top: undefined
+            }
+
+            let delCountry = false
+            let countryArgs = []
+
+            for (let arg in args) {
+                if (args[arg].startsWith('l=')) {
+                    if (Math.round(Number(args[arg].slice(2))) > 50 || Math.round(Number(args[arg].slice(2))) < 1)
+                        return m.channel.send(`Please enter a limit between \`1\` and \`50\` users!`)
+                    filters.limit = args[arg].slice(2)
+                    continue
+                }
+                else if (args[arg].startsWith('t=')) {
+                    if (Math.round(Number(args[arg].slice(2))) > 100 || Math.round(Number(args[arg].slice(2))) < 1)
+                        return m.channel.send(`Please enter a top player number between \`1\` and \`100\` plays!`)
+                    filters.top = args[arg].slice(2)
+                }
+                else {
+                    countryArgs.push(args[arg])
+                }
+            }
+
+            for (let arg in countryArgs)
+                if (countryArgs[arg] == '-d' || countryArgs[arg] == '-delete') {
+                    delCountry = true
+                    countryArgs.splice(arg, 1)
+            }
+
+            let country = countryArgs.join(' ')
+            if (country.length === 2) {
+                country = country.toUpperCase()
+            }
+            else {
+                const countryWords = country.split(' ')
+                for (let word in countryWords) {
+                    countryWords[word] = countryWords[word].charAt(0).toUpperCase() + countryWords[word].slice(1)
+                }
+                country = countryWords.join(' ')
+            }
+
+            if (country == 'UK')
+                country = 'GB'
+            if (country.toUpperCase() == 'USA')
+                country = 'US'
+
+            if (country.length != 2) {
+                country = Object.keys(countries).find(key => countries[key] === country)
+                if (!country)
+                    return m.channel.send(`Invalid country name! Make sure it matches the osu website or use the 2 letter country codes!`)
+            }
+
+            if (delCountry) {
+                database.deleteCountryTrack(country, m.channel.id, m)
+            }
+            else {
+                const existingTrack = await database.checkCountryTrack(country, m.channel.id, filters)
+
+                if (existingTrack) {
+                    m.channel.send(`\:flag_${country.toLowerCase()}: is already being tracked!`)
+                }
+                else {
+                    database.addCountryTrack(country, m, filters)
+                }
+            }
+        }
         else if (args[0] === '-add' || args[0] === '-a') {
             args.shift()
+
             let argUsernamesRaw = args.join(' ').split(',')
             let argUsernames = []
 

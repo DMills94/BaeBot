@@ -32,11 +32,21 @@ client.on('ready', async () => {
     //Check bot hasn't left any servers, if so remove their db entries
 
     console.log('Starting tracking..')
-    tracking(emojis)
+    tracking(emojis, false)
+    tracking(emojis, true)
+    database.countryTrackUpdate()
 
     setInterval(() => {
-        tracking(emojis)
+        tracking(emojis, false)
     }, 150000)
+
+    setInterval(() => {
+        tracking(emojis, true)
+    }, 900000)
+
+    setInterval(() => {
+        database.countryTrackUpdate()
+    }, 3600000)
 })
 
 client.on('error', err => {
@@ -186,21 +196,21 @@ client.on('guildDelete', guild => {
     database.deleteGuild(guild)
 })
 
-async function tracking(emojis) {
-    const newScores = await client.commands.get('getTrackScores').execute()
+async function tracking(emojis, country) {
+    const newScores = await client.commands.get('getTrackScores').execute(country)
 
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)
     const time = currentTime.toTimeString().slice(0, 9)
 
     if (newScores.length > 0) {
-        console.log(`[TRACKING] ${newScores.length} new scores detected...posting: ${date} at ${time}`)
+        console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} ${newScores.length} new scores detected...posting: ${date} at ${time}`)
 
         for (let score in newScores) {
-            client.commands.get('postnew').execute(newScores[score], emojis, client.channels)
+            client.commands.get('postnew').execute(newScores[score], emojis, client.channels, country)
         }
     } else {
-        console.log(`[TRACKING] No new scores detected: ${date} at ${time}`)
+        console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No new scores detected: ${date} at ${time}`)
     }
 }
 

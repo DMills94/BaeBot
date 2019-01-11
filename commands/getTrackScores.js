@@ -4,15 +4,29 @@ const functions = require('./exportFunctions.js')
 module.exports = {
     name: 'getTrackScores',
     description: 'Parse tracked users scores for new plays and post if new top',
-    async execute() {
+    async execute(country) {
         return new Promise(async resolve => {
             let changedScoresArray = []
             let counter = 0
+            let trackdb = []
 
-            const trackdb = await database.allTracks()
+            if (country) {
+                const countryTrackdb = await database.countryTracks()
+
+                for (count in countryTrackdb) {
+                    if (!countryTrackdb[count].players)
+                        continue
+
+                    trackdb = trackdb.concat(countryTrackdb[count].players)
+                }
+                
+            }
+            else {
+                trackdb = await database.allTracks()
+            }
 
             if (trackdb.length < 1)
-                return console.log(`no users are being tracked!`)
+                return console.log(`no users are being tracked!`, country)
 
             Object.keys(trackdb).forEach(async user => {
                 const userInfo = trackdb[user]
