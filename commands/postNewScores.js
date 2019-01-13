@@ -35,9 +35,16 @@ module.exports = {
             userDB = await database.userTrack(userInfo.username)
         }
 
-        let oldPP = userDB.players.filter(player => {
-            return player.username === userInfo.username
-        })[0].pp
+        let oldPP
+        
+        try {
+            oldPP = userDB.pp
+        }
+        catch(err) {
+            oldPP = userDB.players.filter(player => {
+                return player.username === userInfo.username
+            })[0].pp
+        }
 
         if (!oldPP)
             oldPP = newPP
@@ -94,7 +101,13 @@ module.exports = {
 
         Object.keys(usersTrackedChannels).forEach(channel => {
             if (score.playNumber <= usersTrackedChannels[channel] || score.playNumber <= usersTrackedChannels[channel].top) {
-                client.get(channel).send({ embed })
+                if (country) {
+                    if (userInfo.pp_country_rank <= usersTrackedChannels[channel].limit)
+                        client.get(channel).send({ embed })
+                }
+                else {
+                    client.get(channel).send({ embed })
+                }
                 functions.logCommand(client, channel, 'Tracking', 'track', embed)
                 database.updateTrack(userInfo.username, null, newPP, country ? true : false)
                 database.storeBeatmap(channel, beatmapInfo, score)

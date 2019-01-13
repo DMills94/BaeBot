@@ -34,7 +34,7 @@ client.on('ready', async () => {
     console.log('Starting tracking..')
     tracking(emojis, false)
     tracking(emojis, true)
-    // database.countryTrackUpdate()
+    database.countryTrackUpdate(client)
 
     setInterval(() => {
         tracking(emojis, false)
@@ -204,7 +204,7 @@ async function tracking(emojis, country) {
     const time = currentTime.toTimeString().slice(0, 9)
 
     if (newScores.length > 0) {
-        console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} ${newScores.length} new scores detected...posting: ${date} at ${time}`)
+        console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} ${newScores.length} new scores detected...: ${date} at ${time}`)
 
         for (let score in newScores) {
             client.commands.get('postnew').execute(newScores[score], emojis, client.channels, country)

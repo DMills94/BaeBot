@@ -1,4 +1,5 @@
 const Datastore = require('nedb')
+const Discord = require('discord.js')
 const axios = require('axios')
 const HTMLParser = require('node-html-parser')
 const functions = require('../commands/exportFunctions')
@@ -477,17 +478,41 @@ exports.countryTrackUpdate = (client) => {
                     }
                     
                     if (docs[countryObj].players) {
-                        for (let i = 0; i < 50; i++) {
-                            let oldRank = docs[countryObj].players[i].countryRank
-                            let newRank = i + 1
-
-                            console.log(oldRank, '|||', newRank)
-
-                            if (oldRank - newRank != 0) {
-                                Object.keys(docs[countryObj].channels).forEach(channel => {
-                                    console.log(channel)
-                                    client.get(channel).send(`\`${userArr[i]}\` has changed rank! Old rank: \`${oldRank}\` | New rank: \`${newRank}\``)
-                                })
+                        for (let player in docs[countryObj].players) {
+                            let oldRank
+                            
+                            if (docs[countryObj].players[player].username != userArr[player].username) {
+                                let oldTop50 = docs[countryObj].players.map(user => user.username)
+                                
+                                let newRank = Number(player) + 1
+                                if (!oldTop50.includes(userArr[player].username)) {
+                                    Object.keys(docs[countryObj].channels).forEach(channel => {
+                                        if (newRank <= docs[countryObj].channels[channel].limit)
+                                            client.channels.get(channel).send(`\`${userArr[player].username}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
+                                    })
+                                }
+                                else {
+                                    oldRank = docs[countryObj].players[player].countryRank 
+        
+                                    if (oldRank - newRank != 0) {
+                                        let rankChange = oldRank - newRank
+                                        let color = '#3B94D9'
+                                        if (rankChange > 0) {
+                                            rankChange = '+' + rankChange
+                                            color = '#DD2E44'
+                                        }
+        
+                                        Object.keys(docs[countryObj].channels).forEach(channel => {
+                                            let embed = new Discord.RichEmbed()
+                                                .setColor(color)
+                                                .addField('Old Rank', oldRank, true)
+                                                .addField('New Rank', newRank, true)
+                                        
+                                            client.channels.get(channel).send(`\`${userArr[player].username}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
+        
+                                        })
+                                    }
+                                }
                             }
                         }
                     }
