@@ -38,15 +38,17 @@ module.exports = {
 
             for (let arg in args) {
                 if (args[arg].startsWith('l=')) {
-                    if (Math.round(Number(args[arg].slice(2))) > 50 || Math.round(Number(args[arg].slice(2))) < 1)
+                    const value = Number(args[arg].slice(2))
+                    if (Math.round(Number(value)) > 50 || Math.round(Number(value)) < 1 || !value)
                         return m.channel.send(`Please enter a limit between \`1\` and \`50\` users!`)
-                    filters.limit = args[arg].slice(2)
+                    filters.limit = value
                     continue
                 }
                 else if (args[arg].startsWith('t=')) {
-                    if (Math.round(Number(args[arg].slice(2))) > 100 || Math.round(Number(args[arg].slice(2))) < 1)
+                    const value = Number(args[arg].slice(2))
+                    if (Math.round(Number(value)) > 100 || Math.round(Number(value)) < 1 || !value)
                         return m.channel.send(`Please enter a top player number between \`1\` and \`100\` plays!`)
-                    filters.top = args[arg].slice(2)
+                    filters.top = value
                 }
                 else {
                     countryArgs.push(args[arg])

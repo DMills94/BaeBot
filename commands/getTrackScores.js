@@ -26,7 +26,7 @@ module.exports = {
             }
 
             if (trackdb.length < 1)
-                return console.log(`no users are being tracked!`, country)
+                return console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No tracks.`)
 
             Object.keys(trackdb).forEach(async user => {
                 const userInfo = trackdb[user]
@@ -53,10 +53,8 @@ module.exports = {
 
                     if (!scoreMatch) {
                         changedScoresArray.push(newTop100[score])
-                        let dbTop100 = newTop100.map(top => {
-                            return top.date
-                        })
-                        database.updateTrack(userInfo.username, dbTop100)
+                        let dbTop100 = newTop100.map(top => top.date)
+                        database.updateTrack(userInfo.username, dbTop100, null, country)
                     }
                 }
 

@@ -267,15 +267,44 @@ exports.trackList = channelid => {
     })
 }
 
-exports.updateTrack = (username, scoreDates, pp) => {
-    if (scoreDates != null) {
+exports.updateTrack = (username, scoreDates, pp, country) => {
+    if (scoreDates != null && !country) {
         db.track.update({ username }, { $set: { userBest: scoreDates } }, {}, err => {
             if (err) console.log(err)
         })
     }
-    else if (pp != null) {
+    else if (pp != null && !country) {
         db.track.update({ username }, { $set: { pp } }, {}, err => {
             if (err) console.log(err)
+        })
+    }
+    else if (country) {
+        db.countryTrack.find({ "players.username": username }, (err, docs) => {
+            if (err) console.log(err)
+            const playersInfo = [ ...docs[0].players ]
+
+            if (scoreDates != null) {
+                for (let user in playersInfo) {
+                    if (playersInfo[user].username === username) {
+                        playersInfo[user].userBest = scoreDates
+                        break
+                    }
+                }
+                db.countryTrack.update({ "players.username": username }, { $set: { players: playersInfo } }, {}, err => {
+                    if (err) console.log(err)
+                })
+            }
+            else if (pp != null) {
+                for (let user in playersInfo) {
+                    if (playersInfo[user].username === username) {
+                        playersInfo[user].pp = pp
+                        break
+                    }
+                }
+                db.countryTrack.update({ "players.username": username }, { $set: { players: playersInfo } }, {}, err => {
+                    if (err) console.log(err)
+                })
+            }
         })
     }
 }
@@ -409,7 +438,7 @@ exports.deleteCountryTrack = (country, channelID, m) => {
 }
 
 exports.countryTrackUpdate = (client) => {
-    console.log('[COUNTRY TRACKING] Starting to update database!')
+    console.log('[COUNTRY TRACKING] Checking for country tracks to update.')
 
     db.countryTrack.find({}, (err, docs) => {
         if (err) {
@@ -418,7 +447,7 @@ exports.countryTrackUpdate = (client) => {
         }
 
         if (docs.length < 1) {
-            return console.log('no countries being tracked')
+            return console.log('[COUNTRY TRACKING || DB] No countries being tracked.')
         }
         
         for (let countryObj in docs) {
@@ -452,8 +481,11 @@ exports.countryTrackUpdate = (client) => {
                             let oldRank = docs[countryObj].players[i].countryRank
                             let newRank = i + 1
 
+                            console.log(oldRank, '|||', newRank)
+
                             if (oldRank - newRank != 0) {
                                 Object.keys(docs[countryObj].channels).forEach(channel => {
+                                    console.log(channel)
                                     client.get(channel).send(`\`${userArr[i]}\` has changed rank! Old rank: \`${oldRank}\` | New rank: \`${newRank}\``)
                                 })
                             }

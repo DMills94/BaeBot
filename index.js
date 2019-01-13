@@ -34,7 +34,7 @@ client.on('ready', async () => {
     console.log('Starting tracking..')
     tracking(emojis, false)
     tracking(emojis, true)
-    database.countryTrackUpdate()
+    // database.countryTrackUpdate()
 
     setInterval(() => {
         tracking(emojis, false)
@@ -46,7 +46,7 @@ client.on('ready', async () => {
 
     setInterval(() => {
         database.countryTrackUpdate()
-    }, 3600000)
+    }, 21600000)
 })
 
 client.on('error', err => {
