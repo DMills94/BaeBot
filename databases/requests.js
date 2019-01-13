@@ -1,4 +1,7 @@
 const Datastore = require('nedb')
+const Discord = require('discord.js')
+const axios = require('axios')
+const HTMLParser = require('node-html-parser')
 const functions = require('../commands/exportFunctions')
 
 let db = {}
@@ -7,6 +10,7 @@ db.devMode = new Datastore({ filename: './databases/stores/devMode', autoload: t
 db.lastBeatmap = new Datastore({ filename: './databases/stores/lastBeatmap', autoload: true })
 db.linkedUsers = new Datastore({ filename: './databases/stores/links', autoload: true })
 db.track = new Datastore({ filename: './databases/stores/track', autoload: true })
+db.countryTrack = new Datastore({ filename: './databases/stores/countryTrack', autoload: true })
 
 //Dev Mode
 exports.addDevMode = () => {
@@ -137,9 +141,11 @@ exports.addNewTrack = (m, channelid, trackInfo, action) => {
             db.track.insert(data, err => {
                 if (err) {
                     console.log(err)
+                    m.react('❎')
                     return m.channel.send(`There was an error adding \`${trackInfo.username}\` to tracking. Please try again later!`)
-                }
-                m.channel.send(`\`${trackInfo.username}\` is being added to the tracking for osu! standard scores in their \`top ${trackInfo.limit}\`! \:tada:`)
+                }        
+                m.react('✅')
+                return m.channel.send(`\`${trackInfo.username}\` is being added to the tracking for osu! standard scores in their \`top ${trackInfo.limit}\`! \:tada:`)
             })
         }
         else if (action === 'update') { //Update'
@@ -213,7 +219,8 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
                 db.track.remove({ username: searchName }, {}, err => {
                     if (err) {
                         console.log(err)
-                        m.channel.send(`Unable to delete ${userToEdit.username} \:sob:`)
+                        m.react('❎')
+                        return m.channel.send(`Unable to delete ${userToEdit.username} \:sob:`)
                     }
                 })
                 m.react('✅')
@@ -261,18 +268,263 @@ exports.trackList = channelid => {
     })
 }
 
-exports.updateTrack = (username, scoreDates, pp) => {
-    if (scoreDates != null) {
+exports.updateTrack = (username, scoreDates, pp, country) => {
+    if (scoreDates != null && !country) {
         db.track.update({ username }, { $set: { userBest: scoreDates } }, {}, err => {
             if (err) console.log(err)
         })
     }
-    else if (pp != null) {
+    else if (pp != null && !country) {
         db.track.update({ username }, { $set: { pp } }, {}, err => {
             if (err) console.log(err)
         })
     }
+    else if (country) {
+        db.countryTrack.find({ "players.username": username }, (err, docs) => {
+            if (err) console.log(err)
+            const playersInfo = [ ...docs[0].players ]
 
+            if (scoreDates != null) {
+                for (let user in playersInfo) {
+                    if (playersInfo[user].username === username) {
+                        playersInfo[user].userBest = scoreDates
+                        break
+                    }
+                }
+                db.countryTrack.update({ "players.username": username }, { $set: { players: playersInfo } }, {}, err => {
+                    if (err) console.log(err)
+                })
+            }
+            else if (pp != null) {
+                for (let user in playersInfo) {
+                    if (playersInfo[user].username === username) {
+                        playersInfo[user].pp = pp
+                        break
+                    }
+                }
+                db.countryTrack.update({ "players.username": username }, { $set: { players: playersInfo } }, {}, err => {
+                    if (err) console.log(err)
+                })
+            }
+        })
+    }
+}
+
+exports.countryTracks = (country) => {
+    return new Promise(resolve => {
+        if (country) {
+            db.countryTrack.find({ country }, (err, docs) => {
+                if (err) console.log(err)
+                resolve(docs)
+            })
+        }
+        else {
+            db.countryTrack.find( {}, (err, docs) => {
+                if (err) console.log(err)
+                resolve(docs)
+            })
+        }
+
+    })
+}
+
+exports.checkCountryTrack = (country, channelID, filters) => {
+    return new Promise(resolve => {
+        db.countryTrack.find({ country }, (err, docs) => {
+            if (err) console.log(err)
+            if (docs.length < 1)
+                return resolve(false)
+            
+            if (filters.limit === undefined) {
+                filters.limit = docs[0].channels[channelID] ? docs[0].channels[channelID].limit : 10
+            }
+            if (filters.top === undefined) {
+                filters.top = docs[0].channels[channelID] ? docs[0].channels[channelID].top : 100
+            }
+            
+            if (docs.length < 1) {
+                resolve(false)
+            }
+            else if (!docs[0].channels.hasOwnProperty(channelID)) {
+                resolve(false)
+            }
+            else if (docs[0].channels[channelID].limit !== filters.limit || docs[0].channels[channelID].top !== filters.top) {
+                resolve(false)
+            }
+            else {
+                resolve(true)
+            }
+        })
+
+    })
+}
+
+exports.addCountryTrack = (country, m, filters) => {
+    if (filters.limit === undefined) {
+        filters.limit = 10
+    }
+    if (filters.top === undefined) {
+        filters.top = 100
+    }
+
+    const trackInfo = {
+        country,
+        channels: {
+            [m.channel.id]: filters
+        }
+    }
+
+    db.countryTrack.find({ country }, (err, docs) => {
+        if (err) console.log(err)
+
+        if (docs.length > 0) {
+            let newChannels = { ...docs[0].channels }
+            newChannels[m.channel.id] = filters
+            db.countryTrack.update({ country }, { $set: { channels: newChannels } }, {}, err => {
+                if (err) console.log(err)
+                m.react('✅')
+                return m.channel.send(`The top \`${filters.limit}\` \:flag_${country.toLowerCase()}: players are being tracked for changes in their \`top ${filters.top}\` and rank changes! \:tada:`)
+            })
+        }
+        else {
+            db.countryTrack.insert(trackInfo, err => {
+                if (err) {
+                    m.react('❎')
+                    return m.channel.send(`There was an error adding \:flag_${country.toLowerCase()}: to tracking. Please try again later!`)
+                }
+                m.react('✅')
+                return m.channel.send(`The top \`${filters.limit}\` \:flag_${country.toLowerCase()}: players are being tracked for changes in their \`top ${filters.top}\` and rank changes! \:tada:`)
+            })
+        }
+    })
+}
+
+exports.deleteCountryTrack = (country, channelID, m) => {
+    db.countryTrack.find({ country }, (err, docs) => {
+        if (err) {
+            console.log(err)
+            m.react('❎')
+            return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
+        }
+        if (docs.length < 1)
+            return m.channel.send(`Oh, that country doesn't appear to be tracked \:flushed:`)
+        const countryToEdit = docs[0]
+
+        let newChannels = { ...countryToEdit.channels }
+        delete newChannels[channelID]
+
+        if (Object.keys(newChannels).length < 1) {
+            db.countryTrack.remove({ country }, {}, err => {
+                if (err) {
+                    console.log(err)
+                    m.react('❎')
+                    return m.channel.send(`Unable to delete the country ${country} \:sob:`)
+                }
+                m.react('✅')
+                return m.channel.send(`\:flag_${country.toLowerCase()}: has been removed from tracking! \:tada:`)
+            })
+        }
+        else {
+            db.countryTrack.update({ country }, { $set: { channels: newChannels } }, {}, err => {
+                if (err) {
+                    console.log(err)
+                    m.react('❎')
+                    return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
+                }
+                m.react('✅')
+                return m.channel.send(`\:flag_${country.toLowerCase()}: has been removed from tracking! \:tada:`)
+            })
+        }
+    })
+}
+
+exports.countryTrackUpdate = (client) => {
+    console.log('[COUNTRY TRACKING] Checking for country tracks to update.')
+
+    db.countryTrack.find({}, (err, docs) => {
+        if (err) {
+            console.log('Issue retrieving country track DB.')
+            console.log(err)
+        }
+
+        if (docs.length < 1) {
+            return console.log('[COUNTRY TRACKING || DB] No countries being tracked.')
+        }
+        
+        for (let countryObj in docs) {
+            let country = docs[countryObj].country
+            let userArr = []
+            axios.get('rankings/osu/performance', {
+                params: {
+                    country
+                }
+            })
+                .then(async resp => {
+                    const parsed = HTMLParser.parse(resp.data)
+                    let users = parsed.querySelectorAll('.js-usercard')
+    
+                    for (let user in users) {
+                        const username = users[user].rawText.trim()
+                        const userInfo = await functions.getUser(username)
+                        const userBest = (await functions.getUserTop(username, 100)).map(play => play.date)
+                        const userObj = {
+                            username,
+                            userBest,
+                            pp: userInfo.pp_raw,
+                            countryRank: Number(user) + 1,
+                            country
+                        }
+                        userArr.push(userObj)
+                    }
+                    
+                    if (docs[countryObj].players) {
+                        for (let player in docs[countryObj].players) {
+                            let oldRank
+                            
+                            if (docs[countryObj].players[player].username != userArr[player].username) {
+                                let oldTop50 = docs[countryObj].players.map(user => user.username)
+                                
+                                let newRank = Number(player) + 1
+                                if (!oldTop50.includes(userArr[player].username)) {
+                                    Object.keys(docs[countryObj].channels).forEach(channel => {
+                                        if (newRank <= docs[countryObj].channels[channel].limit)
+                                            client.channels.get(channel).send(`\`${userArr[player].username}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
+                                    })
+                                }
+                                else {
+                                    oldRank = docs[countryObj].players[player].countryRank 
+        
+                                    if (oldRank - newRank != 0) {
+                                        let rankChange = oldRank - newRank
+                                        let color = '#3B94D9'
+                                        if (rankChange > 0) {
+                                            rankChange = '+' + rankChange
+                                            color = '#DD2E44'
+                                        }
+        
+                                        Object.keys(docs[countryObj].channels).forEach(channel => {
+                                            let embed = new Discord.RichEmbed()
+                                                .setColor(color)
+                                                .addField('Old Rank', oldRank, true)
+                                                .addField('New Rank', newRank, true)
+                                        
+                                            client.channels.get(channel).send(`\`${userArr[player].username}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
+        
+                                        })
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    db.countryTrack.update({ country }, { $set: { players: userArr } }, {}, err => {
+                        if (err) console.log(err)
+                        console.log(`[COUNTRY TRACKING] Finished updating database for ${country}!`)
+                    })
+                })
+                .catch(err => console.log(err))
+        }
+    })
 }
 
 // Delete Guild information

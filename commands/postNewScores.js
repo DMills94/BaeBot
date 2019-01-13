@@ -5,8 +5,7 @@ const database = require('../databases/requests.js')
 module.exports = {
     name: 'postnew',
     description: 'Posts new scores from updating a users top 100',
-    async execute(score, emojis, client) {
-
+    async execute(score, emojis, client, country) {
 
         //API Calls
         const userInfo = await functions.getUser(score.user_id)
@@ -21,14 +20,37 @@ module.exports = {
         }
 
         const newPP = userInfo.pp_raw
+        let userDB
 
-        const userDB = await database.userTrack(userInfo.username)
-        let oldPP = userDB.pp
+        if (country) {
+            countryDB = await database.countryTracks(userInfo.country)
+
+            for (let count in countryDB) {
+                if (countryDB[count].username = userInfo.username)
+                    userDB = countryDB[count]
+                    break
+            }
+        }
+        else {
+            userDB = await database.userTrack(userInfo.username)
+        }
+
+        let oldPP
+        
+        try {
+            oldPP = userDB.pp
+        }
+        catch(err) {
+            oldPP = userDB.players.filter(player => {
+                return player.username === userInfo.username
+            })[0].pp
+        }
 
         if (!oldPP)
             oldPP = newPP
 
         let updatedPP = (Number(newPP) - Number(oldPP)).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
         score.enabled_mods = functions.determineMods(score)
 
         score.accuracy = functions.determineAcc(score)
@@ -63,7 +85,7 @@ module.exports = {
         }
 
         const mapStatus = await functions.approvedStatus(beatmapInfo.approved)
-
+        
         let embed = new Discord.RichEmbed()
             .setColor(colour)
             .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en' , { minimumFractionDigits: 2, maximumFractionDigits: 2 })}pp ${updatedPP >= 0 ? '+' + updatedPP : updatedPP} (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, 'https://osu.ppy.sh/users/' + userInfo.user_id)
@@ -78,10 +100,16 @@ module.exports = {
         const usersTrackedChannels = userDB.channels
 
         Object.keys(usersTrackedChannels).forEach(channel => {
-            if (score.playNumber <= usersTrackedChannels[channel]) {
-                client.get(channel).send({ embed })
+            if (score.playNumber <= usersTrackedChannels[channel] || score.playNumber <= usersTrackedChannels[channel].top) {
+                if (country) {
+                    if (userInfo.pp_country_rank <= usersTrackedChannels[channel].limit)
+                        client.get(channel).send({ embed })
+                }
+                else {
+                    client.get(channel).send({ embed })
+                }
                 functions.logCommand(client, channel, 'Tracking', 'track', embed)
-                database.updateTrack(userInfo.username, null, newPP)
+                database.updateTrack(userInfo.username, null, newPP, country ? true : false)
                 database.storeBeatmap(channel, beatmapInfo, score)
             }
         })
