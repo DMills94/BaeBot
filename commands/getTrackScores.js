@@ -53,6 +53,10 @@ module.exports = {
 
                 if (!trackUser) {
                     counter++
+
+                    if (counter === Object.keys(trackdb).length)
+                    resolve(changedScoresArray)
+
                     continue
                 }
                     

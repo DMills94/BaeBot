@@ -479,26 +479,27 @@ exports.countryTrackUpdate = (client) => {
                         }
                         userArr.push(userObj)
                     }
-                    
+
                     if (docs[countryObj].players) {
-                        for (let player in docs[countryObj].players) {
-                            let oldRank
-                            
+                        for (let player in docs[countryObj].players) {                            
                             if (docs[countryObj].players[player].username != userArr[player].username) {
-                                let oldTop50 = docs[countryObj].players.map(user => user.username)
-                                
-                                let newRank = Number(player) + 1
-                                if (!oldTop50.includes(userArr[player].username)) {
+                                const oldTop50 = docs[countryObj].players.map(user => user.username)
+                                const newUser = userArr[player].username
+                                const newRank = Number(player) + 1
+
+                                if (!oldTop50.includes(newUser)) {
                                     Object.keys(docs[countryObj].channels).forEach(channel => {
                                         if (newRank <= docs[countryObj].channels[channel].limit)
-                                            client.channels.get(channel).send(`\`${userArr[player].username}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
+                                            client.channels.get(channel).send(`\`${newUser}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
                                     })
                                 }
                                 else {
-                                    oldRank = docs[countryObj].players[player].countryRank 
+                                    const oldRank = docs[countryObj].players.filter(player => {
+                                        return player.username === newUser
+                                    })[0].countryRank
+                                    let rankChange = oldRank - newRank
         
-                                    if (oldRank - newRank != 0) {
-                                        let rankChange = oldRank - newRank
+                                    if (rankChange != 0) {
                                         let color = '#3B94D9'
                                         if (rankChange > 0) {
                                             rankChange = '+' + rankChange
@@ -511,7 +512,7 @@ exports.countryTrackUpdate = (client) => {
                                                 .addField('Old Rank', oldRank, true)
                                                 .addField('New Rank', newRank, true)
                                         
-                                            client.channels.get(channel).send(`\`${userArr[player].username}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
+                                            client.channels.get(channel).send(`\`${newUser}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
                                         })
                                     }
                                 }
