@@ -11,7 +11,7 @@ module.exports = {
         const link = await database.checkForLink(userID)
 
         if (link.length > 0)
-            return m.channel.send(`Your account is already link to \`${link[0].osuIGN}\``)
+            return m.channel.send(`Your account is already linked to \`${link[0].osuIGN}\``)
         
         const osuIGN = args.join('_')
 

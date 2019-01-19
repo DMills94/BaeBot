@@ -9,9 +9,19 @@ module.exports = {
             let changedScoresArray = []
             let counter = 0
             let trackdb = []
+            let limits = []
 
             if (country) {
                 const countryTrackdb = await database.countryTracks()
+                
+                limits = countryTrackdb.map(country => {
+                    let max = 0
+                    for (let channel in country.channels) {
+                        if (country.channels[channel].limit > max)
+                            max = country.channels[channel].limit
+                    }
+                    return { [country.country]: max}
+                })
 
                 for (count in countryTrackdb) {
                     if (!countryTrackdb[count].players)
@@ -27,9 +37,26 @@ module.exports = {
 
             if (trackdb.length < 1)
                 return console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No tracks.`)
-
-            Object.keys(trackdb).forEach(async user => {
+            
+            for (let user in trackdb) {
                 const userInfo = trackdb[user]
+                let trackUser = true
+
+                for (let lim of limits) {
+                    if (Object.keys(lim)[0] == userInfo.country) {
+                        if (userInfo.countryRank > lim[userInfo.country]) {
+                            trackUser = false
+                            break
+                        }
+                    }
+                }
+
+                if (!trackUser) {
+                    counter++
+                    continue
+                }
+                    
+
 
                 //Get users Top 100
                 const newTop100 = await functions.getUserTop(userInfo.username)
@@ -62,7 +89,7 @@ module.exports = {
 
                 if (counter === Object.keys(trackdb).length)
                     resolve(changedScoresArray)
-            })
+            }
         })
     }
 }

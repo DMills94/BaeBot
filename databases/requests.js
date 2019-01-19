@@ -410,6 +410,9 @@ exports.deleteCountryTrack = (country, channelID, m) => {
             return m.channel.send(`Oh, that country doesn't appear to be tracked \:flushed:`)
         const countryToEdit = docs[0]
 
+        if (!countryToEdit.channels[channelID])
+            return m.channel.send(`Oh, that country doesn't appear to be tracked \:flushed:`)
+
         let newChannels = { ...countryToEdit.channels }
         delete newChannels[channelID]
 
@@ -509,7 +512,6 @@ exports.countryTrackUpdate = (client) => {
                                                 .addField('New Rank', newRank, true)
                                         
                                             client.channels.get(channel).send(`\`${userArr[player].username}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
-        
                                         })
                                     }
                                 }

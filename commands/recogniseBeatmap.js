@@ -12,6 +12,7 @@ module.exports = {
         const splitArgs = args.split(' ')
         let beatmapURL
         let mods = ''
+        let error = false
 
         splitArgs.forEach(arg => {
             if (arg.match(/https?:\/\/(osu|new).ppy.sh\/([b]|[s]|beatmapsets)\//i)) {
@@ -24,18 +25,24 @@ module.exports = {
 
                 for (let mod of modsParts) {
                     if (!['hd', 'hr', 'dt', 'nc', 'so', 'nf', 'fl', 'ht', 'ez'].includes(mod)) {
+                        error = true
                         return m.reply('invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `[beatmapURL] +[mods]`')
                     }
                 }
 
                 if (mods.includes('hr') && mods.includes('ez')) {
+                    error = true
                     return m.reply('mods cannot include BOTH Hard Rock AND Easy! Please try again.')
                 }
                 if (mods.includes('dt') && mods.includes('nc') || mods.includes('dt') && mods.includes('ht') || mods.includes('ht') && mods.includes('nc')) {
+                    error = true
                     return m.reply('mods cannot include BOTH Double Time/Nightcore AND Half Time! Please try again.')
                 }
             }
         })
+
+        if (error)
+            return
 
         // Extract Beatmap ID
         const urlInfo = {

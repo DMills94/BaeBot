@@ -1,4 +1,5 @@
 const database = require('../databases/requests.js')
+const config = require('../config.json')
 
 module.exports = {
     name: 'unlink',
@@ -10,7 +11,7 @@ module.exports = {
 
         if (link.length < 1) {
             m.react('❎')
-            return m.channel.send('You have no linked account to unlink! Please use ``link [username]` to link an account!')
+            return m.channel.send(`You have no linked account to unlink! Please use \`${config.prefix}link [username]\` to link an account!`)
         }
 
         const username = link[0].osuIGN

@@ -1,6 +1,7 @@
 const Discord = require("discord.js")
 const functions = require("./exportFunctions.js")
 const database = require('../databases/requests.js')
+const config = require('../config.json')
 
 module.exports = {
     name: "top",
@@ -29,7 +30,7 @@ module.exports = {
         
         if (!username) {
             m.react('❎')
-            return m.channel.send('No linked account could be found! I cannot find their top plays \:sob:')
+            return m.channel.send(`No linked account could be found! \:sob: try \`${config.prefix}link [username]\``)
         }
 
         //osu API calls

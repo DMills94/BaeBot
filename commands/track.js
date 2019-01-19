@@ -17,11 +17,11 @@ module.exports = {
 
         if (args[0] === '-help' || args[0] === '-h') {
             let helpText = `Tracking Commands | ${config.prefix}track [command]`
-            helpText += '\n ```\t-help : Hey, you are already here!'
-            helpText += '\n\t-add/-a [osu username] [top=x],[osu username]...: Adds a users to be tracked, separated by a comma. top=x optional, default is 100.'
-            helpText += '\n\t-delete/-d [osu username] : Removes a user from being tracked'
-            helpText += '\n\t-list/-l : List the users currently being tracked```'
-            helpText += '\nTracking is currently a test feature, it will only track osu standard and also will always track the top 100 scores of the user.'
+            helpText += '\n ```-help : Hey, you are already here!'
+            helpText += '\n-add/-a [osu username] [top=x],[osu username]...: Adds a users to be tracked, separated by a comma. top=x optional, default is 100.'
+            helpText += '\n-delete/-d [osu username] : Removes a user from being tracked'
+            helpText += '\n-c [country code] [l=x] [t=x] : Adds a country to tracking! options: l=\'x\' only track the top x of the country, default: 10 | t=\'x\' track the top x plays of the players, default: 100'
+            helpText += '\n-list/-l : List the users currently being tracked```'
 
             m.channel.send(helpText)
         }
