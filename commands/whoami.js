@@ -45,7 +45,7 @@ module.exports = {
 
         let embed = new Discord.RichEmbed()
             .setColor('#5cd6eb')
-            .setAuthor(discordUsername + "@" + discordDiscrim)
+            .setAuthor(`Account info for: ${discordUsername}#${discordDiscrim}`)
             .setThumbnail(discordAvatar)
             .addField("Server Nickname", discordNick ? discordNick : discordUsername)
             .addField("Server Roles", serverRoles)

@@ -72,6 +72,20 @@ client.on('message', async message => {
         }
 
         let commandName = args.shift()
+
+        if (commandName === 'restart') {
+            if (message.author.id == config.baeID) {
+                return message.channel.send('I\'m restarting, see you soon!')
+                    .then(() => client.destroy())
+                    .then(() => {
+                        client.login(config.token)
+                    })
+            }
+            else
+                return message.channel.send('Hey! What are you trying to do to me \:rage:')
+        }
+
+
         let playNum
         let top5 = true
 
