@@ -490,7 +490,7 @@ exports.countryTrackUpdate = (client) => {
                                 if (!oldTop50.includes(newUser)) {
                                     Object.keys(docs[countryObj].channels).forEach(channel => {
                                         if (newRank <= docs[countryObj].channels[channel].limit)
-                                            client.channels.get(channel).send(`\`${newUser}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
+                                            client.get(channel).send(`\`${newUser}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
                                     })
                                 }
                                 else {
@@ -501,18 +501,21 @@ exports.countryTrackUpdate = (client) => {
         
                                     if (rankChange != 0) {
                                         let color = '#3B94D9'
+
                                         if (rankChange > 0) {
                                             rankChange = '+' + rankChange
                                             color = '#DD2E44'
                                         }
-        
-                                        Object.keys(docs[countryObj].channels).forEach(channel => {
-                                            let embed = new Discord.RichEmbed()
-                                                .setColor(color)
-                                                .addField('Old Rank', oldRank, true)
-                                                .addField('New Rank', newRank, true)
                                         
-                                            client.channels.get(channel).send(`\`${newUser}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
+                                        Object.keys(docs[countryObj].channels).forEach(channel => {
+                                            if (newRank <= docs[countryObj].channels[channel].limit) {
+                                                let embed = new Discord.RichEmbed()
+                                                    .setColor(color)
+                                                    .addField('Old Rank', oldRank, true)
+                                                    .addField('New Rank', newRank, true)
+                                            
+                                                client.get(channel).send(`\:flag_${docs[countryObj].country.toLowerCase()}: \`${newUser}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
+                                            }
                                         })
                                     }
                                 }

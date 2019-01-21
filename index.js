@@ -32,9 +32,9 @@ client.on('ready', async () => {
     //Check bot hasn't left any servers, if so remove their db entries
 
     console.log('Starting tracking..')
-    // tracking(emojis, false)
-    // tracking(emojis, true)
-    database.countryTrackUpdate(client)
+    tracking(emojis, false)
+    tracking(emojis, true)
+    database.countryTrackUpdate(client.channels)
 
     setInterval(() => {
         tracking(emojis, false)
@@ -46,7 +46,7 @@ client.on('ready', async () => {
 
     setInterval(() => {
         database.countryTrackUpdate()
-    }, 21600000)
+    }, 7200000)
 })
 
 client.on('error', err => {
