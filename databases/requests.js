@@ -489,7 +489,7 @@ exports.countryTrackUpdate = (client) => {
 
                                 if (!oldTop50.includes(newUser)) {
                                     Object.keys(docs[countryObj].channels).forEach(channel => {
-                                        if (newRank <= docs[countryObj].channels[channel].limit)
+                                        if (newRank <= docs[countryObj].channels[channel].limit && docs[countryObj.channels[channel].rankUpdates])
                                             client.get(channel).send(`\`${newUser}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
                                     })
                                 }
@@ -508,7 +508,7 @@ exports.countryTrackUpdate = (client) => {
                                         }
                                         
                                         Object.keys(docs[countryObj].channels).forEach(channel => {
-                                            if (newRank <= docs[countryObj].channels[channel].limit) {
+                                            if (newRank <= docs[countryObj].channels[channel].limit && docs[countryObj.channels[channel].rankUpdates]) {
                                                 let embed = new Discord.RichEmbed()
                                                     .setColor(color)
                                                     .addField('Old Rank', oldRank, true)
@@ -529,6 +529,31 @@ exports.countryTrackUpdate = (client) => {
                     })
                 })
                 .catch(err => console.log(err))
+        }
+    })
+}
+
+exports.toggleRankTrack = (m, channelID) => {
+    db.countryTrack.find({ $where: function() { return Object.keys(this.channels).includes(channelID) } }, (err, docs) => {
+        if (err) {
+            console.log(err)
+            m.react('❎')
+            return m.channel.send(`Unable to toggle rank tracking right now \:sob:`)
+        }
+
+        for (let country in docs) {
+            let newChannels = docs[country].channels
+            newChannels[channelID].rankUpdates = !newChannels[channelID].rankUpdates
+
+            db.countryTrack.update({ country: docs[country].country }, { $set: { channels: newChannels }}, {}, err => {
+                if (err) {
+                    console.log(err)
+                    m.react('❎')
+                    return m.channel.send(`Unable to toggle rank tracking right now \:sob:`)
+                }
+                m.react('✅')
+                return m.channel.send(`Country rank tracking has been \`${newChannels[channelID].rankUpdates ? 'enabled' : 'disabled'}\` \:tada:`)
+            })
         }
     })
 }
