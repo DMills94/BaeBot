@@ -30,7 +30,8 @@ module.exports = {
 
             let filters = {
                 limit: undefined,
-                top: undefined
+                top: undefined,
+                rankUpdates: true
             }
 
             let delCountry = false
