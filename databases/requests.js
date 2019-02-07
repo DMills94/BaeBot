@@ -118,17 +118,18 @@ exports.checkForLink = discordid => {
 }
 
 //Servers
-exports.addServer = (guildID) => {
+exports.addServer = (guildID, channelID) => {
     const serverToggles = {
         guildID,
-        announcements: true
+        announcements: true,
+        announceChannel: channelID
     }
     db.servers.insert(serverToggles, err => {
         if (err) console.log(err)
     })
 }
 
-exports.checkServer = (guildID, query) => {
+exports.checkServer = (guildID, m, query) => {
     return new Promise (resolve => {
         db.servers.find({ guildID }, async (err, docs) => {
             if (err) {
@@ -137,29 +138,24 @@ exports.checkServer = (guildID, query) => {
 
             let guild
             if (docs.length == 0) {
-                await exports.addServer(guildID)
-                guild = {announcements: true}
+                await exports.addServer(guildID, m.guild.systemChannelID)
+                resolve({announcements: true, announceChannel: null})
             }
             else {
                 guild = docs[0]
             }
 
-            console.log('guild')
-            console.log(guild)
-            console.log('query')
-            console.log(query)
-
             switch(query) {
                 case 'announcements':
-                    resolve(guild.announcements)
+                    resolve(guild)
                 default:
-                    break
+                    resolve(false)
             }
         })
     })
 }
 
-exports.toggleAnnouncements = (m) => {
+exports.toggleAnnouncements = (m, channel) => {
     const guildID = m.guild.id
     db.servers.find({ guildID }, async (err, docs) => {
         if (err) {
@@ -169,19 +165,34 @@ exports.toggleAnnouncements = (m) => {
         let guild
         if (docs.length == 0) {
             await exports.addServer(guildID)
-            guild = {announcements: true}
+            guild = {announcements: channel ? true: false, announceChannel: channel}
         }
         else {
             guild = docs[0]
+            guild.announcements = channel ? true : !guild.announcements
+            if (channel) {
+                guild.announceChannel = channel
+            }
         }
 
-        console.log(guild)
-
-        db.servers.update({ guildID }, {$set: { announcements: !guild.announcements }}, {}, err => {
+        db.servers.update({ guildID }, {$set: { announcements: guild.announcements, announceChannel: guild.announceChannel }}, {}, err => {
             if (err) console.log(err)
-            m.channel.send(`\:mega: Announcements have been ${!guild.announcements ? '`enabled` \:smile:' : '`disabled` \:slight_frown:'}`)
+            m.channel.send(`\:mega: Announcements have been ${guild.announcements ? '`enabled` \:smile:' : '`disabled` \:slight_frown:'}`)
         })
     })
+}
+
+exports.announceHere = (channelID, guildID) => {
+    return new Promise(promise => {
+        db.servers.update({ guildID }, {$set: { announceChannel: channelID }}, {}, err => {
+            if (err) {
+                console.log(err)
+                resolve(false)
+            }
+            resolve(true)
+        })
+    })
+
 }
 
 

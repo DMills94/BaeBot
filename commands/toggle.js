@@ -14,7 +14,13 @@ module.exports = {
 			database.toggleRankTrack(m, channelID)
 		}
 		else if (args[0] === 'announcements') {
-			database.toggleAnnouncements(m)
+			if (args[1] && args[1].startsWith('<#')) {
+				const channelID = args[1].slice(2, args[1].length - 1)
+				database.toggleAnnouncements(m, channelID)
+			}
+			else {
+				database.toggleAnnouncements(m, null)
+			}
 		}
 	}
 }
