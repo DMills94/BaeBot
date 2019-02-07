@@ -13,6 +13,7 @@ module.exports = {
 		const created = m.guild.createdAt
 
 		let onlineUsers = m.guild.presences.array().length
+		
 		let games = {}
 		m.guild.presences.forEach(presence => {
 			if (presence.game != null)

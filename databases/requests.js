@@ -9,6 +9,7 @@ let db = {}
 db.devMode = new Datastore({ filename: './databases/stores/devMode', autoload: true })
 db.lastBeatmap = new Datastore({ filename: './databases/stores/lastBeatmap', autoload: true })
 db.linkedUsers = new Datastore({ filename: './databases/stores/links', autoload: true })
+db.servers = new Datastore({ filename: './databases/stores/servers', autoload: true })
 db.track = new Datastore({ filename: './databases/stores/track', autoload: true })
 db.countryTrack = new Datastore({ filename: './databases/stores/countryTrack', autoload: true })
 
@@ -116,12 +117,80 @@ exports.checkForLink = discordid => {
     })
 }
 
+//Servers
+exports.addServer = (guildID) => {
+    const serverToggles = {
+        guildID,
+        announcements: true
+    }
+    db.servers.insert(serverToggles, err => {
+        if (err) console.log(err)
+    })
+}
+
+exports.checkServer = (guildID, query) => {
+    return new Promise (resolve => {
+        db.servers.find({ guildID }, async (err, docs) => {
+            if (err) {
+                return m.channel.send(`There was an error. Try again later \:slight_frown:`)
+            }
+
+            let guild
+            if (docs.length == 0) {
+                await exports.addServer(guildID)
+                guild = {announcements: true}
+            }
+            else {
+                guild = docs[0]
+            }
+
+            console.log('guild')
+            console.log(guild)
+            console.log('query')
+            console.log(query)
+
+            switch(query) {
+                case 'announcements':
+                    resolve(guild.announcements)
+                default:
+                    break
+            }
+        })
+    })
+}
+
+exports.toggleAnnouncements = (m) => {
+    const guildID = m.guild.id
+    db.servers.find({ guildID }, async (err, docs) => {
+        if (err) {
+            return m.channel.send(`There's an error with toggling this at the moment! Sorry about that, try again later \:slight_frown:`)
+        }
+
+        let guild
+        if (docs.length == 0) {
+            await exports.addServer(guildID)
+            guild = {announcements: true}
+        }
+        else {
+            guild = docs[0]
+        }
+
+        console.log(guild)
+
+        db.servers.update({ guildID }, {$set: { announcements: !guild.announcements }}, {}, err => {
+            if (err) console.log(err)
+            m.channel.send(`\:mega: Announcements have been ${!guild.announcements ? '`enabled` \:smile:' : '`disabled` \:slight_frown:'}`)
+        })
+    })
+}
+
+
 //Tracking
 exports.checkForTrack = username => {
     return new Promise(resolve => {
         db.track.find({ username }, (err, docs) => {
             if (err) resolve([])
-            if (docs.length < 1) resolve(false)
+            if (docs.length == 0) resolve(false)
             else resolve(docs[0])
         })
     })
@@ -542,6 +611,10 @@ exports.toggleRankTrack = (m, channelID) => {
             console.log(err)
             m.react('❎')
             return m.channel.send(`Unable to toggle rank tracking right now \:sob:`)
+        }
+
+        if (docs.length < 1) {
+            return m.channel.send(`Seems no countries are being tracked \:thinking:`)
         }
 
         for (let country in docs) {

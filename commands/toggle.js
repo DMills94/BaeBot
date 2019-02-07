@@ -8,10 +8,13 @@ module.exports = {
         const channelID = m.channel.id
 
 		if (args[0] === '-h' || args[0] === '-help') {
-
+			
 		}
 		else if (args[0] === 'ranktrack') {
 			database.toggleRankTrack(m, channelID)
+		}
+		else if (args[0] === 'announcements') {
+			database.toggleAnnouncements(m)
 		}
 	}
 }

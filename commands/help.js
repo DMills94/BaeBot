@@ -5,12 +5,10 @@ module.exports = {
   name: "help",
   description: "Command List",
   execute(m) {
-
     let embed = new Discord.RichEmbed()
       .setColor("#fd0000")
       .setAuthor("List of bot commands")
       .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
-      .addField(`${prefix}history`, 'History of commands used since bot went online')
       .addField(`${prefix}osu`, 'List of osu! commands')
       .addField(`${prefix}ping`, 'Check if the bot is live')
       .addField(`${prefix}roll`, 'Generate a random number between 1-100')

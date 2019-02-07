@@ -13,18 +13,37 @@ for (const file of commandFiles) {
     const command = require(`./commands/${file}`)
     client.commands.set(command.name, command)
 }
-let commandHistory = []
 
 client.on('ready', async () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`)
-
     const devMode = await database.getDevMode()
 
     if (devMode) {
         client.user.setActivity(`In dev mode`)
     }
     else {
-        client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
+        client.user.setActivity(`messages! Try ${config.prefix}help!`, { type:"LISTENING" })
+    }
+
+    try {
+        client.channels.get(config.updatesChannel).fetchMessage(config.commandsMessage)
+            .then(msg => {
+                let embed = new Discord.RichEmbed()
+                    .setColor("#fd0000")
+                    .setAuthor("List of bot commands")
+                    .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
+                    .addField(`${config.prefix}osu`, 'List of osu! commands')
+                    .addField(`${config.prefix}ping`, 'Check if the bot is live')
+                    .addField(`${config.prefix}roll`, 'Generate a random number between 1-100')
+                    .addField(`${config.prefix}server`, 'Tells you what about the server you are in')
+                    .addField(`${config.prefix}whoami`, 'Tell you about you')
+                    .setFooter("Contact @Bae#3308 with any issues", "https://cdn.discordapp.com/avatars/122136963129147393/a_9ca3ec15b8776bf77cafe30d78b3ad96")
+                msg.edit({ embed })
+            })
+            .catch(err => console.log(err))
+    }
+    catch(err) {
+        console.log(err)
     }
 
     const emojis = client.guilds.find('id', config.privServer).emojis
@@ -73,13 +92,18 @@ client.on('message', async message => {
 
         let commandName = args.shift()
 
-        if (commandName === 'restart') {
+        if (commandName === 'restart' || commandName === 'psa') {
             if (message.author.id == config.baeID) {
-                return message.channel.send('I\'m restarting, see you soon!')
+                if (commandName === 'restart') {
+                    return message.channel.send('I\'m restarting, see you soon!')
                     .then(() => client.destroy())
                     .then(() => {
                         client.login(config.token)
                     })
+                }
+                else if (commandName === 'psa') {
+                    return client.commands.get('psa').execute(client, message, args)
+                }
             }
             else
                 return message.channel.send('Hey! What are you trying to do to me \:rage:')
@@ -132,23 +156,14 @@ client.on('message', async message => {
         const command = client.commands.get(commandName)
 
         try {
-            if (command.name !== 'history') {
-                const emojis = client.guilds.find('id', config.privServer).emojis
+            const emojis = client.guilds.find('id', config.privServer).emojis
 
-                command.execute(message, args, emojis, playNum, top5)
-
-                //Update history
-                commandHistory.unshift(uI.slice(config.prefix.length))
-                if (commandHistory.length > 5) {
-                    commandHistory.pop()
-                }
-            } else {
-                command.execute(message, commandHistory)
-            }
+            command.execute(message, args, emojis, playNum, top5)
 
             functions.logCommand(client.channels, message, command.name, 'command', args)
 
-        } catch (error) {
+        } 
+        catch (error) {
             console.error(error)
             message.reply('There was an error with that command! Details: ' + error)
         }
