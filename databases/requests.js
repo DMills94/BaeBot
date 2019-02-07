@@ -177,7 +177,7 @@ exports.toggleAnnouncements = (m, channel) => {
 
         db.servers.update({ guildID }, {$set: { announcements: guild.announcements, announceChannel: guild.announceChannel }}, {}, err => {
             if (err) console.log(err)
-            m.channel.send(`\:mega: Announcements have been ${guild.announcements ? '`enabled` \:smile:' : '`disabled` \:slight_frown:'}`)
+            m.channel.send(`\:mega: Announcements have been ${guild.announcements ? `\`enabled\` in \`#${m.guild.channels.get(channel).name}\`  \:smile:` : '`disabled` \:slight_frown:'}`)
         })
     })
 }
