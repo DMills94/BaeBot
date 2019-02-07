@@ -45,7 +45,7 @@ client.on('ready', async () => {
     }, 900000)
 
     setInterval(() => {
-        database.countryTrackUpdate()
+        database.countryTrackUpdate(client.channels)
     }, 7200000)
 })
 
@@ -121,7 +121,7 @@ client.on('message', async message => {
 
         //config.prefix Commands
         if (!client.commands.has(commandName)) {
-            message.channel.send('Sorry that\'s not command I have :( \nIf you need help try ``help`!')
+            message.channel.send(`Sorry that\'s not command I have :( \nIf you need help try \` ${config.prefix}help \` or for osu! commands try \` ${config.prefix}osu \`!`)
             return
         }
         
@@ -221,7 +221,7 @@ async function tracking(emojis, country) {
         console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} ${newScores.length} new scores detected...: ${date} at ${time}`)
 
         for (let score in newScores) {
-            client.commands.get('postnew').execute(newScores[score], emojis, client.channels, country)
+            // client.commands.get('postnew').execute(newScores[score], emojis, client.channels, country)
         }
     } else {
         console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No new scores detected: ${date} at ${time}`)

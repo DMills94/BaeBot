@@ -12,6 +12,9 @@ db.linkedUsers = new Datastore({ filename: './databases/stores/links', autoload:
 db.track = new Datastore({ filename: './databases/stores/track', autoload: true })
 db.countryTrack = new Datastore({ filename: './databases/stores/countryTrack', autoload: true })
 
+db.countryTrack.persistence.setAutocompactionInterval(43200000)
+db.track.persistence.setAutocompactionInterval(43200000)
+
 //Dev Mode
 exports.addDevMode = () => {
     db.devMode.insert({ devMode: false }, err => {
@@ -489,7 +492,7 @@ exports.countryTrackUpdate = (client) => {
 
                                 if (!oldTop50.includes(newUser)) {
                                     Object.keys(docs[countryObj].channels).forEach(channel => {
-                                        if (newRank <= docs[countryObj].channels[channel].limit && docs[countryObj.channels[channel].rankUpdates])
+                                        if (newRank <= channel.limit && channel.rankUpdates)
                                             client.get(channel).send(`\`${newUser}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
                                     })
                                 }
@@ -508,7 +511,7 @@ exports.countryTrackUpdate = (client) => {
                                         }
                                         
                                         Object.keys(docs[countryObj].channels).forEach(channel => {
-                                            if (newRank <= docs[countryObj].channels[channel].limit && docs[countryObj.channels[channel].rankUpdates]) {
+                                            if (newRank <= channel.limit && channel.rankUpdates) {
                                                 let embed = new Discord.RichEmbed()
                                                     .setColor(color)
                                                     .addField('Old Rank', oldRank, true)

@@ -12,12 +12,6 @@ module.exports = {
 		const roleNum = m.guild.roles.array().length
 		const created = m.guild.createdAt
 
-		let emojis = []
-		m.guild.emojis.forEach(emoji => {
-			if (emoji.requiresColons)
-				emojis.push(`${emoji} `)
-		})
-
 		let onlineUsers = m.guild.presences.array().length
 		let games = {}
 		m.guild.presences.forEach(presence => {
@@ -40,6 +34,22 @@ module.exports = {
 
 
 		m.channel.send({ embed })
-		m.channel.send(`__**Emojis**__\n${emojis.join(' ')}`)
+		
+		let emojis = ''
+		let count = 1
+		m.guild.emojis.forEach(emoji => {
+			let emojisBefore = emojis
+
+			if (emoji.requiresColons)
+				emojis += `${emoji} `
+
+			if (emojis.length > 2000) {
+				m.channel.send(`__**Emojis**__\n${emojisBefore}`)
+				emojis = `${emoji} `
+				count++
+			}
+		})
+
+		m.channel.send(`__**Emojis${count == 1 ? '' : ' ' + count} **__\n${emojis}`)
 	}
 }
