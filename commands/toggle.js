@@ -5,7 +5,11 @@ module.exports = {
 	name: 'toggle',
 	description: 'toggle functions',
 	execute(m, args) {
-        const channelID = m.channel.id
+		const channelID = m.channel.id
+		
+		if (!m.channel.permissionsFor(m.member).has("ADMINISTRATOR") && m.author.id !== config.baeID) {
+            return m.reply('sorry brah, this is currently only a feature for users with Administrative permissions.')
+        }
 
 		if (args[0] === '-h' || args[0] === '-help') {
 			
