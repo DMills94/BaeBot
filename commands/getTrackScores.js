@@ -59,8 +59,6 @@ module.exports = {
 
                     continue
                 }
-                    
-
 
                 //Get users Top 100
                 const newTop100 = await functions.getUserTop(userInfo.username)

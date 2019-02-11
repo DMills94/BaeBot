@@ -236,7 +236,7 @@ async function tracking(emojis, country) {
         console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} ${newScores.length} new scores detected...: ${date} at ${time}`)
 
         for (let score in newScores) {
-            // client.commands.get('postnew').execute(newScores[score], emojis, client.channels, country)
+            client.commands.get('postnew').execute(newScores[score], emojis, client.channels, country)
         }
     } else {
         console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No new scores detected: ${date} at ${time}`)
