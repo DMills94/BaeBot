@@ -7,7 +7,6 @@ module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
     async execute(m, args, emojis, plays, top5) {
-        m.channel.startTyping()
         let user = []
         let username
 
@@ -91,7 +90,6 @@ module.exports = {
         const currentDate = Date.now()
 
         let embed = new Discord.RichEmbed()
-        m.channel.stopTyping()
         if (top5) {
             embed
                 .setColor("#FFFFFF")

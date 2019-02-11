@@ -69,7 +69,7 @@ module.exports = {
         }
         else {
             let scores = 100
-            const message = await m.channel.send(`Processing top scores for \`${userInfo.username}\`, this can take a while... (${scores}/100)`)
+            const message = await m.channel.send(`Processing top scores for \`${userInfo.username}\`, this can take a while... \`${scores}/100\``)
 
             let maxPP = 0
             let minPP = 0
