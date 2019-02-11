@@ -281,12 +281,15 @@ module.exports = {
                                 mapInfo += `\n\n **Downloads:** [Map](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}) - [No Video](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}n) - [Bloodcat](https://bloodcat.com/osu/s/${beatmapAPI[i].beatmapset_id})`
                         }
 
+                        const updateDate = new Date(beatmapAPI[i].last_update)
+                        const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth()}/${updateDate.getFullYear()}`
+
                         let embed = new Discord.RichEmbed()
                             .setColor('#ffb3ff')
                             .setAuthor(`${beatmapAPI[0].artist} - ${beatmapAPI[0].title} by ${beatmapAPI[0].creator}`, undefined, `https://osu.ppy.sh/beatmapsets/${beatmapAPI[0].beatmapset_id}#osu/${beatmapAPI[0].beatmap_id}`)
                             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapAPI[0].beatmapset_id + 'l.jpg')
                             .setDescription(mapInfo)
-                            .setFooter(`Status: ${beatmapAPI[0].approved}`)
+                            .setFooter(`Status: ${beatmapAPI[0].approved} • ${beatmapAPI[0].approved == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
                         m.channel.send({ embed: embed })
 

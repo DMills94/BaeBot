@@ -61,7 +61,7 @@ module.exports = {
                 .setAuthor(`osu! Standard stats for ${userInfo.username}`, undefined, "https://osu.ppy.sh/users/" + userInfo.user_id)
                 .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
                 .addField(`${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp \:earth_africa: #${parseInt(userInfo.pp_rank).toLocaleString('en')} \:flag_${userInfo.country.toLowerCase()}: #${parseInt(userInfo.pp_country_rank).toLocaleString('en')}`,
-                    `**Ranked Score:** ${parseFloat(userInfo.ranked_score).toLocaleString('en')}\n**Accuracy:** ${parseFloat(userInfo.accuracy).toFixed(2)}%\n**Play Count:** ${parseInt(userInfo.playcount).toLocaleString('en')}\n**Playtime:** ${parseFloat(userInfo.total_seconds_played / 60 / 60).toFixed(2)} hours\n**Total Score:** ${parseInt(userInfo.total_score).toLocaleString('en')}\n**Account Level:** ${parseFloat(userInfo.level).toFixed(2)}\n**Total Hits:** ${parseInt(parseInt(userInfo.count300) + parseInt(userInfo.count100) + parseInt(userInfo.count50)).toLocaleString('en')}\n${SSH}: ${userInfo.count_rank_ssh} ${SS}: ${userInfo.count_rank_ss} ${SH}: ${userInfo.count_rank_sh} ${S}: ${userInfo.count_rank_s} ${A}: ${userInfo.count_rank_a}`
+                    `**Ranked Score:** ${parseFloat(userInfo.ranked_score).toLocaleString('en')}\n**Accuracy:** ${parseFloat(userInfo.accuracy).toFixed(2)}%\n**Play Count:** ${parseInt(userInfo.playcount).toLocaleString('en')}\n**Playtime:** ${parseFloat(userInfo.total_seconds_played / 60 / 60).toLocaleString('en', { maximumFractionDigits: 2 })} hours\n**Total Score:** ${parseInt(userInfo.total_score).toLocaleString('en')}\n**Account Level:** ${parseFloat(userInfo.level).toFixed(2)}\n**Total Hits:** ${parseInt(parseInt(userInfo.count300) + parseInt(userInfo.count100) + parseInt(userInfo.count50)).toLocaleString('en')}\n${SSH}: ${parseInt(userInfo.count_rank_ssh).toLocaleString('en')} ${SS}: ${parseInt(userInfo.count_rank_ss).toLocaleString('en')} ${SH}: ${parseInt(userInfo.count_rank_sh).toLocaleString('en')} ${S}: ${parseInt(userInfo.count_rank_s).toLocaleString('en')} ${A}: ${parseInt(userInfo.count_rank_a).toLocaleString('en')}`
                 )
                 .setFooter(`Try [[ ${prefix}user -pp ]] for performance stats • Something missing you think you'd like? Contact @Bae#3308 with it!`)
 
@@ -69,7 +69,7 @@ module.exports = {
         }
         else {
             let scores = 100
-            const message = await m.channel.send(`Processing top scores for \`${userInfo.username}\`, this can take a while... (${scores}/100)`)
+            const message = await m.channel.send(`Processing top scores for \`${userInfo.username}\`, this can take a while... \`${scores}/100\``)
 
             let maxPP = 0
             let minPP = 0

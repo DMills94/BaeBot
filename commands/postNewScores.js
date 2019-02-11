@@ -85,6 +85,9 @@ module.exports = {
         }
 
         const mapStatus = await functions.approvedStatus(beatmapInfo.approved)
+
+        const updateDate = new Date(beatmapInfo.last_update)
+        const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth()}/${updateDate.getFullYear()}`
         
         let embed = new Discord.RichEmbed()
             .setColor(colour)
@@ -94,7 +97,7 @@ module.exports = {
             .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
             .setDescription(`__**PERSONAL BEST #${score.playNumber}**__`)
             .addField(`• ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \t\t ${mapRank ? '\:medal: Rank __#' + mapRank + '__' : ''} \n• ${rankImage} | Score: ${parseInt((score.score)).toLocaleString('en')} (${score.accuracy}%) | ${score.rank === 'F_' ? '~~**' + ppInfo.performancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `• ${score.maxcombo === beatmapInfo.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}x/**${beatmapInfo.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
-            .setFooter(`${mapStatus} • Beatmap by ${beatmapInfo.creator}`)
+            .setFooter(`${mapStatus} • Beatmap by ${beatmapInfo.creator} • ${mapStatus == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
         //Send embed to channels where user tracked
         const usersTrackedChannels = userDB.channels

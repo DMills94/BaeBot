@@ -7,7 +7,6 @@ module.exports = {
     name: "top",
     description: "Displays users top 5 plays",
     async execute(m, args, emojis, plays, top5) {
-        m.channel.startTyping()
         let user = []
         let username
 
@@ -84,7 +83,7 @@ module.exports = {
             const ppInfo = await functions.calculate(beatmapInfo, topPlays[score])
 
             topPlays[score].maxPP = ppInfo.formattedMaxPP
-            topPlays[score].pp = ppInfo.formattedPerformancePP
+            topPlays[score].pp = parseFloat(topPlays[score].pp).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             topPlays[score].stars = ppInfo.formattedStars
         }
 
@@ -125,6 +124,9 @@ module.exports = {
             const rankImage = emojis.find("name", usersScore.rank)
             const diffImage = functions.difficultyImage(usersScore.stars, emojis)
 
+            const updateDate = new Date(beatmapList[0].last_update)
+            const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth()}/${updateDate.getFullYear()}`
+
             embed
                 .setColor(colour)
                 .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, "https://osu.ppy.sh/users/" + userInfo.user_id)
@@ -133,13 +135,12 @@ module.exports = {
                 .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
                 .setDescription(`__**PERSONAL BEST #${plays}**__`)
                 .addField(`• ${diffImage} **${usersScore.stars}*** ${usersScore.enabled_mods} \t\t ${mapRanks[0] ? '\:medal: Rank __#' + mapRanks[0] + '__' : ''} \n• ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp~~' : '**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp'}`, `• ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
-                .setFooter(`${mapStatus} • Beatmap by ${beatmapList[0].creator}`)
+                .setFooter(`${mapStatus} • Beatmap by ${beatmapList[0].creator} • ${mapStatus == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
             database.storeBeatmap(m.channel.id, beatmapList[0], topPlays[0])
         }
 
         //Send Embed to Channel
-        m.channel.stopTyping()
         m.channel.send({embed: embed})
     }
 }
@@ -150,6 +151,6 @@ const topInfoInfo = (index, topPlays, maps, emojis, mapRanks) => {
     }
     const rankImage = emojis.find("name", topPlays[index].rank)
     const diffImage = functions.difficultyImage(topPlays[index].stars, emojis)
-
-    return `**[${maps[index].artist} - ${maps[index].title} [${maps[index].version}]](https://osu.ppy.sh/b/${maps[index].beatmap_id}) \n• ${diffImage} ${topPlays[index].stars}* ${topPlays[index].enabled_mods} ${mapRanks[index] ? '\:medal: Rank __#' + mapRanks[index] + '__' : ''} \n• ${rankImage} | Score: ${parseInt((topPlays[index].score)).toLocaleString("en")} (${topPlays[index].accuracy}%) | **${parseFloat(topPlays[index].pp).toFixed(2)}pp**/${topPlays[index].maxPP}pp** \n• ${topPlays[index].maxcombo === maps[index].max_combo ? "**" + topPlays[index].maxcombo + "x**" : topPlays[index].maxcombo}/**${maps[index].max_combo}x** {${topPlays[index].count300}/${topPlays[index].count100}/${topPlays[index].count50}/${topPlays[index].countmiss}} | ${topPlays[index].date}`
+    
+    return `**[${maps[index].artist} - ${maps[index].title} [${maps[index].version}]](https://osu.ppy.sh/b/${maps[index].beatmap_id}) \n• ${diffImage} ${topPlays[index].stars}* ${topPlays[index].enabled_mods} ${mapRanks[index] ? '\:medal: Rank __#' + mapRanks[index] + '__' : ''} \n• ${rankImage} | Score: ${parseInt((topPlays[index].score)).toLocaleString("en")} (${topPlays[index].accuracy}%) | **${topPlays[index].pp}pp**/${topPlays[index].maxPP}pp** \n• ${topPlays[index].maxcombo === maps[index].max_combo ? "**" + topPlays[index].maxcombo + "x**" : topPlays[index].maxcombo}/**${maps[index].max_combo}x** {${topPlays[index].count300}/${topPlays[index].count100}/${topPlays[index].count50}/${topPlays[index].countmiss}} | ${topPlays[index].date}`
 }

@@ -155,6 +155,7 @@ client.on('message', async message => {
 
         const command = client.commands.get(commandName)
 
+        message.channel.startTyping()
         try {
             const emojis = client.guilds.find('id', config.privServer).emojis
 
@@ -167,6 +168,7 @@ client.on('message', async message => {
             console.error(error)
             message.reply('There was an error with that command! Details: ' + error)
         }
+        message.channel.stopTyping()
     }
 
     //No-config.prefix Commands

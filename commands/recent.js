@@ -91,6 +91,9 @@ module.exports = {
         const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
         const mapStatus = functions.approvedStatus(beatmapInfo.approved)
+        
+        const updateDate = new Date(beatmapInfo.last_update)
+        const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth()}/${updateDate.getFullYear()}`
 
         let embed = new Discord.RichEmbed()
             .setColor('#0096CF')
@@ -99,7 +102,7 @@ module.exports = {
             .setTitle(`${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]`)
             .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
             .addField(`• ${diffImage} **${ppInfo.formattedStars}*** ${recent.enabled_mods} \t\t ${mapCompletion ? mapCompletion.emoji + ' Map Completion: ' + mapCompletion.perc + '%': '' } ${mapRank ? '\:medal: Rank __#' + mapRank + '__' : ''} \n• ${rankImage} | Score: ${parseInt((recent.score)).toLocaleString('en')} (${recent.accuracy}%) | ${recent.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `• ${recent.maxcombo === beatmapInfo.max_combo ? '**' + recent.maxcombo + '**' : recent.maxcombo}x/**${beatmapInfo.max_combo}x** {${recent.count300}/${recent.count100}/${recent.count50}/${recent.countmiss}} | ${recent.date}`)
-            .setFooter(`${mapStatus} • Beatmap by ${beatmapInfo.creator}`)
+            .setFooter(`${mapStatus} • Beatmap by ${beatmapInfo.creator} • ${mapStatus == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
         if (recent.playNumber) {
             switch (recent.playNumber) {
