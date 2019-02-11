@@ -289,7 +289,7 @@ module.exports = {
                             .setAuthor(`${beatmapAPI[0].artist} - ${beatmapAPI[0].title} by ${beatmapAPI[0].creator}`, undefined, `https://osu.ppy.sh/beatmapsets/${beatmapAPI[0].beatmapset_id}#osu/${beatmapAPI[0].beatmap_id}`)
                             .setThumbnail('https://b.ppy.sh/thumb/' + beatmapAPI[0].beatmapset_id + 'l.jpg')
                             .setDescription(mapInfo)
-                            .setFooter(`Status: ${beatmapAPI[0].approved} • ${mapStatus == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
+                            .setFooter(`Status: ${beatmapAPI[0].approved} • ${beatmapAPI[0].approved == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
                         m.channel.send({ embed: embed })
 
