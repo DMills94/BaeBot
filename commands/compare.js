@@ -132,6 +132,9 @@ module.exports = {
 
         const mapStatus = functions.approvedStatus(prevBeatmap.beatmap.approved)
 
+        const updateDate = new Date(prevBeatmap.beatmap.last_update)
+        const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth()}/${updateDate.getFullYear()}`
+
         let embed = new Discord.RichEmbed()
             .setColor("#0096CF")
             .setAuthor(`Best Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
@@ -139,7 +142,7 @@ module.exports = {
             .setTitle(prevBeatmap.beatmap.artist + " - " + prevBeatmap.beatmap.title + " [" + prevBeatmap.beatmap.version + "]")
             .setURL(`https://osu.ppy.sh/b/${prevBeatmap.beatmap.beatmap_id}`)
             .addField(`• ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \t\t${mapRank ? '\:medal: Rank __#' + mapRank + '__' : ''} \n• ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp~~" : "**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.beatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}/**${prevBeatmap.beatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
-            .setFooter(`${mapStatus} • Beatmap by ${prevBeatmap.beatmap.creator}`)
+            .setFooter(`${mapStatus} • Beatmap by ${prevBeatmap.beatmap.creator} • ${mapStatus == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
             if (score.playNumber) {
                 switch (score.playNumber) {
