@@ -69,8 +69,13 @@ module.exports = {
 
                 //See if each of the new top 100 scores exist in the db top 100 scores
                 const prevTop100 = userInfo.userBest
+                const msNow = Date.now()
 
                 for (let score in newTop100) {
+                    if (msNow - Date.parse(newTop100[score].date) > 86400000) {
+                        continue
+                    }
+
                     let scoreMatch = false
 
                     for (let record in prevTop100) {
