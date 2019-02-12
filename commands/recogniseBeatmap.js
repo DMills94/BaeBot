@@ -281,8 +281,8 @@ module.exports = {
                                 mapInfo += `\n\n **Downloads:** [Map](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}) - [No Video](https://osu.ppy.sh/d/${beatmapAPI[i].beatmapset_id}n) - [Bloodcat](https://bloodcat.com/osu/s/${beatmapAPI[i].beatmapset_id})`
                         }
 
-                        const updateDate = new Date(beatmapAPI[i].last_update)
-                        const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth()}/${updateDate.getFullYear()}`
+                        const updateDate = beatmapAPI[0].approved == 'Ranked' ? new Date(beatmapAPI[0].approved_date) : new Date(beatmapAPI[0].last_update)
+                        const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth() + 1}/${updateDate.getFullYear()}`
 
                         let embed = new Discord.RichEmbed()
                             .setColor('#ffb3ff')

@@ -92,10 +92,10 @@ module.exports = {
                 break
         }
 
-        const updateDate = new Date(beatmapInfo.last_update)
-        const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth()}/${updateDate.getFullYear()}`
-
         const mapStatus = functions.approvedStatus(beatmapInfo.approved)
+
+        const updateDate = mapStatus == 'Ranked' ? new Date(beatmapInfo.approved_date) : new Date(beatmapInfo.last_update)
+        const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth() + 1}/${updateDate.getFullYear()}`
 
         let embed = new Discord.RichEmbed()
             .setColor(colour)

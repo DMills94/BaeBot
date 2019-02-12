@@ -124,8 +124,8 @@ module.exports = {
             const rankImage = emojis.find("name", usersScore.rank)
             const diffImage = functions.difficultyImage(usersScore.stars, emojis)
 
-            const updateDate = new Date(beatmapList[0].last_update)
-            const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth()}/${updateDate.getFullYear()}`
+            const updateDate = mapStatus == 'Ranked' ? new Date(beatmapList[0].approved_date) : new Date(beatmapList[0].last_update)
+            const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth() + 1}/${updateDate.getFullYear()}`
 
             embed
                 .setColor(colour)
