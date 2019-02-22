@@ -36,7 +36,7 @@ module.exports = {
             }
 
             if (trackdb.length < 1)
-                return console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No tracks.`)
+                return console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No track entries.`)
             
             for (let user in trackdb) {
                 const userInfo = trackdb[user]

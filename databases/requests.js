@@ -534,7 +534,7 @@ exports.countryTrackUpdate = (client) => {
         }
 
         if (docs.length < 1) {
-            return console.log('[COUNTRY TRACKING || DB] No countries being tracked.')
+            return console.log('[COUNTRY TRACKING || DB] No countries to update.')
         }
         
         for (let countryObj in docs) {
