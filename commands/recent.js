@@ -39,10 +39,10 @@ module.exports = {
         if (!userInfo)
             return m.channel.send('That username does not exist! Please try again.')
 
-        const recent = (await functions.getUserRecent(username))[0]
+        const recent = (await functions.getUserRecent(userInfo.username))[0]
 
         if (!recent)
-            return m.channel.send(`That user has not played a loved or ranked map in the previous 24 hours so I can't find their score! :(`)
+            return m.channel.send(`\`${userInfo.username}\` has not played a loved or ranked map in the previous 24 hours so I can't find their score! :(`)
 
         const beatmapInfo = (await functions.getBeatmap(recent.beatmap_id))[0]
         
@@ -69,7 +69,7 @@ module.exports = {
             mapCompletion.emoji = emojis.find('name', searchVal + 'Perc')
         }
         else {
-            const topPlays = await functions.getUserTop(username, 100)
+            const topPlays = await functions.getUserTop(userInfo.username, 100)
 
             for (let play in topPlays) {
                 if (recent.date === topPlays[play].date) {

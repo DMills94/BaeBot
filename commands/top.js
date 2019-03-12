@@ -131,7 +131,7 @@ module.exports = {
                 .setColor(colour)
                 .setAuthor(`Top Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, "https://osu.ppy.sh/users/" + userInfo.user_id)
                 .setThumbnail("https://b.ppy.sh/thumb/" + beatmapList[0].beatmapset_id + "l.jpg")
-                .setTitle(`${beatmapList[0].artist} ${beatmapList[0].title} [${beatmapList[0].version}]`)
+                .setTitle(`${beatmapList[0].artist} - ${beatmapList[0].title} [${beatmapList[0].version}]`)
                 .setURL(`https://osu.ppy.sh/b/${beatmapInfo.beatmap_id}`)
                 .setDescription(`__**PERSONAL BEST #${plays}**__`)
                 .addField(`• ${diffImage} **${usersScore.stars}*** ${usersScore.enabled_mods} \t\t ${mapRanks[0] ? '\:medal: Rank __#' + mapRanks[0] + '__' : ''} \n• ${rankImage} | Score: ${parseInt((usersScore.score)).toLocaleString('en')} (${usersScore.accuracy}%) | ${usersScore.rank === 'F_' ? '~~**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp~~' : '**' + usersScore.pp + 'pp**/' + usersScore.maxPP + 'pp'}`, `• ${usersScore.maxcombo === beatmapInfo.max_combo ? '**' + usersScore.maxcombo + '**' : usersScore.maxcombo}x/**${beatmapInfo.max_combo}x** {${usersScore.count300}/${usersScore.count100}/${usersScore.count50}/${usersScore.countmiss}} | ${usersScore.date}`)
