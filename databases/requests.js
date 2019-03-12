@@ -230,7 +230,7 @@ exports.addNewTrack = (m, channelid, trackInfo, action) => {
                     return m.channel.send(`There was an error adding \`${trackInfo.username}\` to tracking. Please try again later!`)
                 }        
                 m.react('✅')
-                return m.channel.send(`\`${trackInfo.username}\` is being added to the tracking for osu! standard scores in their \`top ${trackInfo.limit}\`! \:tada:`)
+                return m.channel.send(`\`${trackInfo.username}\` is being added to tracking for osu! standard scores in their \`top ${trackInfo.limit}\`! \:tada:`)
             })
         }
         else if (action === 'update') { //Update'
@@ -346,9 +346,19 @@ exports.userTrack = (username) => {
 
 exports.trackList = channelid => {
     return new Promise(resolve => {
+        let tracks = {}
         db.track.find({ $where: function () { return Object.keys(this.channels).includes(channelid) } }, (err, docs) => {
             if (err) console.log(err)
-            resolve(docs)
+
+            tracks['users'] = docs
+
+            db.countryTrack.find({ $where: function() { return Object.keys(this.channels).includes(channelid) } }, (err, docs2) => {
+                if (err) console.log(err)
+
+                tracks['countries'] = docs2
+
+                resolve(tracks)
+            })
         })
     })
 }

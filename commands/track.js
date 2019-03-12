@@ -182,7 +182,7 @@ module.exports = {
                     else {
 
                         database.addNewTrack(m, channelID, trackInfo, 'update')
-                        m.channel.send(`\`${username}\` is being added to tracking for osu! standard scores in their \`top ${argUsernames[arg].limit}\`! \:tada:`)
+                        m.channel.send(`\`${username}\` has been added to tracking for osu! standard scores in their \`top ${argUsernames[arg].limit}\`! \:tada:`)
                     }
                 }
             }
@@ -199,12 +199,13 @@ module.exports = {
             }
         }
         else if (args[0] === '-list' || args[0] === '-l') {
-            let usersTrack = await database.trackList(channelID)
+            let trackList = await database.trackList(channelID)
 
             let usernameArr = []
+            let countriesArr = []
             let trackedText = ''
 
-            usersTrack.forEach(user => {
+            trackList.users.forEach(user => {
                 if (Object.keys(user.channels).includes(channelID)) {
                     usernameArr.push({
                         username: user.username,
@@ -212,20 +213,48 @@ module.exports = {
                     })
                 }
             })
+            
+            trackList.countries.forEach(country => {
+                if (Object.keys(country.channels).includes(channelID)) {
+                    countriesArr.push({
+                        country: country.country,
+                        limit: country.channels[channelID]
+                    })
+                }
+            })
 
-            if (usernameArr.length < 1) {
-                return m.channel.send(`There are no tracked users in this channel!`)
+            if (usernameArr.length < 1 && countriesArr.length < 1) {
+                trackedText += `There are no tracked users \:robot: or countries \:earth_africa: in this channel!`
             }
+            else {
+                if (usernameArr.length < 1)
+                    trackedText += `There are no tracked users \:robot: in this channel!\n\n`
+                else {
+                    usernameArr.sort((a, b) => (a.username.toUpperCase() > b.username.toUpperCase()) ? 1 : ((b.username.toUpperCase() > a.username.toUpperCase()) ? -1 : 0))
 
-            usernameArr.sort((a, b) => (a.username.toUpperCase() > b.username.toUpperCase()) ? 1 : ((b.username.toUpperCase() > a.username.toUpperCase()) ? -1 : 0))
+                    trackedText += `__List of tracked users in this channel__\n\`\`\``
+        
+                    for (let name in usernameArr) {
+                        trackedText += `\n - Top: ${(usernameArr[name].limit).toString().length === 2 ? usernameArr[name].limit + ' ' : usernameArr[name].limit} | ${usernameArr[name].username}`
+                    }
 
-            trackedText += `__List of tracked users in this channel__ \n\`\`\``
+                    trackedText += '```\n'
+                }
+                
+                if (countriesArr.length < 1)
+                    trackedText += `There are no tracked countries \:earth_africa: in this channel!`
+                else {
+                    countriesArr.sort((a, b) => (a.country.toUpperCase() > b.country.toUpperCase()) ? 1 : ((b.country.toUpperCase() > a.country.toUpperCase()) ? -1 : 0))
 
-            for (let name in usernameArr) {
-                trackedText += `\n - Top: ${(usernameArr[name].limit).toString().length === 2 ? usernameArr[name].limit + ' ' : usernameArr[name].limit} | ${usernameArr[name].username}`
+                    trackedText += `__List of tracked countries in this channel__\n\`\`\``
+                    
+                    for (let country in countriesArr) {
+                        trackedText += `\n - Top: ${(countriesArr[country].limit.limit).toString().length === 2 ? countriesArr[country].limit.limit + ' ' : countriesArr[country].limit.limit} | ${countriesArr[country].country}`
+                    }
+                    
+                    trackedText += '```\n\n'
+                }
             }
-
-            trackedText += "```"
 
             m.channel.send(trackedText)
         }
