@@ -6,7 +6,7 @@ module.exports = {
     name: "psa",
     description: "Admin only command to broadcast announcements to servers",
     execute(client, m, args) {
-        const text = args.join(' ')
+        const text = args
 
         let embed = new Discord.RichEmbed()
             .setColor("#45f442")

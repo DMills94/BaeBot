@@ -23,7 +23,7 @@ module.exports = {
 				database.toggleAnnouncements(m, channelID)
 			}
 			else {
-				database.toggleAnnouncements(m, null)
+				database.toggleAnnouncements(m, false)
 			}
 		}
 	}

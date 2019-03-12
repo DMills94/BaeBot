@@ -79,6 +79,7 @@ client.on('message', async message => {
         return
 
     //Record message
+    psaText = message.content.slice(5)
     uI = message.content.toLowerCase()
 
     //Check for config.prefix
@@ -102,7 +103,7 @@ client.on('message', async message => {
                     })
                 }
                 else if (commandName === 'psa') {
-                    return client.commands.get('psa').execute(client, message, args)
+                    return client.commands.get('psa').execute(client, message, psaText)
                 }
             }
             else
@@ -113,9 +114,8 @@ client.on('message', async message => {
         let playNum
         let top5 = true
 
-        if (commandName === 'r') {
+        if (commandName === 'r')
             commandName = 'recent'
-        }
 
         //If specific top play remove numbers
         if (commandName.includes('top') && commandName.length > 3) {
