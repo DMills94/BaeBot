@@ -257,7 +257,7 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
                 return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
             }
 
-            const deleteMessage = await m.channel.send("Deleting entries..")
+            const deleteMessage = await m.channel.send('Deleting entries..')
 
             for (let user in docs) {
                 let username = docs[user].username
@@ -286,7 +286,7 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
         })
     }
     else if (size === 'one') {
-        let searchName = new RegExp(username, "i")
+        let searchName = new RegExp(username, 'i')
         db.track.find({ username: searchName }, (err, docs) => {
             if (err) {
                 console.log(err)
@@ -375,7 +375,7 @@ exports.updateTrack = (username, scoreDates, pp, country) => {
         })
     }
     else if (country) {
-        db.countryTrack.find({ "players.username": username }, (err, docs) => {
+        db.countryTrack.find({ 'players.username': username }, (err, docs) => {
             if (err) console.log(err)
             const playersInfo = [ ...docs[0].players ]
 
@@ -386,7 +386,7 @@ exports.updateTrack = (username, scoreDates, pp, country) => {
                         break
                     }
                 }
-                db.countryTrack.update({ "players.username": username }, { $set: { players: playersInfo } }, {}, err => {
+                db.countryTrack.update({ 'players.username': username }, { $set: { players: playersInfo } }, {}, err => {
                     if (err) console.log(err)
                 })
             }
@@ -397,7 +397,7 @@ exports.updateTrack = (username, scoreDates, pp, country) => {
                         break
                     }
                 }
-                db.countryTrack.update({ "players.username": username }, { $set: { players: playersInfo } }, {}, err => {
+                db.countryTrack.update({ 'players.username': username }, { $set: { players: playersInfo } }, {}, err => {
                     if (err) console.log(err)
                 })
             }

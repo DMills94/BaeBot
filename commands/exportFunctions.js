@@ -3,7 +3,7 @@ const axios = require('axios')
 const { osuApiKey, logChannel, trackChannel } = require('../config.json')
 const ojsama = require('ojsama')
 
-axios.defaults.baseURL = "https://osu.ppy.sh/"
+axios.defaults.baseURL = 'https://osu.ppy.sh/'
 
 let customExports = module.exports = {}
 
@@ -107,9 +107,9 @@ customExports.getScores = (bmpId, username) => {
 }
 
 customExports.determineMods = score => {
-    let mods = ""
-    if (score.enabled_mods === "0") {
-        return mods = ""
+    let mods = ''
+    if (score.enabled_mods === '0') {
+        return mods = ''
     } else {
         for (let mod in modnames) {
             if (score.enabled_mods & modnames[mod].val) {
@@ -117,8 +117,8 @@ customExports.determineMods = score => {
             }
         }
 
-        if (mods.includes("NC")) {
-            mods = mods.replace("DT", "")
+        if (mods.includes('NC')) {
+            mods = mods.replace('DT', '')
         }
 
         return `+${mods}`
@@ -128,18 +128,18 @@ customExports.determineMods = score => {
 customExports.modsToBitNum = mods => {
     let bitNumValue = 0
     mods = mods.toLowerCase()
-    if (mods === "mods") {
-        return "mods"
+    if (mods === 'mods') {
+        return 'mods'
     }
-    else if (mods === "nomod" || mods === "") {
+    else if (mods === 'nomod' || mods === '') {
         return 0
     }
     else {
         const modsSplit = mods.match(/[\s\S]{1,2}/g)
         for (let mod in modsSplit) {
             for (let obj in modnames) {
-                if (!["hd", "hr", "dt", "nc", "so", "nf", "fl", "ht", "ez"].includes(modsSplit[mod])) {
-                    return "invalid"
+                if (!['hd', 'hr', 'dt', 'nc', 'so', 'nf', 'fl', 'ht', 'ez'].includes(modsSplit[mod])) {
+                    return 'invalid'
                 }
 
                 if (modsSplit[mod] === modnames[obj].short.toLowerCase()) {
@@ -169,19 +169,19 @@ customExports.timeDifference = (current, previous) => {
 
     if (elapsed < msPerMinute) {
         time = Math.round(elapsed / 1000)
-        return `${time} ${time > 1 ? "seconds ago" : "second ago"}`
+        return `${time} ${time > 1 ? 'seconds ago' : 'second ago'}`
     } else if (elapsed < msPerHour) {
         time = Math.round(elapsed / msPerMinute)
-        return `${time} ${time > 1 ? " minutes ago" : "minute ago"}`
+        return `${time} ${time > 1 ? ' minutes ago' : 'minute ago'}`
     } else if (elapsed < msPerDay) {
         time = Math.round(elapsed / msPerHour)
-        return `${time} ${time > 1 ? "hours ago" : "hour ago"}`
+        return `${time} ${time > 1 ? 'hours ago' : 'hour ago'}`
     } else if (elapsed < msPerYear) {
         time = Math.round(elapsed / msPerDay)
-        return `${time} ${time > 1 ? "days ago" : "day ago"}`
+        return `${time} ${time > 1 ? 'days ago' : 'day ago'}`
     } else {
         time = Math.round(elapsed / msPerYear)
-        return `${time} ${time > 1 ? "years ago" : "year ago"}`
+        return `${time} ${time > 1 ? 'years ago' : 'year ago'}`
     }
 }
 
@@ -233,7 +233,7 @@ customExports.calculate = (beatmap, performance) => {
 
         axios.get(`osu/${beatmap.beatmap_id}`, {
             params: {
-                credentials: "include"
+                credentials: 'include'
             }
         })
             .then(resp => {
@@ -260,9 +260,9 @@ customExports.calculate = (beatmap, performance) => {
                     stars: stars
                 })
 
-                results.formattedStars = stars.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
-                results.formattedPerformancePP = recentPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
-                results.formattedMaxPP = maxPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(" ")[0]
+                results.formattedStars = stars.toLocaleString('en', { maximumFractionDigits: 2 }).split(' ')[0]
+                results.formattedPerformancePP = recentPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(' ')[0]
+                results.formattedMaxPP = maxPP.toLocaleString('en', { maximumFractionDigits: 2 }).split(' ')[0]
                 results.beatmapInfo = cleanBeatmap
 
                 resolve(results)
@@ -283,7 +283,7 @@ customExports.logCommand = (client, message, command, type, args = []) => {
     
     if (type === 'command') {
         embed
-            .setColor("#964B00")
+            .setColor('#964B00')
             .setAuthor(`Server: ${message.channel.guild.name}`, message.channel.guild.iconURL)
             .setTitle(`Command: ${command.toUpperCase()}`)
             .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
@@ -304,114 +304,114 @@ customExports.logCommand = (client, message, command, type, args = []) => {
 
 let modnames = [{
     val: 1,
-    name: "NoFail",
-    short: "NF"
+    name: 'NoFail',
+    short: 'NF'
 }, {
     val: 2,
-    name: "Easy",
-    short: "EZ"
+    name: 'Easy',
+    short: 'EZ'
 }, {
     val: 4,
-    name: "TouchDevice",
-    short: "TD"
+    name: 'TouchDevice',
+    short: 'TD'
 }, {
     val: 8,
-    name: "Hidden",
-    short: "HD"
+    name: 'Hidden',
+    short: 'HD'
 }, {
     val: 16,
-    name: "HardRock",
-    short: "HR"
+    name: 'HardRock',
+    short: 'HR'
 }, {
     val: 32,
-    name: "SuddenDeath",
-    short: "SD"
+    name: 'SuddenDeath',
+    short: 'SD'
 }, {
     val: 64,
-    name: "DoubleTime",
-    short: "DT"
+    name: 'DoubleTime',
+    short: 'DT'
 }, {
     val: 128,
-    name: "Relax",
-    short: "RX"
+    name: 'Relax',
+    short: 'RX'
 }, {
     val: 256,
-    name: "HalfTime",
-    short: "HT"
+    name: 'HalfTime',
+    short: 'HT'
 }, {
     val: 512,
-    name: "Nightcore",
-    short: "NC"
+    name: 'Nightcore',
+    short: 'NC'
 }, {
     val: 1024,
-    name: "Flashlight",
-    short: "FL"
+    name: 'Flashlight',
+    short: 'FL'
 }, {
     val: 2048,
-    name: "Autoplay",
-    short: "AT"
+    name: 'Autoplay',
+    short: 'AT'
 }, {
     val: 4096,
-    name: "SpunOut",
-    short: "SO"
+    name: 'SpunOut',
+    short: 'SO'
 }, {
     val: 8192,
-    name: "Relax2",
-    short: "AP"
+    name: 'Relax2',
+    short: 'AP'
 }, {
     val: 16384,
-    name: "Perfect",
-    short: "PF"
+    name: 'Perfect',
+    short: 'PF'
 }, {
     val: 32768,
-    name: "Key4",
-    short: "4K"
+    name: 'Key4',
+    short: '4K'
 }, {
     val: 65536,
-    name: "Key5",
-    short: "5K"
+    name: 'Key5',
+    short: '5K'
 }, {
     val: 131072,
-    name: "Key6",
-    short: "6K"
+    name: 'Key6',
+    short: '6K'
 }, {
     val: 262144,
-    name: "Key7",
-    short: "7K"
+    name: 'Key7',
+    short: '7K'
 }, {
     val: 524288,
-    name: "Key8",
-    short: "8K"
+    name: 'Key8',
+    short: '8K'
 }, {
     val: 1048576,
-    name: "FadeIn",
-    short: "FI"
+    name: 'FadeIn',
+    short: 'FI'
 }, {
     val: 2097152,
-    name: "Random",
-    short: "RD"
+    name: 'Random',
+    short: 'RD'
 }, {
     val: 4194304,
-    name: "Cinema",
-    short: "CN"
+    name: 'Cinema',
+    short: 'CN'
 }, {
     val: 16777216,
-    name: "Key9",
-    short: "9K"
+    name: 'Key9',
+    short: '9K'
 }, {
     val: 33554432,
-    name: "Key10",
-    short: "10K"
+    name: 'Key10',
+    short: '10K'
 }, {
     val: 67108864,
-    name: "Key1",
-    short: "1K"
+    name: 'Key1',
+    short: '1K'
 }, {
     val: 134217728,
-    name: "Key3",
-    short: "3K"
+    name: 'Key3',
+    short: '3K'
 }, {
     val: 268435456,
-    name: "Key2",
-    short: "2K"
+    name: 'Key2',
+    short: '2K'
 }]

@@ -22,22 +22,22 @@ client.on('ready', async () => {
         client.user.setActivity(`In dev mode`)
     }
     else {
-        client.user.setActivity(`messages! Try ${config.prefix}help!`, { type:"LISTENING" })
+        client.user.setActivity(`messages! Try ${config.prefix}help!`, { type:'LISTENING' })
     }
 
     try {
         client.channels.get(config.updatesChannel).fetchMessage(config.commandsMessage)
             .then(msg => {
                 let embed = new Discord.RichEmbed()
-                    .setColor("#fd0000")
-                    .setAuthor("List of bot commands")
+                    .setColor('#fd0000')
+                    .setAuthor('List of bot commands')
                     .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
                     .addField(`${config.prefix}osu`, 'List of osu! commands')
                     .addField(`${config.prefix}ping`, 'Check if the bot is live')
                     .addField(`${config.prefix}roll`, 'Generate a random number between 1-100')
                     .addField(`${config.prefix}server`, 'Tells you what about the server you are in')
                     .addField(`${config.prefix}whoami`, 'Tell you about you')
-                    .setFooter("Contact @Bae#3308 with any issues", "https://cdn.discordapp.com/avatars/122136963129147393/a_9ca3ec15b8776bf77cafe30d78b3ad96")
+                    .setFooter('Contact @Bae#3308 with any issues', 'https://cdn.discordapp.com/avatars/122136963129147393/a_9ca3ec15b8776bf77cafe30d78b3ad96')
                 msg.edit({ embed })
             })
             .catch(err => console.log(err))

@@ -1,8 +1,8 @@
 const Discord = require('discord.js')
 
 module.exports = {
-	name: "server",
-	description: "Server Information",
+	name: 'server',
+	description: 'Server Information',
 	execute(m) {
 		const serverName = m.guild.name
 		const serverIcon = m.guild.iconURL
@@ -22,16 +22,16 @@ module.exports = {
 		const popularGame = Object.keys(games).reduce((a, b) => games[a] > games[b] ? a : b)
 
 		let embed = new Discord.RichEmbed()
-			.setColor("#fcee03")
+			.setColor('#fcee03')
 			.setAuthor(`Server info for: ${serverName}`)
 			.setThumbnail(serverIcon)
-			.addField("Total members", memberCount, true)
-			.addField("Users online", onlineUsers, true)
-			.addField("Owner", serverOwner, true)
-			.addField("Region", region, true)
-			.addField("Current most popular game", popularGame, true)
-			.addField("Number of roles", roleNum, true)
-			.addField("Created", created, false)
+			.addField('Total members', memberCount, true)
+			.addField('Users online', onlineUsers, true)
+			.addField('Owner', serverOwner, true)
+			.addField('Region', region, true)
+			.addField('Current most popular game', popularGame, true)
+			.addField('Number of roles', roleNum, true)
+			.addField('Created', created, false)
 
 
 		m.channel.send({ embed })

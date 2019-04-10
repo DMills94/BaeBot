@@ -71,7 +71,7 @@ module.exports = {
         const rankImage = emojis.find('name', score.rank)
         const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
-        let colour = "#0096CF"
+        let colour = '#0096CF'
         switch (score.playNumber) {
             case 1:
                 colour = '#FFD700'

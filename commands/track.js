@@ -1,4 +1,5 @@
 const database = require('../databases/requests.js')
+const Discord = require('discord.js')
 const config = require('../config.json')
 const countries = require('../databases/countries.json')
 
@@ -11,19 +12,24 @@ module.exports = {
     async execute(m, args) {
         const channelID = m.channel.id
 
-        if (!m.channel.permissionsFor(m.member).has("ADMINISTRATOR") && m.author.id !== config.baeID) {
+        if (!m.channel.permissionsFor(m.member).has('ADMINISTRATOR') && m.author.id !== config.baeID) {
             return m.reply('sorry brah, this is currently only a feature for users with Administrative permissions.')
         }
 
         if (args[0] === '-help' || args[0] === '-h') {
-            let helpText = `Tracking Commands | ${config.prefix}track [command]`
-            helpText += '\n ```-help/-h : Hey, you are already here!'
-            helpText += '\n-add/-a [osu username] [t=x],[osu username]...: Adds a users to be tracked, separated by a comma. t=x optional, default is 100.'
-            helpText += '\n-delete/-d [osu username] : Removes a user from being tracked'
-            helpText += '\n-c [country code] [l=x] [t=x] : Adds a country to tracking! options: l=\'x\' only track the top x of the country, default: 10 | t=\'x\' track the top x plays of the players, default: 100'
-            helpText += '\n-list/-l : List the users currently being tracked```'
+            let embed = new Discord.RichEmbed()
+                .setColor('#fd0000')
+                .setAuthor(`Track Commands | ${config.prefix}track [command]`)
+                .setTitle('Commands')
+                .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
+                .addField('-help/-h', 'Hey, you\'re already here!')
+                .addField('-add/-a [osu username] [t=x],[osu username]...', 'Adds a user(s) to be tracked, separated by a comma. t=x optional, default is 100.')
+                .addField('-delete/-d [osu username]', 'Removes a user from being tracked')
+                .addField('-c [country code] [l=x] [t=x]', 'Adds a country to tracking! options: l=\'x\' only track the top x of the country, default: 10 | t=\'x\' track the top x plays of the players, default: 100')
+                .addField('-list/-l', 'List the users/countries currently being tracked')
+                .setFooter(`These commands are ADMIN ONLY`)
 
-            m.channel.send(helpText)
+            m.channel.send({ embed })
         }
         else if (args[0] === '-country' || args[0] === '-c') {
             args.shift()

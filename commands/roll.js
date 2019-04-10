@@ -1,6 +1,6 @@
 module.exports = {
 	name: 'roll',
-	description: "Random number between 'x' and 'y'",
+	description: 'Random number between "x" and "y"',
 	async execute(m, args) {
 		const Msg = 'Command only takes numbers! Try one of:\n```\troll : Random number between 1 and 100\n\troll [maxValue] : Random number between 1 and maxValue\n\troll [minValue] [maxValue] : Random number between minValue and maxValue```'
 		const errorMsg = 'Incorrect Paramaters. '

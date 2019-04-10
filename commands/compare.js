@@ -4,8 +4,8 @@ const database = require('../databases/requests.js')
 const config = require('../config.json')
 
 module.exports = {
-    name: "compare",
-    description: "Compares the users best play against the last posted beatmap in that guild",
+    name: 'compare',
+    description: 'Compares the users best play against the last posted beatmap in that guild',
     async execute(m, args, emojis) {
         let compMods = false
         let modsToCompare
@@ -19,7 +19,7 @@ module.exports = {
                 channelid = args[arg].slice(2, args[arg].length - 1)
                 args.splice(arg, 1)
             }
-            else if (args[arg].startsWith("+")) {
+            else if (args[arg].startsWith('+')) {
                 modsToCompare = args[arg].slice(1)
                 args.splice(arg, 1)
                 compMods = true
@@ -58,7 +58,7 @@ module.exports = {
 
         if (!userInfo){
             m.react('❎')
-            return m.channel.send("The username provided doesn't exist! Please try again.")
+            return m.channel.send('The username provided doesn\'t exist! Please try again.')
         }
 
         const userScores = await functions.getScores(prevBeatmap.beatmap.beatmap_id, username)
@@ -75,14 +75,14 @@ module.exports = {
         }
         else {
             let bitNumMods = functions.modsToBitNum(modsToCompare)
-            if (bitNumMods === "invalid") {
+            if (bitNumMods === 'invalid') {
                 m.react('❎')
-                return m.reply("invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `compare +mods/[mods]`")
+                return m.reply('invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `compare +mods/[mods]`')
 
             }
-            else if (bitNumMods === "mods") {
+            else if (bitNumMods === 'mods') {
                 prevBeatmapMods = prevBeatmap.performance.enabled_mods
-                if (prevBeatmapMods.startsWith("+")) {
+                if (prevBeatmapMods.startsWith('+')) {
                     prevBeatmapMods = prevBeatmapMods.slice(1)
                 }
 
@@ -100,7 +100,7 @@ module.exports = {
 
             if (!scoreFound) {
                 m.react('❎')
-                return m.reply("sorry, you don't have a play on that map with the mods selected! Sometimes the API deletes very old plays, sorry about that :(")
+                return m.reply('sorry, you don\'t have a play on that map with the mods selected! Sometimes the API deletes very old plays, sorry about that :(')
             }
         }
 
@@ -124,10 +124,10 @@ module.exports = {
         const ppInfo = await functions.calculate(prevBeatmap.beatmap, score)
 
         if (score.rank.length === 1) {
-            score.rank += "_"
+            score.rank += '_'
         }
 
-        const rankImage = emojis.find("name", score.rank)
+        const rankImage = emojis.find('name', score.rank)
         const diffImage = functions.difficultyImage(ppInfo.formattedStars, emojis)
 
         const mapStatus = functions.approvedStatus(prevBeatmap.beatmap.approved)
@@ -136,12 +136,12 @@ module.exports = {
         const formatUpdateDate = `${updateDate.getDate()}/${updateDate.getMonth() + 1}/${updateDate.getFullYear()}`
 
         let embed = new Discord.RichEmbed()
-            .setColor("#0096CF")
+            .setColor('#0096CF')
             .setAuthor(`Best Play for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
-            .setThumbnail("https://b.ppy.sh/thumb/" + prevBeatmap.beatmap.beatmapset_id + "l.jpg")
-            .setTitle(prevBeatmap.beatmap.artist + " - " + prevBeatmap.beatmap.title + " [" + prevBeatmap.beatmap.version + "]")
+            .setThumbnail('https://b.ppy.sh/thumb/' + prevBeatmap.beatmap.beatmapset_id + 'l.jpg')
+            .setTitle(prevBeatmap.beatmap.artist + ' - ' + prevBeatmap.beatmap.title + ' [' + prevBeatmap.beatmap.version + ']')
             .setURL(`https://osu.ppy.sh/b/${prevBeatmap.beatmap.beatmap_id}`)
-            .addField(`• ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \t\t${mapRank ? '\:medal: Rank __#' + mapRank + '__' : ''} \n• ${rankImage} | Score: ${parseInt((score.score)).toLocaleString("en")} (${score.accuracy}%) | ${score.rank === "F_" ? "~~**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp~~" : "**" + ppInfo.formattedPerformancePP + "pp**/" + ppInfo.formattedMaxPP + "pp"}`, `\u2022 ${score.maxcombo === prevBeatmap.beatmap.max_combo ? "**" + score.maxcombo + "**" : score.maxcombo}/**${prevBeatmap.beatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
+            .addField(`• ${diffImage} **${ppInfo.formattedStars}*** ${score.enabled_mods} \t\t${mapRank ? '\:medal: Rank __#' + mapRank + '__' : ''} \n• ${rankImage} | Score: ${parseInt((score.score)).toLocaleString('en')} (${score.accuracy}%) | ${score.rank === 'F_' ? '~~**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp~~' : '**' + ppInfo.formattedPerformancePP + 'pp**/' + ppInfo.formattedMaxPP + 'pp'}`, `\u2022 ${score.maxcombo === prevBeatmap.beatmap.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}/**${prevBeatmap.beatmap.max_combo}x** {${score.count300}/${score.count100}/${score.count50}/${score.countmiss}} | ${score.date}`)
             .setFooter(`${mapStatus} • Beatmap by ${prevBeatmap.beatmap.creator} • ${mapStatus == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
             if (score.playNumber) {
