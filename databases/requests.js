@@ -541,7 +541,7 @@ exports.countryTrackUpdate = (client) => {
 
     // Start the loop to check for updated player list
     setTimeout(() => {
-        exports.countryTrackUpdate(client.channels)
+        exports.countryTrackUpdate(client)
     }, 7200000)
 
     db.countryTrack.find({}, (err, docs) => {
