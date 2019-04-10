@@ -580,20 +580,26 @@ exports.countryTrackUpdate = (client) => {
                         userArr.push(userObj)
                     }
 
+                    // Check for rank changes
                     if (docs[countryObj].players) {
                         for (let player in docs[countryObj].players) {                            
-                            if (docs[countryObj].players[player].username != userArr[player].username) {
+
+                            // If player username is different (aka moved in rankings)
+                            if (docs[countryObj].players[player].username !== userArr[player].username) {
+                                const channels = Object.entries(docs[countryObj].channels)
                                 const oldTop50 = docs[countryObj].players.map(user => user.username)
                                 const newUser = userArr[player].username
                                 const newRank = Number(player) + 1
 
+                                // the new User wasn't in the previous top 100
                                 if (!oldTop50.includes(newUser)) {
-                                    Object.keys(docs[countryObj].channels).forEach(channel => {
-                                        if (newRank <= channel.limit && channel.rankUpdates)
-                                            client.get(channel).send(`\`${newUser}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: Country rank: \`${newRank}\``)
-                                    })
+                                    for (const [channel, properties] of channels) {
+                                        if (newRank <= properties.limit && properties.rankUpdates) {
+                                            client.get(channel).send(`\`${newUser}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: New rank: \`${newRank}\``)
+                                        }
+                                    }
                                 }
-                                else {
+                                else { // the new User was in the preview top 100
                                     const oldRank = docs[countryObj].players.filter(player => {
                                         return player.username === newUser
                                     })[0].countryRank
@@ -606,9 +612,9 @@ exports.countryTrackUpdate = (client) => {
                                             rankChange = '+' + rankChange
                                             color = '#DD2E44'
                                         }
-                                        
-                                        Object.keys(docs[countryObj].channels).forEach(channel => {
-                                            if (newRank <= channel.limit && channel.rankUpdates) {
+
+                                        for (const [channel, properties] of channels) {
+                                            if (newRank <= properties.limit && properties.rankUpdates) {
                                                 let embed = new Discord.RichEmbed()
                                                     .setColor(color)
                                                     .addField('Old Rank', oldRank, true)
@@ -616,7 +622,7 @@ exports.countryTrackUpdate = (client) => {
                                             
                                                 client.get(channel).send(`\:flag_${docs[countryObj].country.toLowerCase()}: \`${newUser}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
                                             }
-                                        })
+                                        }
                                     }
                                 }
                             }
