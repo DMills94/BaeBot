@@ -210,26 +210,18 @@ customExports.approvedStatus = value => {
 customExports.difficultyImage = (stars, emojis) => {
     let diffImage
 
-    switch (true) {
-        case (stars <= 1.5):
-            diffImage = emojis.find('name', 'Easy')
-            break
-        case (1.51 <= stars && stars <= 2.25):
-            diffImage = emojis.find('name', 'Normal')
-            break
-        case (2.26 <= stars && stars <= 3.75):
-            diffImage = emojis.find('name', 'Hard')
-            break
-        case (3.76 <= stars && stars <= 5.25):
-            diffImage = emojis.find('name', 'Insane')
-            break
-        case (5.26 <= stars && stars <= 6.75):
-            diffImage = emojis.find('name', 'Expert')
-            break
-        case (stars >= 6.76):
-            diffImage = emojis.find('name', 'ExpertPlus')
-            break
-    }
+    if (stars < 2)
+        diffImage = emojis.find('name', 'Easy')
+    else if (stars < 2.7)
+        diffImage = emojis.find('name', 'Normal')
+    else if (stars < 4)
+        diffImage = emojis.find('name', 'Hard')
+    else if (stars < 5.3)
+        diffImage = emojis.find('name', 'Insane')
+    else if (stars < 6.5)
+        diffImage = emojis.find('name', 'Expert')
+    else
+        diffImage = emojis.find('name', 'ExpertPlus')
 
     return diffImage
 }
