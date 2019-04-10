@@ -117,7 +117,7 @@ module.exports = {
 
         score.accuracy = functions.determineAcc(score)
 
-        let playDate = Date.parse(score.date)
+        let playDate = Date.parse(score.date) + 3600000
         let currentDate = Date.now()
         score.date = functions.timeDifference(currentDate, playDate)
 

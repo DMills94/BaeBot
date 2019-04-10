@@ -79,8 +79,9 @@ module.exports = {
             }
         }
 
-        const playDate = Date.parse(recent.date)
+        const playDate = Date.parse(recent.date) + 3600000
         const currentDate = Date.now()
+
         recent.date = functions.timeDifference(currentDate, playDate)
 
         if (recent.rank.length === 1) {

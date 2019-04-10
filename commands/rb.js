@@ -41,7 +41,7 @@ module.exports = {
 
         for (let score in unsortedTopScores) {
             unsortedTopScores[score].playNumber = parseInt(score) + 1
-            unsortedTopScores[score].date = Date.parse(unsortedTopScores[score].date) 
+            unsortedTopScores[score].date = Date.parse(unsortedTopScores[score].date) + 3600000 
         }
 
         const topScores = unsortedTopScores.sort((a, b) => {
