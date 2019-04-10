@@ -70,8 +70,8 @@ module.exports = {
             m.channel.send({ embed: embed })
         }
         else {
-            let scores = 100
-            const message = await m.channel.send(`Processing top scores for \`${userInfo.username}\`, this can take a while... \`${scores}/100\``)
+            let scores = 0
+            const message = await m.channel.send(`Processing top scores for \`${userInfo.username}\`, this can take a while... | \`${scores}/100\``)
 
             let maxPP = 0
             let minPP = 0
@@ -115,7 +115,7 @@ module.exports = {
                 if (top100[play].perfect === '1')
                     zeroMiss++
 
-                scores = scores - 1
+                scores = scores + 1
 
                 if (scores % 8 === 0)
                     message.edit(`Processing top scores for \`${userInfo.username}\`, this can take a while... | \`${scores}/100\``)
@@ -138,7 +138,7 @@ module.exports = {
                 .setAuthor(`osu! Standard stats for ${userInfo.username}`, undefined, 'https://osu.ppy.sh/users/' + userInfo.user_id)
                 .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
                 .addField(`${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp \:earth_africa: #${parseInt(userInfo.pp_rank).toLocaleString('en')} \:flag_${userInfo.country.toLowerCase()}: #${userInfo.pp_country_rank}`, `**PP Range:** ${maxPP}pp - ${minPP}pp = ${ppRange}pp\n**PP Average:** ${ppAvg}pp\n**Perfect plays in top 100:** ${zeroMiss}\n**Cumulative unweighted PP:** ${parseFloat(cumulativePP).toLocaleString('en', { maximumFractionDigits: 2 })}pp\n**Play Count:** ${parseFloat(userInfo.playcount).toLocaleString('en')}\n**Average unweighted PP per play:** ${ppPerPlay}\n**Preferred Map Length:** ${avgLengthMin}:${avgLengthSec}\n**Preferred Map Max Combo:** ${Math.round(avgCombo)}`)
-                .addField(`More Stats for ${userInfo.username}`, `[osu!track](https://ameobea.me/osutrack/user/${userInfo.username}) • [osu!stats](https://osustats.ppy.sh/u/${userInfo.username}) • [osu!skills](http://osuskills.com/user/${userInfo.username}) • [osu!chan](https://syrin.me/osuchan/u/${userInfo.user_id}) • [pp+](https://syrin.me/pp+/u/${userInfo.user_id})`)
+                .addField(`More Stats for ${userInfo.username}`, `[osu!track](https://ameobea.me/osutrack/user/${userInfo.username.split(' ').join('_')}) • [osu!stats](https://osustats.ppy.sh/u/${userInfo.username.split(' ').join('_')}) • [osu!skills](http://osuskills.com/user/${userInfo.username}) • [osu!chan](https://syrin.me/osuchan/u/${userInfo.user_id}) • [pp+](https://syrin.me/pp+/u/${userInfo.user_id})`)
                 .setFooter(`• Try [[ ${prefix}user ]] for account stats`)
 
             message.edit({ embed: embed })
