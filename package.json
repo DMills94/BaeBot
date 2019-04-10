@@ -1,7 +1,7 @@
 {
     "author": "DMills94",
     "name": "baebot",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "main": "index.js",
     "engines": {
         "node": "8.x",
