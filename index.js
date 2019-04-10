@@ -202,10 +202,18 @@ client.on('message', async message => {
         }
     }
 
+    // Beatmap recognition
     if (uI.match(/https?:\/\/(osu|new).ppy.sh\/([b]|[s]|beatmapsets)\//i)) {
         const emojis = client.guilds.find('id', config.privServer).emojis
         client.commands.get('recognise beatmap').execute(message, uI, emojis)
         functions.logCommand(client.channels, message, 'Recognise Beatmap', 'command')
+    }
+
+    // User recognition
+    if (uI.match(/https?:\/\/(osu|new).ppy.sh\/([u]|users)\//i)) {
+        const emojis = client.guilds.find('id', config.privServer).emojis
+        client.commands.get('recognise user').execute(message, uI, emojis)
+        functions.logCommand(client.channels, message, 'Recognise User', 'command')
     }
 })
 

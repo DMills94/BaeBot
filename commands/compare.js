@@ -54,7 +54,7 @@ module.exports = {
         if (!prevBeatmap)
             return m.channel.send(`There was an issue comparing, perhaps the channel you are trying to compare with doesn't have a beatmap posted recently? Apologies! Please try again later.`)
 
-        const userInfo = await functions.getUser(username, 0)
+        const userInfo = await functions.getUser(username)
 
         if (!userInfo){
             m.react('❎')

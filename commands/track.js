@@ -139,7 +139,7 @@ module.exports = {
                     continue
 
                 //check username exists + format correctly
-                usernameInfo = await functions.getUser(username, 0)
+                usernameInfo = await functions.getUser(username)
 
                 if (!usernameInfo) {
                     m.channel.send(`The username \`${username}\` doesn't exist! \:angry:`)

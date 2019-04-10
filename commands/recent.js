@@ -34,7 +34,7 @@ module.exports = {
 
 
         //osu API calls
-        const userInfo = await functions.getUser(username, 0)
+        const userInfo = await functions.getUser(username)
 
         if (!userInfo)
             return m.channel.send('That username does not exist! Please try again.')

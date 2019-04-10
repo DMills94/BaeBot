@@ -221,7 +221,7 @@ module.exports = {
             urlInfo.beatmapId = beatmapAPI[i].beatmap_id
             urlInfo.beatmapSetId = beatmapAPI[i].beatmapset_id
 
-            //Get Beatmap data for calculations
+            //Get Beatmap data for calculations, don't use global function as using different acc %'s
             axios.get('osu/' + urlInfo.beatmapId, {
                 params: {
                     credentials: 'include'

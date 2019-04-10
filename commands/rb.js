@@ -62,7 +62,7 @@ module.exports = {
         let currentDate = Date.now()
         usersScore.date = functions.timeDifference(currentDate, playDate)
 
-        const userInfo = await functions.getUser(username, 0)
+        const userInfo = await functions.getUser(username)
 
         if (!userInfo) {
             m.react('❎')

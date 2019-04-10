@@ -7,13 +7,12 @@ axios.defaults.baseURL = "https://osu.ppy.sh/"
 
 let customExports = module.exports = {}
 
-customExports.getUser = (username, mode) => {
+customExports.getUser = (username) => {
     return new Promise(resolve => {
         axios.get('api/get_user', {
             params: {
                 k: osuApiKey,
-                u: username,
-                m: mode
+                u: username
             }
         })
             .then(resp => {

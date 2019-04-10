@@ -33,7 +33,7 @@ module.exports = {
         }
 
         //osu API calls
-        const userInfo = await functions.getUser(username, 0)
+        const userInfo = await functions.getUser(username)
 
         if (!userInfo) {
             m.react('❎')
