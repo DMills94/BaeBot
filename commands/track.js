@@ -17,8 +17,8 @@ module.exports = {
 
         if (args[0] === '-help' || args[0] === '-h') {
             let helpText = `Tracking Commands | ${config.prefix}track [command]`
-            helpText += '\n ```-help : Hey, you are already here!'
-            helpText += '\n-add/-a [osu username] [top=x],[osu username]...: Adds a users to be tracked, separated by a comma. top=x optional, default is 100.'
+            helpText += '\n ```-help/-h : Hey, you are already here!'
+            helpText += '\n-add/-a [osu username] [t=x],[osu username]...: Adds a users to be tracked, separated by a comma. t=x optional, default is 100.'
             helpText += '\n-delete/-d [osu username] : Removes a user from being tracked'
             helpText += '\n-c [country code] [l=x] [t=x] : Adds a country to tracking! options: l=\'x\' only track the top x of the country, default: 10 | t=\'x\' track the top x plays of the players, default: 100'
             helpText += '\n-list/-l : List the users currently being tracked```'
@@ -112,7 +112,7 @@ module.exports = {
                 let trackLimit = 100
 
                 for (let index in userToTrackArr) {
-                    if (userToTrackArr[index].startsWith('top=')) {
+                    if (userToTrackArr[index].startsWith('t=')) {
                         trackLimit = parseInt(userToTrackArr[index].substring(4))
                         userToTrackArr.splice(index, 1)
                     }

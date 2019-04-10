@@ -54,18 +54,6 @@ client.on('ready', async () => {
     tracking(emojis, false)
     tracking(emojis, true)
     database.countryTrackUpdate(client.channels)
-
-    setInterval(() => {
-        tracking(emojis, false)
-    }, 150000)
-
-    setInterval(() => {
-        tracking(emojis, true)
-    }, 900000)
-
-    setInterval(() => {
-        database.countryTrackUpdate(client.channels)
-    }, 7200000)
 })
 
 client.on('error', err => {
@@ -228,6 +216,17 @@ client.on('guildDelete', guild => {
 })
 
 async function tracking(emojis, country) {
+
+    // Start the loop to repeat the check for new scores
+    let timeout = 150000 // Timeout for user tracking
+    if (country)
+        timeout = 900000
+
+
+    setTimeout(() => {
+        tracking(emojis, country)
+    }, timeout)
+
     const newScores = await client.commands.get('getTrackScores').execute(country)
 
     const currentTime = new Date()

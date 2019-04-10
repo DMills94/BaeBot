@@ -539,6 +539,11 @@ exports.deleteCountryTrack = (country, channelID, m) => {
 exports.countryTrackUpdate = (client) => {
     console.log('[COUNTRY TRACKING] Checking for country tracks to update.')
 
+    // Start the loop to check for updated player list
+    setTimeout(() => {
+        exports.countryTrackUpdate(client.channels)
+    }, 7200000)
+
     db.countryTrack.find({}, (err, docs) => {
         if (err) {
             console.log('Issue retrieving country track DB.')
@@ -627,6 +632,9 @@ exports.countryTrackUpdate = (client) => {
         }
     })
 }
+
+
+
 
 exports.toggleRankTrack = (m, channelID) => {
     db.countryTrack.find({ $where: function() { return Object.keys(this.channels).includes(channelID) } }, (err, docs) => {
