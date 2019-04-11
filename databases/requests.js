@@ -572,6 +572,7 @@ exports.countryTrackUpdate = (client) => {
                         const userBest = (await functions.getUserTop(username, 100)).map(play => play.date)
                         const userObj = {
                             username,
+                            userId: userInfo.user_id,
                             userBest,
                             pp: userInfo.pp_raw,
                             countryRank: Number(user) + 1,
