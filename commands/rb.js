@@ -56,7 +56,7 @@ module.exports = {
 
         usersScore.accuracy = functions.determineAcc(usersScore)
         
-        const mapRank = await functions.checkMapRank(username, beatmapInfo.beatmap_id)
+        const mapRank = await functions.checkMapRank(usersScore, beatmapInfo.beatmap_id)
 
         let playDate = usersScore.date
         let currentDate = Date.now()
