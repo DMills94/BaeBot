@@ -25,7 +25,7 @@ module.exports = {
         }
         
         if (user.length >  0)
-            username = user[0].osuIGN
+            username = user[0].osuId
         
         if (!username) {
             m.react('❎')

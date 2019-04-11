@@ -14,8 +14,8 @@ module.exports = {
             return m.channel.send(`You have no linked account to unlink! Please use \`${config.prefix}link [username]\` to link an account!`)
         }
 
-        const username = link[0].osuIGN
+        const userInfo = link[0]
 
-        database.deleteLink(userID, username, m)
+        database.deleteLink(userID, userInfo, m)
     }
 }

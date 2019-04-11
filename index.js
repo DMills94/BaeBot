@@ -42,8 +42,8 @@ client.on('ready', async () => {
                     .setFooter('Contact @Bae#3308 with any issues')
 
                 msg.edit({ embed })
+                    .catch(() => console.error('RUNNING BOT IN TEST MODE'))
             })
-            .catch(err => console.log(err))
     }
     catch(err) {
         console.log(err)
@@ -52,7 +52,6 @@ client.on('ready', async () => {
     const emojis = client.guilds.find('id', config.privServer).emojis
 
     //Check bot hasn't left any servers, if so remove their db entries
-
     console.log('Starting tracking..')
     tracking(emojis, false)
     tracking(emojis, true)

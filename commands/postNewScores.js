@@ -113,7 +113,7 @@ module.exports = {
                     client.get(channel).send({ embed })
                     functions.logCommand(client, channel, 'Tracking', 'track', embed)
                 }
-                database.updateTrack(userInfo.username, null, newPP, country ? true : false)
+                database.updateTrack(userInfo, null, newPP, country ? true : false)
                 database.storeBeatmap(channel, beatmapInfo, score)
             }
         })

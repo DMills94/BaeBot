@@ -27,6 +27,6 @@ module.exports = {
             return m.channel.send('That username does not exist! Please try again.')
         }
 
-        await database.newLink(userID, userInfo.username, m)
+        await database.newLink(userID, userInfo, m)
     }
 }

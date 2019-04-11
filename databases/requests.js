@@ -19,14 +19,14 @@ db.track.persistence.setAutocompactionInterval(43200000)
 //Dev Mode
 exports.addDevMode = () => {
     db.devMode.insert({ devMode: false }, err => {
-        if (err) console.log(err)
+        if (err) console.error(err)
     })
 }
 
 exports.getDevMode = () => {
     return new Promise(resolve => {
         db.devMode.find({}, (err, docs) => {
-            if (err) console.log(err)
+            if (err) console.error(err)
             if (docs.length > 0)
                 resolve(docs[0].devMode)
             else resolve(undefined)
@@ -37,7 +37,7 @@ exports.getDevMode = () => {
 exports.toggleDev = (devStatus, m) => {
     db.devMode.update({ devMode: !devStatus }, { $set: { devMode: devStatus } }, {}, err => {
         if (err) {
-            console.log(err)
+            console.error(err)
             m.react('❎')
             return m.channel.send(`Unable to toggle dev mode right now! \:slight_frown:`)
         }
@@ -50,7 +50,7 @@ exports.toggleDev = (devStatus, m) => {
 exports.storeBeatmap = (channelid, beatmap, performance) => {
 
     db.lastBeatmap.find({ channelid }, (err, docs) => {
-        if (err) console.log(err)
+        if (err) console.error(err)
         if (docs.length < 1) { //New guild
             const beatmapObj = {
                 channelid,
@@ -59,12 +59,12 @@ exports.storeBeatmap = (channelid, beatmap, performance) => {
             }
 
             db.lastBeatmap.insert(beatmapObj, err => {
-                if (err) console.log(err)
+                if (err) console.error(err)
             })
         }
         else {
             db.lastBeatmap.update({ channelid }, { $set: { beatmap, performance } }, {}, err => {
-                if (err) console.log(err)
+                if (err) console.error(err)
             })
         }
     })
@@ -80,38 +80,39 @@ exports.fetchBeatmap = channelid => {
 }
 
 //Linking
-exports.newLink = (discordid, osuIGN, m) => {
+exports.newLink = (discordid, userInfo, m) => {
     let data = {
         discordid,
-        osuIGN
+        osuUsername: userInfo.username,
+        osuId: userInfo.user_id
     }
     db.linkedUsers.insert(data, err => {
         if (err) {
-            console.log(err)
+            console.error(err)
             m.react('❎')
             return m.channel.send(`There was an issue linking your account! Please try again later.`)
         }
         m.react('✅')
-        return m.channel.send(`You have successfully been linked to \`${osuIGN}\` \:tada:`)
+        return m.channel.send(`You have successfully been linked to \`${userInfo.username}\` \:tada:`)
     })
 }
 
-exports.deleteLink = (discordid, osuIGN, m) => {
+exports.deleteLink = (discordid, userInfo, m) => {
     db.linkedUsers.remove({ discordid }, {}, err => {
         if (err) {
-            console.log(err)
+            console.error(err)
             m.react('❎')
             return m.channel.send(`There was an error unlinking your account, please try again later!`)
         }
         m.react('✅')
-        return m.channel.send(`You have successfully unlinked from ${osuIGN} \:tada:`)
+        return m.channel.send(`You have successfully unlinked from \`${userInfo.osuUsername}\` \:tada:`)
     })
 }
 
 exports.checkForLink = discordid => {
     return new Promise(resolve => {
         db.linkedUsers.find({ discordid }, (err, docs) => {
-            if (err) console.log(err)
+            if (err) console.error(err)
             resolve(docs)
         })
     })
@@ -125,7 +126,7 @@ exports.addServer = (guildID, channelID) => {
         announceChannel: channelID
     }
     db.servers.insert(serverToggles, err => {
-        if (err) console.log(err)
+        if (err) console.error(err)
     })
 }
 
@@ -178,7 +179,7 @@ exports.toggleAnnouncements = (m, channel) => {
         }
 
         db.servers.update({ guildID }, {$set: { announcements: guild.announcements, announceChannel: guild.announceChannel }}, {}, err => {
-            if (err) console.log(err)
+            if (err) console.error(err)
             m.channel.send(`\:mega: Announcements have been ${guild.announcements ? `\`enabled\` ${guild.announceChannel ? 'in \`#' + m.guild.channels.get(guild.announceChannel).name + '\`' : ''} \:smile:` : '`disabled` \:slight_frown:'}`)
         })
     })
@@ -188,7 +189,7 @@ exports.announceHere = (channelID, guildID) => {
     return new Promise(promise => {
         db.servers.update({ guildID }, {$set: { announceChannel: channelID }}, {}, err => {
             if (err) {
-                console.log(err)
+                console.error(err)
                 resolve(false)
             }
             resolve(true)
@@ -199,9 +200,9 @@ exports.announceHere = (channelID, guildID) => {
 
 
 //Tracking
-exports.checkForTrack = username => {
+exports.checkForTrack = userId => {
     return new Promise(resolve => {
-        db.track.find({ username }, (err, docs) => {
+        db.track.find({ userId }, (err, docs) => {
             if (err) resolve([])
             if (docs.length == 0) resolve(false)
             else resolve(docs[0])
@@ -212,20 +213,20 @@ exports.checkForTrack = username => {
 exports.addNewTrack = (m, channelid, trackInfo, action) => {
     //check for username
     db.track.find({ username: trackInfo.username }, (err, docs) => {
-        if (err) console.log(err)
+        if (err) console.error(err)
         if (action === 'add') {
             let data = {
                 username: trackInfo.username,
+                userId: trackInfo.userId,
                 pp: trackInfo.pp,
                 channels: {
                     [channelid]: trackInfo.limit
                 },
-                userBest: trackInfo.userBest,
-                recent24hr: trackInfo.recent24hr
+                userBest: trackInfo.userBest
             }
             db.track.insert(data, err => {
                 if (err) {
-                    console.log(err)
+                    console.error(err)
                     m.react('❎')
                     return m.channel.send(`There was an error adding \`${trackInfo.username}\` to tracking. Please try again later!`)
                 }        
@@ -234,13 +235,13 @@ exports.addNewTrack = (m, channelid, trackInfo, action) => {
             })
         }
         else if (action === 'update') { //Update'
-            db.track.find({ username: trackInfo.username }, (err, docs) => {
-                if (err) console.log(err)
+            db.track.find({ userId: trackInfo.userId }, (err, docs) => {
+                if (err) console.error(err)
                 let newChannels = { ...docs[0].channels }
                 newChannels[channelid] = trackInfo.limit
 
                 db.track.update({ username: trackInfo.username }, { $set: { channels: newChannels } }, {}, err => {
-                    if (err) console.log(err)
+                    if (err) console.error(err)
                 })
             })
 
@@ -248,11 +249,11 @@ exports.addNewTrack = (m, channelid, trackInfo, action) => {
     })
 }
 
-exports.deleteTrack = (m, size, channelid, username = '') => {
+exports.deleteTrack = (m, size, channelid, userInfo) => {
     if (size === 'all') {
         db.track.find({ $where: function () { return Object.keys(this.channels).includes(channelid) } }, async (err, docs) => {
             if (err) {
-                console.log(err)
+                console.error(err)
                 m.react('❎')
                 return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
             }
@@ -267,7 +268,7 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
                 if (Object.keys(newChannels).length < 1) {
                     db.track.remove({ username }, {}, err => {
                         if (err) {
-                            console.log(err)
+                            console.error(err)
                             m.channel.send(`Unable to delete ${username} \:sob:`)
                         }
                     })
@@ -275,7 +276,7 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
                 else {
                     db.track.update({ username }, { $set: { channels: newChannels } }, {}, err => {
                         if (err) {
-                            console.log(err)
+                            console.error(err)
                             m.channel.send(`Unable to delete ${username} \:sob:`)
                         }
                     })
@@ -286,10 +287,9 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
         })
     }
     else if (size === 'one') {
-        let searchName = new RegExp(username, 'i')
-        db.track.find({ username: searchName }, (err, docs) => {
+        db.track.find({ userId: userInfo.user_id }, (err, docs) => {
             if (err) {
-                console.log(err)
+                console.error(err)
                 m.react('❎')
                 return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
             }
@@ -301,9 +301,9 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
             delete newChannels[channelid]
 
             if (Object.keys(newChannels).length < 1) {
-                db.track.remove({ username: searchName }, {}, err => {
+                db.track.remove({ userId: userInfo.user_id }, {}, err => {
                     if (err) {
-                        console.log(err)
+                        console.error(err)
                         m.react('❎')
                         return m.channel.send(`Unable to delete ${userToEdit.username} \:sob:`)
                     }
@@ -312,9 +312,9 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
                 return m.channel.send(`\`${userToEdit.username}\` has been removed from tracking! \:tada:`)
             }
             else {
-                db.track.update({ username: searchName }, { $set: { channels: newChannels } }, {}, err => {
+                db.track.update({ userId: userInfo.user_id }, { $set: { channels: newChannels } }, {}, err => {
                     if (err) {
-                        console.log(err)
+                        console.error(err)
                         m.react('❎')
                         return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
                     }
@@ -329,7 +329,7 @@ exports.deleteTrack = (m, size, channelid, username = '') => {
 exports.allTracks = () => {
     return new Promise(resolve => {
         db.track.find({}, (err, docs) => {
-            if (err) console.log(err)
+            if (err) console.error(err)
             resolve(docs)
         })
     })
@@ -338,7 +338,7 @@ exports.allTracks = () => {
 exports.userTrack = (username) => {
     return new Promise(resolve => {
         db.track.find({ username }, (err, docs) => {
-            if (err) console.log(err)
+            if (err) console.error(err)
             resolve(docs[0])
         })
     })
@@ -348,12 +348,12 @@ exports.trackList = channelid => {
     return new Promise(resolve => {
         let tracks = {}
         db.track.find({ $where: function () { return Object.keys(this.channels).includes(channelid) } }, (err, docs) => {
-            if (err) console.log(err)
+            if (err) console.error(err)
 
             tracks['users'] = docs
 
             db.countryTrack.find({ $where: function() { return Object.keys(this.channels).includes(channelid) } }, (err, docs2) => {
-                if (err) console.log(err)
+                if (err) console.error(err)
 
                 tracks['countries'] = docs2
 
@@ -363,42 +363,42 @@ exports.trackList = channelid => {
     })
 }
 
-exports.updateTrack = (username, scoreDates, pp, country) => {
-    if (scoreDates != null && !country) {
-        db.track.update({ username }, { $set: { userBest: scoreDates } }, {}, err => {
-            if (err) console.log(err)
+exports.updateTrack = (userInfo, scoreDates, pp, country) => {
+    if (scoreDates != null && !country) { // Updates top 100 scores for an Individual
+        db.track.update({ userId: userInfo.userId }, { $set: { username: userInfo.username, userBest: scoreDates } }, {}, err => {
+            if (err) console.error(err)
         })
     }
-    else if (pp != null && !country) {
-        db.track.update({ username }, { $set: { pp } }, {}, err => {
-            if (err) console.log(err)
+    else if (pp != null && !country) { // Sets pp if not set already
+        db.track.update({ userId: userInfo.userId }, { $set: { pp } }, {}, err => {
+            if (err) console.error(err)
         })
     }
-    else if (country) {
-        db.countryTrack.find({ 'players.username': username }, (err, docs) => {
-            if (err) console.log(err)
+    else if (country) { // Country tracking updates
+        db.countryTrack.find({ 'players.username': userInfo.username }, (err, docs) => {
+            if (err) console.error(err)
             const playersInfo = [ ...docs[0].players ]
 
             if (scoreDates != null) {
                 for (let user in playersInfo) {
-                    if (playersInfo[user].username === username) {
+                    if (playersInfo[user].username === userInfo.username) {
                         playersInfo[user].userBest = scoreDates
                         break
                     }
                 }
-                db.countryTrack.update({ 'players.username': username }, { $set: { players: playersInfo } }, {}, err => {
-                    if (err) console.log(err)
+                db.countryTrack.update({ 'players.username': userInfo.username }, { $set: { players: playersInfo } }, {}, err => {
+                    if (err) console.error(err)
                 })
             }
             else if (pp != null) {
                 for (let user in playersInfo) {
-                    if (playersInfo[user].username === username) {
+                    if (playersInfo[user].username === userInfo.username) {
                         playersInfo[user].pp = pp
                         break
                     }
                 }
-                db.countryTrack.update({ 'players.username': username }, { $set: { players: playersInfo } }, {}, err => {
-                    if (err) console.log(err)
+                db.countryTrack.update({ 'players.username': userInfo.username }, { $set: { players: playersInfo } }, {}, err => {
+                    if (err) console.error(err)
                 })
             }
         })
@@ -409,13 +409,13 @@ exports.countryTracks = (country) => {
     return new Promise(resolve => {
         if (country) {
             db.countryTrack.find({ country }, (err, docs) => {
-                if (err) console.log(err)
+                if (err) console.error(err)
                 resolve(docs)
             })
         }
         else {
             db.countryTrack.find( {}, (err, docs) => {
-                if (err) console.log(err)
+                if (err) console.error(err)
                 resolve(docs)
             })
         }
@@ -426,7 +426,7 @@ exports.countryTracks = (country) => {
 exports.checkCountryTrack = (country, channelID, filters) => {
     return new Promise(resolve => {
         db.countryTrack.find({ country }, (err, docs) => {
-            if (err) console.log(err)
+            if (err) console.error(err)
             if (docs.length < 1)
                 return resolve(false)
             
@@ -470,13 +470,13 @@ exports.addCountryTrack = (country, m, filters) => {
     }
 
     db.countryTrack.find({ country }, (err, docs) => {
-        if (err) console.log(err)
+        if (err) console.error(err)
 
         if (docs.length > 0) {
             let newChannels = { ...docs[0].channels }
             newChannels[m.channel.id] = filters
             db.countryTrack.update({ country }, { $set: { channels: newChannels } }, {}, err => {
-                if (err) console.log(err)
+                if (err) console.error(err)
                 m.react('✅')
                 return m.channel.send(`The top \`${filters.limit}\` \:flag_${country.toLowerCase()}: players are being tracked for changes in their \`top ${filters.top}\` and rank changes! \:tada:`)
             })
@@ -497,7 +497,7 @@ exports.addCountryTrack = (country, m, filters) => {
 exports.deleteCountryTrack = (country, channelID, m) => {
     db.countryTrack.find({ country }, (err, docs) => {
         if (err) {
-            console.log(err)
+            console.error(err)
             m.react('❎')
             return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
         }
@@ -514,7 +514,7 @@ exports.deleteCountryTrack = (country, channelID, m) => {
         if (Object.keys(newChannels).length < 1) {
             db.countryTrack.remove({ country }, {}, err => {
                 if (err) {
-                    console.log(err)
+                    console.error(err)
                     m.react('❎')
                     return m.channel.send(`Unable to delete the country ${country} \:sob:`)
                 }
@@ -525,7 +525,7 @@ exports.deleteCountryTrack = (country, channelID, m) => {
         else {
             db.countryTrack.update({ country }, { $set: { channels: newChannels } }, {}, err => {
                 if (err) {
-                    console.log(err)
+                    console.error(err)
                     m.react('❎')
                     return m.channel.send(`There's an error deleting users from tracking right now, please try again later.`)
                 }
@@ -547,7 +547,7 @@ exports.countryTrackUpdate = (client) => {
     db.countryTrack.find({}, (err, docs) => {
         if (err) {
             console.log('Issue retrieving country track DB.')
-            console.log(err)
+            console.error(err)
         }
 
         if (docs.length < 1) {
@@ -630,11 +630,11 @@ exports.countryTrackUpdate = (client) => {
                     }
 
                     db.countryTrack.update({ country }, { $set: { players: userArr } }, {}, err => {
-                        if (err) console.log(err)
+                        if (err) console.error(err)
                         console.log(`[COUNTRY TRACKING] Finished updating database for ${country}!`)
                     })
                 })
-                .catch(err => console.log(err))
+                .catch(err => console.error(err))
         }
     })
 }
@@ -645,7 +645,7 @@ exports.countryTrackUpdate = (client) => {
 exports.toggleRankTrack = (m, channelID) => {
     db.countryTrack.find({ $where: function() { return Object.keys(this.channels).includes(channelID) } }, (err, docs) => {
         if (err) {
-            console.log(err)
+            console.error(err)
             m.react('❎')
             return m.channel.send(`Unable to toggle rank tracking right now \:sob:`)
         }
@@ -660,7 +660,7 @@ exports.toggleRankTrack = (m, channelID) => {
 
             db.countryTrack.update({ country: docs[country].country }, { $set: { channels: newChannels }}, {}, err => {
                 if (err) {
-                    console.log(err)
+                    console.error(err)
                     m.react('❎')
                     return m.channel.send(`Unable to toggle rank tracking right now \:sob:`)
                 }
@@ -678,12 +678,12 @@ exports.deleteGuild = guild => {
     for (let chanid in guildChannels) {
         //Last Beatmap
         db.lastBeatmap.remove({ channelid: guildChannels[chanid] }, {}, err => {
-            if (err) console.log(err)
+            if (err) console.error(err)
         })
 
         //Tracking
         db.track.find({}, (err, docs) => {
-            if (err) console.log(err)
+            if (err) console.error(err)
 
             for (let user in docs) {
                 if (Object.keys(docs[user].channels).includes(guildChannels[chanid])){
@@ -692,12 +692,12 @@ exports.deleteGuild = guild => {
 
                     if (Object.keys(newChannels).length === 0) {
                         db.track.remove({ username: docs[user].username }, {}, err => {
-                            if (err) console.log(err)
+                            if (err) console.error(err)
                         })
                     }
                     else {
                         db.track.update({ username: docs[user].username }, { $set: { channels: newChannels } }, {}, err => {
-                            if (err) console.log(err)
+                            if (err) console.error(err)
                         })
                     }
                 }

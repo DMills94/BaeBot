@@ -61,7 +61,7 @@ module.exports = {
                 }
 
                 //Get users Top 100
-                const newTop100 = await functions.getUserTop(userInfo.username)
+                const newTop100 = await functions.getUserTop(userInfo.userId)
 
                 if (newTop100.length < 1) {
                     console.log(`${userInfo.username} has changed username, or been removed!`)
@@ -89,7 +89,7 @@ module.exports = {
                     if (!scoreMatch) {
                         changedScoresArray.push(newTop100[score])
                         let dbTop100 = newTop100.map(top => top.date)
-                        database.updateTrack(userInfo.username, dbTop100, null, country)
+                        database.updateTrack(userInfo, dbTop100, null, country)
                     }
                 }
 

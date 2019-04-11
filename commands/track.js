@@ -119,19 +119,19 @@ module.exports = {
 
                 for (let index in userToTrackArr) {
                     if (userToTrackArr[index].startsWith('t=')) {
-                        trackLimit = parseInt(userToTrackArr[index].substring(4))
+                        trackLimit = parseInt(userToTrackArr[index].substring(2))
                         userToTrackArr.splice(index, 1)
                     }
                 }
 
                 nameToTrack = userToTrackArr.join('_')
 
-                trackInfo = {
+                usernamesInfo = {
                     username: nameToTrack,
                     limit: trackLimit
                 }
 
-                argUsernames.push(trackInfo)
+                argUsernames.push(usernamesInfo)
             }
 
             if (argUsernames.length > 10)
@@ -153,16 +153,18 @@ module.exports = {
                 }
 
                 username = usernameInfo.username
+                userId = usernameInfo.user_id
                 
                 const userBest = (await functions.getUserTop(username)).map(top => {
                     return top.date
                 })
 
                 //CHECK IF EXISTING USERNAME IN TRACK
-                const existingTrack = await database.checkForTrack(username)
+                const existingTrack = await database.checkForTrack(userId)
 
                 const trackInfo = {
                     username,
+                    userId,
                     pp: usernameInfo.pp_raw,
                     limit: argUsernames[arg].limit,
                     userBest
@@ -170,7 +172,6 @@ module.exports = {
 
                 //ADD IF NOT EXISTING, IF SO UPDATE CHANNELS
                 if (!existingTrack) {
-
                     database.addNewTrack(m, channelID, trackInfo, 'add')
                 }
                 else {
@@ -196,12 +197,13 @@ module.exports = {
         else if (args[0] === '-delete' || args[0] === '-d') {
             args.shift()
             let username = args.join('_')
+            const userInfo = await functions.getUser(username)
 
             if (username === '--all') {
                 database.deleteTrack(m, 'all', channelID)
             }
             else {
-                database.deleteTrack(m, 'one', channelID, username)
+                database.deleteTrack(m, 'one', channelID, userInfo)
             }
         }
         else if (args[0] === '-list' || args[0] === '-l') {
