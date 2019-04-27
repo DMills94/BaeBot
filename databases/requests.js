@@ -542,7 +542,7 @@ exports.countryTrackUpdate = (client) => {
     // Start the loop to check for updated player list
     setTimeout(() => {
         exports.countryTrackUpdate(client)
-    }, 7200000)
+    }, 1800000)
 
     db.countryTrack.find({}, (err, docs) => {
         if (err) {
@@ -585,43 +585,64 @@ exports.countryTrackUpdate = (client) => {
                     if (docs[countryObj].players) {
                         for (let player in docs[countryObj].players) {                            
 
-                            // If player username is different (aka moved in rankings)
-                            if (docs[countryObj].players[player].username !== userArr[player].username) {
+                            // If player userId is different (aka moved in rankings)
+                            if (docs[countryObj].players[player].userId !== userArr[player].userId) {
                                 const channels = Object.entries(docs[countryObj].channels)
-                                const oldTop50 = docs[countryObj].players.map(user => user.username)
-                                const newUser = userArr[player].username
+                                const oldTop50 = docs[countryObj].players.map(user => user.userId)
+                                const newUserId = userArr[player].userId
+                                const userInfo = await functions.getUser(newUserId)
                                 const newRank = Number(player) + 1
+                                const currentDate = Date.now()
+                                let playersPassed = ''
 
                                 // the new User wasn't in the previous top 100
-                                if (!oldTop50.includes(newUser)) {
+                                if (!oldTop50.includes(newUserId)) {
                                     for (const [channel, properties] of channels) {
                                         if (newRank <= properties.limit && properties.rankUpdates) {
-                                            client.get(channel).send(`\`${newUser}\` has entered the \:flag_${docs[countryObj].country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada: New rank: \`${newRank}\``)
+
+                                            for (let i = newRank - 1; i < properties.limit; i++) {
+                                                playersPassed += `[${docs[countryObj].players[i].username}](https://osu.ppy.sh/users/${docs[countryObj].players[i].userId})\n`
+                                            }
+
+                                            const embed = new Discord.RichEmbed()
+                                                .setColor('#FFD700')
+                                                .setAuthor(`Welcome to the top ${properties.limit} ${userInfo.username}!: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, undefined, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                                .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
+                                                .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.userId})__** has entered the \:flag_${userInfo.country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada:`)
+                                                .addField(
+                                                    `**New Rank:** ${newRank}`,
+                                                    `\:man_dancing:**__Players passed__** \:dancer:
+                                                    ${playersPassed}`
+                                                )
+                                                
+                                            client.get(channel).send({ embed })
                                         }
                                     }
                                 }
-                                else { // the new User was in the preview top 100
+                                else { // the new User was in the previous top 100
                                     const oldRank = docs[countryObj].players.filter(player => {
-                                        return player.username === newUser
+                                        return player.userId === newUserId
                                     })[0].countryRank
-                                    let rankChange = oldRank - newRank
+                                    const rankChange = oldRank - newRank
         
-                                    if (rankChange != 0) {
-                                        let color = '#3B94D9'
-
-                                        if (rankChange > 0) {
-                                            rankChange = '+' + rankChange
-                                            color = '#DD2E44'
+                                    if (rankChange > 0) {                                        
+                                        for (let i = newRank; i < oldRank; i++) {
+                                            playersPassed += `[${docs[countryObj].players[i].username}](https://osu.ppy.sh/users/${docs[countryObj].players[i].userId})\n`
                                         }
 
                                         for (const [channel, properties] of channels) {
                                             if (newRank <= properties.limit && properties.rankUpdates) {
-                                                let embed = new Discord.RichEmbed()
-                                                    .setColor(color)
-                                                    .addField('Old Rank', oldRank, true)
-                                                    .addField('New Rank', newRank, true)
+                                                const embed = new Discord.RichEmbed()
+                                                    .setColor('#00FF00')
+                                                    .setAuthor(`County rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                                    .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
+                                                    .addField(
+                                                        `Ranks gained: ${rankChange}\nNew Rank: ${newRank}`,
+                                                        `\:man_dancing:**__Players passed__** \:dancer:
+                                                        ${playersPassed}`
+                                                    )
                                             
-                                                client.get(channel).send(`\:flag_${docs[countryObj].country.toLowerCase()}: \`${newUser}\` has changed ranks! ${rankChange > 0 ? '\:chart_with_upwards_trend:' : '\:chart_with_downwards_trend:'} ${rankChange}`, { embed })
+                                                client.get(channel).send({ embed })
                                             }
                                         }
                                     }
