@@ -611,8 +611,7 @@ exports.countryTrackUpdate = (client) => {
                                                 .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.userId})__** has entered the \:flag_${userInfo.country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada:`)
                                                 .addField(
                                                     `**New Rank:** ${newRank}`,
-                                                    `\:man_dancing:**__Players passed__** \:dancer:
-                                                    ${playersPassed}`
+                                                    `\:man_dancing:**__Players passed__** \:dancer:\n${playersPassed}`
                                                 )
                                                 
                                             client.get(channel).send({ embed })
@@ -626,7 +625,7 @@ exports.countryTrackUpdate = (client) => {
                                     const rankChange = oldRank - newRank
         
                                     if (rankChange > 0) {                                        
-                                        for (let i = newRank; i < oldRank; i++) {
+                                        for (let i = newRank - 1; i < oldRank - 1; i++) {
                                             playersPassed += `[${docs[countryObj].players[i].username}](https://osu.ppy.sh/users/${docs[countryObj].players[i].userId})\n`
                                         }
 
@@ -637,9 +636,8 @@ exports.countryTrackUpdate = (client) => {
                                                     .setAuthor(`County rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                                                     .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
                                                     .addField(
-                                                        `Ranks gained: ${rankChange}\nNew Rank: ${newRank}`,
-                                                        `\:man_dancing:**__Players passed__** \:dancer:
-                                                        ${playersPassed}`
+                                                        `**Country**: \:flag_${userInfo.country.toLowerCase()}:\nRanks gained: ${rankChange}\nNew Rank: ${newRank}`,
+                                                        `\:man_dancing:**__Players passed__** \:dancer:\n${playersPassed}`
                                                     )
                                             
                                                 client.get(channel).send({ embed })

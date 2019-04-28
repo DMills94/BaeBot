@@ -139,14 +139,7 @@ module.exports = {
                 .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
                 .addField(
                     `${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp \:earth_africa: #${parseInt(userInfo.pp_rank).toLocaleString('en')} \:flag_${userInfo.country.toLowerCase()}: #${userInfo.pp_country_rank}`,
-                    `**PP Range:** ${maxPP}pp - ${minPP}pp = ${ppRange}pp
-                    **PP Average:** ${ppAvg}pp
-                    **Perfect plays in top 100:** ${zeroMiss}
-                    **Cumulative unweighted PP:** ${parseFloat(cumulativePP).toLocaleString('en', { maximumFractionDigits: 2 })}pp
-                    **Play Count:** ${parseFloat(userInfo.playcount).toLocaleString('en')}
-                    **Average unweighted PP per play:** ${ppPerPlay}
-                    **Preferred Map Length:** ${avgLengthMin}:${avgLengthSec}
-                    **Preferred Map Max Combo:** ${Math.round(avgCombo)}`
+                    `**PP Range:** ${maxPP}pp - ${minPP}pp = ${ppRange}pp\n**PP Average:** ${ppAvg}pp\n**Perfect plays in top 100:** ${zeroMiss}\n**Cumulative unweighted PP:** ${parseFloat(cumulativePP).toLocaleString('en', { maximumFractionDigits: 2 })}pp\n**Play Count:** ${parseFloat(userInfo.playcount).toLocaleString('en')}\n**Average unweighted PP per play:** ${ppPerPlay}\n**Preferred Map Length:** ${avgLengthMin}:${avgLengthSec}\n**Preferred Map Max Combo:** ${Math.round(avgCombo)}`
                 )
                 .addField(
                     `More Stats for ${userInfo.username}`, 
