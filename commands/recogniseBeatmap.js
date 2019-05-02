@@ -287,7 +287,7 @@ module.exports = {
                         let embed = new Discord.RichEmbed()
                             .setColor('#ffb3ff')
                             .setAuthor(`${beatmapAPI[0].artist} - ${beatmapAPI[0].title} by ${beatmapAPI[0].creator}`, undefined, `https://osu.ppy.sh/beatmapsets/${beatmapAPI[0].beatmapset_id}#osu/${beatmapAPI[0].beatmap_id}`)
-                            .setThumbnail('https://b.ppy.sh/thumb/' + beatmapAPI[0].beatmapset_id + 'l.jpg')
+                            .setThumbnail(`https://b.ppy.sh/thumb/${beatmapAPI[0].beatmapset_id}l.jpg?${Date.now()}`)
                             .setDescription(mapInfo)
                             .setFooter(`Status: ${beatmapAPI[0].approved} • ${beatmapAPI[0].approved == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
