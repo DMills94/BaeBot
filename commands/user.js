@@ -32,7 +32,7 @@ module.exports = {
             username = args.join('_')
         }
         
-        if (user.length >  0)
+        if (user)
             username = user.osuId
         
         if (!username){

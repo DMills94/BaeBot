@@ -7,7 +7,7 @@ module.exports = {
     name: 'rb',
     description: 'Displays users recent best (default: most recent)',
     async execute(m, args, emojis, rbNum) {
-        let user = []
+        let user
         let username
 
         if (args.length === 0) {
@@ -24,7 +24,7 @@ module.exports = {
             username = args.join('_')
         }
         
-        if (user.length >  0)
+        if (user)
             username = user.osuId
         
         if (!username) {
