@@ -365,12 +365,12 @@ exports.trackList = channelid => {
 
 exports.updateTrack = (userInfo, scoreDates, pp, country) => {
     if (scoreDates != null && !country) { // Updates top 100 scores for an Individual
-        db.track.update({ userId: userInfo.userId }, { $set: { username: userInfo.username, userBest: scoreDates } }, {}, err => {
+        db.track.update({ userId: userInfo.user_id }, { $set: { username: userInfo.username, userBest: scoreDates } }, {}, err => {
             if (err) console.error(err)
         })
     }
     else if (pp != null && !country) { // Sets pp if not set already
-        db.track.update({ userId: userInfo.userId }, { $set: { pp } }, {}, err => {
+        db.track.update({ userId: userInfo.user_id }, { $set: { pp } }, {}, err => {
             if (err) console.error(err)
         })
     }
