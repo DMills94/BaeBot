@@ -10,19 +10,25 @@ module.exports = {
         let compMods = false
         let modsToCompare
         let username
-        let user = []
+        let user
+        let compareAll = false
+        let currentDate = Date.now()
         
-        let channelid = m.channel.id
+        let channelId = m.channel.id
 
         for (let arg in args) {
             if (args[arg].startsWith('<#')) {
-                channelid = args[arg].slice(2, args[arg].length - 1)
+                channelId = args[arg].slice(2, args[arg].length - 1)
                 args.splice(arg, 1)
             }
             else if (args[arg].startsWith('+')) {
                 modsToCompare = args[arg].slice(1)
                 args.splice(arg, 1)
                 compMods = true
+            }
+            else if (args[arg] === "--all") {
+                args.splice(arg, 1)
+                compareAll = true
             }
         }
 
@@ -40,7 +46,7 @@ module.exports = {
             username = args.join('_')
         }
         
-        if (user.length >  0)
+        if (user)
             username = user.osuId
         
         if (!username){
@@ -49,7 +55,7 @@ module.exports = {
         }
 
         //Get Beatmap Id
-        const prevBeatmap = await database.fetchBeatmap(channelid)
+        const prevBeatmap = await database.fetchBeatmap(channelId)
 
         if (!prevBeatmap)
             return m.channel.send(`There was an issue comparing, perhaps the channel you are trying to compare with doesn't have a beatmap posted recently? Apologies! Please try again later.`)
@@ -65,19 +71,63 @@ module.exports = {
 
         if (userScores.length < 1){
             m.react('❎')
-            return m.channel.send('Go play the map first, dumb bitch - Belial 2018')
+            return m.channel.send('Go play the map first, dumb bitch \:speech_balloon: Belial 2018')
         }
 
+        const userTop = await functions.getUserTop(username)
         let score
+        
+        if (compareAll) { // Show a small bit about each score
+            let embed = new Discord.RichEmbed()
+                .setColor()
+                .setAuthor(`Beatmap plays for ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                .setThumbnail('https://b.ppy.sh/thumb/' + prevBeatmap.beatmap.beatmapset_id + 'l.jpg')
+                .setTitle(prevBeatmap.beatmap.artist + ' - ' + prevBeatmap.beatmap.title + ' [' + prevBeatmap.beatmap.version + ']')
+                .setDescription('Scores ordered by __SCORE__')
+                .setURL(`https://osu.ppy.sh/b/${prevBeatmap.beatmap.beatmap_id}`)
+                .setFooter(`For more specific information, try [[ ${config.prefix}compare +[mods] ]]`)
 
-        if (!compMods) {
+
+            for (let [index, score] of userScores.entries()) {
+                score.enabled_mods = functions.determineMods(score)
+                if (score.enabled_mods === '')
+                    score.enabled_mods = 'Nomod'
+                else
+                    score.enabled_mods = score.enabled_mods.slice(1)
+
+                for (let top in userTop) {
+                    if (userTop[top].date === score.date)
+                        score.playNumber = parseInt(top) + 1
+                }
+
+                const accuracy = score.accuracy = functions.determineAcc(score)
+                const mapRank = await functions.checkMapRank(score, prevBeatmap.beatmap.beatmap_id)
+
+                if (score.rank.length === 1) {
+                    score.rank += '_'
+                }
+        
+                const rankImage = emojis.find('name', score.rank)
+
+                const ppInfo = await functions.calculate(prevBeatmap.beatmap, score)
+
+                embed.addField(
+                    `**[${score.enabled_mods}]**${mapRank ? `\t\t\:medal: Map Rank __#${mapRank}__` : ''}${score.playNumber ? `\t\t \:clap: Personal Best __#${score.playNumber}__` : ''}`,
+                    `${rankImage} | ${score.maxcombo === prevBeatmap.beatmap.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}/**${prevBeatmap.beatmap.max_combo}x** • ${accuracy}% • ${ppInfo.formattedPerformancePP}/${ppInfo.formattedMaxPP}pp`
+                )
+            }
+            
+            database.storeBeatmap(m.channel.id, prevBeatmap.beatmap, null)
+            return m.channel.send({ embed })
+        }
+        else if (!compMods) {
             score = userScores[0]
         }
         else {
             let bitNumMods = functions.modsToBitNum(modsToCompare)
             if (bitNumMods === 'invalid') {
                 m.react('❎')
-                return m.reply('invalid mod entry, please use two letter mod formats (hd, hr, dt, etc..), with no spaces between mods `compare +mods/[mods]`')
+                return m.reply('invalid mod entry, please use two letter mod formats (HD, HR, DT, etc..), with no spaces between mods `compare +mods/[mods]`')
 
             }
             else if (bitNumMods === 'mods') {
@@ -100,25 +150,22 @@ module.exports = {
 
             if (!scoreFound) {
                 m.react('❎')
-                return m.reply('sorry, you don\'t have a play on that map with the mods selected! Sometimes the API deletes very old plays, sorry about that :(')
+                return m.reply('sorry, you don\'t have a play on that map with the mods selected! Sometimes the API deletes very old plays, sorry about that \:sad:')
             }
         }
-
-        const userTop = await functions.getUserTop(score.username)
 
         for (let top in userTop) {
             if (userTop[top].date === score.date)
                 score.playNumber = parseInt(top) + 1
         }
 
-        mapRank = await functions.checkMapRank(score, prevBeatmap.beatmap.beatmap_id)
+        const mapRank = await functions.checkMapRank(score, prevBeatmap.beatmap.beatmap_id)
 
         score.enabled_mods = functions.determineMods(score)
 
         score.accuracy = functions.determineAcc(score)
 
         let playDate = Date.parse(score.date) + 3600000
-        let currentDate = Date.now()
         score.date = functions.timeDifference(currentDate, playDate)
 
         const ppInfo = await functions.calculate(prevBeatmap.beatmap, score)
@@ -167,7 +214,7 @@ module.exports = {
 
         //Send Embed to Channel
         m.channel.send({
-            embed: embed
+            embed
         })
 
         database.storeBeatmap(m.channel.id, prevBeatmap.beatmap, score)
