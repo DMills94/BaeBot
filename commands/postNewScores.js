@@ -118,6 +118,6 @@ module.exports = {
         })
         
         // Update pp for user
-        database.updateTrack(userInfo, null, newPP, country ? true : false)
+        database.updateTrack(userInfo, null, newPP, country)
     }
 }

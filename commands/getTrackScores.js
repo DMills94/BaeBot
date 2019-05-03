@@ -39,12 +39,12 @@ module.exports = {
                 return console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No track entries.`)
             
             for (let user in trackdb) {
-                const userInfo = trackdb[user]
+                const trackInfo = trackdb[user]
                 let trackUser = true
 
                 for (let lim of limits) {
-                    if (Object.keys(lim)[0] == userInfo.country) {
-                        if (userInfo.countryRank > lim[userInfo.country]) {
+                    if (Object.keys(lim)[0] == trackInfo.country) {
+                        if (trackInfo.countryRank > lim[trackInfo.country]) {
                             trackUser = false
                             break
                         }
@@ -60,15 +60,18 @@ module.exports = {
                     continue
                 }
 
+                // Get User info, check for name change
+                const userInfo = await functions.getUser(trackInfo.userId)
+
                 //Get users Top 100
-                const newTop100 = await functions.getUserTop(userInfo.userId)
+                const newTop100 = await functions.getUserTop(userInfo.user_id)
 
                 if (newTop100.length < 1) {
                     continue
                 }
 
                 //See if each of the new top 100 scores exist in the db top 100 scores
-                const prevTop100 = userInfo.userBest
+                const prevTop100 = trackInfo.userBest
                 const msNow = Date.now()
 
                 for (let score in newTop100) {

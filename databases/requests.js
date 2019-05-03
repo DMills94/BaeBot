@@ -364,16 +364,18 @@ exports.trackList = channelid => {
 }
 
 exports.updateTrack = (userInfo, scoreDates, pp, country) => {
-    if (scoreDates != null && !country) { // Updates top 100 scores for an Individual
-        db.track.update({ userId: userInfo.user_id }, { $set: { username: userInfo.username, userBest: scoreDates } }, {}, err => {
-            if (err) console.error(err)
-        })
-    }
-    else if (pp != null && !country) { // Sets pp if not set already
-        db.track.update({ userId: userInfo.user_id }, { $set: { pp } }, {}, err => {
-            if (err) console.error(err)
-        })
-    }
+    if (!country) {
+        if (scoreDates !== null) { // Updates top 100 scores for an Individual
+            db.track.update({ userId: userInfo.user_id }, { $set: { username: userInfo.username, userBest: scoreDates } }, {}, err => {
+                if (err) console.error(err)
+            })
+        }
+        else if (pp !== null) { // Sets pp if not set already
+            db.track.update({ userId: userInfo.user_id }, { $set: { pp } }, {}, err => {
+                if (err) console.error(err)
+            })
+        }
+}
     else if (country) { // Country tracking updates
         db.countryTrack.find({ 'players.username': userInfo.username }, (err, docs) => {
             if (err) console.error(err)
