@@ -64,7 +64,6 @@ module.exports = {
                 const newTop100 = await functions.getUserTop(userInfo.userId)
 
                 if (newTop100.length < 1) {
-                    console.log(`${userInfo.username} has changed username, or been removed!`)
                     continue
                 }
 

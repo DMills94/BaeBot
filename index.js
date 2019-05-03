@@ -46,7 +46,7 @@ client.on('ready', async () => {
             })
     }
     catch(err) {
-        console.log(err)
+        console.error(err)
     }
 
     const emojis = client.guilds.find('id', config.privServer).emojis
@@ -59,7 +59,7 @@ client.on('ready', async () => {
 })
 
 client.on('error', err => {
-    console.log(`[Error] ${util.inspect(err, { showHidden: true, depth: 2 })}`)
+    console.error(`[Error] ${util.inspect(err, { showHidden: true, depth: 2 })}`)
 })
 
 //Recording incoming messages
@@ -164,46 +164,28 @@ client.on('message', async message => {
     }
 
     //No-config.prefix Commands
-
-    if (message.isMentioned(client.user) && message.author.id === config.wiquedID) {
-        message.reply('begone thot.')
-        console.log(`Called Wiqued a thot :)`)
-    }
-
     if (uI.includes('pepehands')) {
         const emoji = client.emojis.find('name', 'PepeHands')
         message.react(emoji)
     }
 
     if (uI.startsWith('goodbye') || uI.startsWith('good bye')) {
-        if (message.author.id === config.wiquedID) {
-            message.reply(`cya thot! \:middle_finger:`)
-            console.log(`Called Wiqued a thot :)`)
-        } else {
-            const konCha = client.emojis.find('name', 'KonCha')
-            message.reply(`cya! ${konCha}`)
-        }
+        const konCha = client.emojis.find('name', 'KonCha')
+        message.reply(`cya! ${konCha}`)
     }
 
     if (uI === 'good bot' || uI === 'goodbot') {
         if (message.author.id === config.baeID) {
             message.channel.send('S...senpai owo')
-        } else if (message.author.id === config.wiquedID) {
-            message.reply('begone thot.')
-            console.log(`Called Wiqued a thot :)`)
-        } else {
+        }
+        else {
             const itsbaeChamp = client.emojis.find('name', 'itsbaeChamp')
             message.channel.send(`Thanks! ${itsbaeChamp}`)
         }
     }
 
     if (uI === 'bad bot' || uI === 'badbot') {
-        if (message.author.id === config.wiquedID) {
-            message.reply('begone thot.')
-            console.log(`Called Wiqued a thot :)`)
-        } else {
-            message.channel.send(`<@${config.baeID}> i'm being bullied \:sob:`)
-        }
+        message.channel.send(`<@${config.baeID}> i'm being bullied \:sob:`)
     }
 
     // Beatmap recognition

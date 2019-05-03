@@ -34,7 +34,7 @@ customExports.getUserTop = (userId, limit = 100) => {
                 resolve(resp.data)
             })
             .catch(err => {
-                console.log(err)
+                console.error(err)
             })
     })
 }
@@ -269,7 +269,7 @@ customExports.calculate = (beatmap, performance) => {
 
             })
             .catch(err => {
-                console.log(`There was an error! More info: + ${err}`)
+                console.error(`There was an error! More info: + ${err}`)
             })
     })
 }

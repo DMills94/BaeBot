@@ -546,7 +546,7 @@ exports.countryTrackUpdate = (client) => {
 
     db.countryTrack.find({}, (err, docs) => {
         if (err) {
-            console.log('Issue retrieving country track DB.')
+            console.error('Issue retrieving country track DB.')
             console.error(err)
         }
 
