@@ -107,6 +107,9 @@ client.on('message', async message => {
         if (commandName === 'r')
             commandName = 'recent'
 
+        if (commandName === 'u')
+            commandName = 'user'
+
         //If specific top play remove numbers
         if (commandName.includes('top') && commandName.length > 3) {
             if (commandName.startsWith('osutop'))
