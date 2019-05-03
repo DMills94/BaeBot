@@ -1,4 +1,5 @@
 const fs = require('fs')
+const util = require('util')
 const Discord = require('discord.js')
 const config = require('./config.json')
 const database = require('./databases/requests.js')
