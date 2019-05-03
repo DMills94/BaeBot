@@ -59,7 +59,7 @@ client.on('ready', async () => {
 })
 
 client.on('error', err => {
-    console.log(err)
+    console.log(`[Error] ${util.inspect(err, { showHidden: true, depth: 2 })}`)
 })
 
 //Recording incoming messages
@@ -109,12 +109,14 @@ client.on('message', async message => {
 
         //If specific top play remove numbers
         if (commandName.includes('top') && commandName.length > 3) {
+            if (commandName.startsWith('osutop'))
+                return message.channel.send(`Excuse me?! This isn\'t owo \:angry:\nTry using \`${config.prefix}top\` or \`${config.prefix}topx\` where \`x\` is a number between 1 and 100`)
             playNum = parseInt(commandName.slice(3))
             if (playNum < 1 || playNum > 100) {
                 return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}topx\``)
             }
             if (!Number.isInteger(playNum))
-                return message.channel.send(`Please use the follow format \`${config.prefix}top[x]\`\` where \`x\` is a number between 1 and 100, or \`${config.prefix}top\` to view the users top 5!`)
+                return message.channel.send(`Not quite! Try again with the following format \`${config.prefix}topx\` where \`x\` is a number between 1 and 100, or \`${config.prefix}top\` to view the users top 5!`)
             commandName = 'top'
             top5 = false
         } else if (commandName.includes('top')) {

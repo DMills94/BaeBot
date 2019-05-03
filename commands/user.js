@@ -33,7 +33,7 @@ module.exports = {
         }
         
         if (user.length >  0)
-            username = user[0].osuId
+            username = user.osuId
         
         if (!username){
             m.react('❎')
@@ -43,7 +43,7 @@ module.exports = {
         const userInfo = await functions.getUser(username)
 
         if (userInfo === undefined)
-            return m.channel.send('that username does not exist! Please try again.')
+            return m.channel.send(`The username \`${username}\` does not exist! Please try again 🙂`)
 
         const currentDate = Date.now()
 

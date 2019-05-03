@@ -10,21 +10,22 @@ module.exports = {
 
         const link = await database.checkForLink(userID)
 
-        if (link.length > 0)
-            return m.channel.send(`Your account is already linked to \`${link[0].osuIGN}\``)
+        if (link) {          
+            return m.channel.send(`\:link: Your account is already linked to \`${link.osuUsername}\` \:link:`)
+        }
         
         const osuIGN = args.join('_')
 
         if (!osuIGN) {
             m.react('❎')
-            return m.channel.send(`please specify a osu! username to link with: \`${prefix}link [username]\``)
+            return m.channel.send(`please specify a osu! username to link with \:point_right: \`${prefix}link [username]\``)
         }
 
         const userInfo = await functions.getUser(osuIGN)
 
         if (!userInfo) {
             m.react('❎')
-            return m.channel.send('That username does not exist! Please try again.')
+            return m.channel.send(`The username \`${osuIGN}\` does not exist! Please try again 🙂`)
         }
 
         await database.newLink(userID, userInfo, m)

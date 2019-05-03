@@ -9,12 +9,14 @@ module.exports = {
 
         const link = await database.checkForLink(userID)
 
-        if (link.length < 1) {
+        console.log(link)
+
+        if (!link) {
             m.react('❎')
             return m.channel.send(`You have no linked account to unlink! Please use \`${config.prefix}link [username]\` to link an account!`)
         }
 
-        const userInfo = link[0]
+        const userInfo = link
 
         database.deleteLink(userID, userInfo, m)
     }

@@ -24,7 +24,7 @@ module.exports = {
         const userInfo = await functions.getUser(userId)
 
         if (userInfo === undefined)
-            return m.channel.send('that username does not exist! Please try again.')
+            return
 
         const currentDate = Date.now()
 

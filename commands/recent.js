@@ -25,7 +25,7 @@ module.exports = {
         }
         
         if (user.length >  0)
-            username = user[0].osuId
+            username = user.osuId
         
         if (!username){
             m.react('❎')
@@ -37,7 +37,7 @@ module.exports = {
         const userInfo = await functions.getUser(username)
 
         if (!userInfo)
-            return m.channel.send('That username does not exist! Please try again.')
+            return m.channel.send(`The username \`${username}\` does not exist! Please try again 🙂`)
 
         const recent = (await functions.getUserRecent(userInfo.username))[0]
 

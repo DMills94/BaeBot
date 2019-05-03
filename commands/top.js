@@ -25,7 +25,7 @@ module.exports = {
         }
         
         if (user.length >  0)
-            username = user[0].osuId
+            username = user.osuId
         
         if (!username) {
             m.react('❎')
@@ -37,8 +37,8 @@ module.exports = {
 
         if (!userInfo) {
             m.react('❎')
-            return m.channel.send('That username does not exist! Please try again.')
-        }
+            return m.channel.send(`The username \`${username}\` does not exist! Please try again 🙂`)
+         }
         
         let topPlays = await functions.getUserTop(username, plays)
 

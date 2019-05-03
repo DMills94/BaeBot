@@ -113,7 +113,7 @@ exports.checkForLink = discordid => {
     return new Promise(resolve => {
         db.linkedUsers.find({ discordid }, (err, docs) => {
             if (err) console.error(err)
-            resolve(docs)
+            resolve(docs[0])
         })
     })
 }
