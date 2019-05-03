@@ -10,7 +10,7 @@ module.exports = {
             .setColor('#fd0000')
             .setThumbnail('https://vignette.wikia.nocookie.net/logopedia/images/d/d3/Osu%21Logo_%282015%29.png/revision/latest/scale-to-width-down/480?cb=20180326010029')
             .setAuthor('osu! related commands • Contact @Bae#3308 with any issues')
-            .addField(`${prefix}compare [USER_NAME]`, 'Compares the users best score on the last beatmap posted.')
+            .addField(`${prefix}compare [USER_NAME] [+MODS] [-all]`, 'Compares the users best score on the last beatmap posted.\nCan use `-all` to view all scores, or (eg) `+HD` to view mod specific scores!')
             .addField(`${prefix}link/unlink [USER_NAME]`, 'Links/Unlinks your discord account to an osu! username')
             .addField(`${prefix}recent/r [USER_NAME]`, 'Displays the users most recent play (within 24 hours)')
             .addField(`${prefix}rb [USER_NAME] / rb[x] [USER_NAME]`, 'Shows the users recent best score, or X recent best where X is an integer between 1 and 100.')

@@ -7,7 +7,7 @@ module.exports = {
     name: 'top',
     description: 'Displays users top 5 plays',
     async execute(m, args, emojis, plays, top5) {
-        let user = []
+        let user
         let username
 
         if (args.length === 0) {

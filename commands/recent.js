@@ -7,7 +7,7 @@ module.exports = {
     name: 'recent',
     description: `Returns a user's most recent play`,
     async execute(m, args, emojis) {
-        let user = []
+        let user
         let username
 
         if (args.length === 0) {

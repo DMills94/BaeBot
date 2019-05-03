@@ -26,7 +26,7 @@ module.exports = {
                 args.splice(arg, 1)
                 compMods = true
             }
-            else if (args[arg] === "--all") {
+            else if (args[arg] === '-all') {
                 args.splice(arg, 1)
                 compareAll = true
             }
@@ -62,14 +62,14 @@ module.exports = {
 
         const userInfo = await functions.getUser(username)
 
-        if (!userInfo){
+        if (!userInfo) {
             m.react('❎')
             return m.channel.send('The username provided doesn\'t exist! Please try again.')
         }
 
         const userScores = await functions.getScores(prevBeatmap.beatmap.beatmap_id, username)
 
-        if (userScores.length < 1){
+        if (userScores.length < 1) {
             m.react('❎')
             return m.channel.send('Go play the map first, dumb bitch \:speech_balloon: Belial 2018')
         }
@@ -113,7 +113,7 @@ module.exports = {
 
                 embed.addField(
                     `**[${score.enabled_mods}]**${mapRank ? `\t\t\:medal: Map Rank __#${mapRank}__` : ''}${score.playNumber ? `\t\t \:clap: Personal Best __#${score.playNumber}__` : ''}`,
-                    `${rankImage} | ${score.maxcombo === prevBeatmap.beatmap.max_combo ? '**' + score.maxcombo + '**' : score.maxcombo}/**${prevBeatmap.beatmap.max_combo}x** • ${accuracy}% • ${ppInfo.formattedPerformancePP}/${ppInfo.formattedMaxPP}pp`
+                    `${rankImage} | ${score.maxcombo === prevBeatmap.beatmap.max_combo ? `**${score.maxcombo}**` : score.maxcombo}/**${prevBeatmap.beatmap.max_combo}x** • ${accuracy === '100.00' ? `**100.00%** • **${ppInfo.formattedMaxPP}**` : `${accuracy}% • ${ppInfo.formattedPerformancePP}`}/**${ppInfo.formattedMaxPP}pp**`
                 )
             }
             

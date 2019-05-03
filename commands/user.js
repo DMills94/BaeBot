@@ -9,7 +9,7 @@ module.exports = {
     async execute(m, args, emojis) {
 
         let username
-        let user = []
+        let user
         let more = false
         let embed
 
