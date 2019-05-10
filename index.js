@@ -114,13 +114,13 @@ client.on('message', async message => {
         //If specific top play remove numbers
         if (commandName.includes('top') && commandName.length > 3) {
             if (commandName.startsWith('osutop'))
-                return message.channel.send(`Excuse me?! This isn\'t owo \:angry:\nTry using \`${config.prefix}top\` or \`${config.prefix}topx\` where \`x\` is a number between 1 and 100`)
+                return message.channel.send(`Excuse me?! This isn't owo \:angry:\nTry using \` ${config.prefix}top\` or \` ${config.prefix}top[x]\` where \`x\` is a number between 1 and 100`)
             playNum = parseInt(commandName.slice(3))
             if (playNum < 1 || playNum > 100) {
-                return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}topx\``)
+                return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}top[x]\``)
             }
             if (!Number.isInteger(playNum))
-                return message.channel.send(`Not quite! Try again with the following format \`${config.prefix}topx\` where \`x\` is a number between 1 and 100, or \`${config.prefix}top\` to view the users top 5!`)
+                return message.channel.send(`Not quite! Try again with the following format \` ${config.prefix}top[x]\` where \`x\` is a number between 1 and 100, or \` ${config.prefix}top\` to view the users top 5!`)
             commandName = 'top'
             top5 = false
         } else if (commandName.includes('top')) {
@@ -133,7 +133,7 @@ client.on('message', async message => {
                 return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}rb[x]\``)
             }
             if (!Number.isInteger(playNum))
-                return message.channel.send(`Please use the follow format \`${config.prefix}rb[x]\` where \`x\` is a number between 1 and 100!`)
+                return message.channel.send(`Please use the follow format \` ${config.prefix}rb[x]\` where \`x\` is a number between 1 and 100!`)
             commandName = 'rb'
         } else if (commandName.includes('rb')) {
             playNum = 1
@@ -204,6 +204,13 @@ client.on('message', async message => {
         const emojis = client.guilds.find('id', config.privServer).emojis
         client.commands.get('recognise user').execute(message, uI, emojis)
         functions.logCommand(client.channels, message, 'Recognise User', 'command')
+    }
+
+    // MP recognition
+    if (uI.match(/https?:\/\/(osu|new).ppy.sh\/community\/matches\//i) || uI.match(/https?:\/\/(osu|new).ppy.sh\/mp\//i)) {
+        const emojis = client.guilds.find('id', config.privServer).emojis
+        client.commands.get('recognise multi').execute(message, uI, emojis)
+        functions.logCommand(client.channels, message, 'Recognise MP', 'command')
     }
 })
 
