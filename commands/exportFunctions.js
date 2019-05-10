@@ -292,12 +292,22 @@ customExports.logCommand = (client, message, command, type, args = []) => {
 
         if (args.length > 0)
             embed.addField('Arguments', args.join(' '))
+
         client.get(logChannel).send({ embed: embed })
 
     }
     else if (type === 'track') {
         embed = args
         client.get(trackChannel).send(`Posted in \`${client.get(message).guild.name}\` -> \`${client.get(message).name}\`:`, { embed: embed })
+    }
+    else {
+        console.log('not message')
+        embed
+            .setColor('#964B00')
+            .setAuthor(`BOT HAS RESTARTED`, 'https://cdn2.iconfinder.com/data/icons/circle-icons-1/64/power-512.png')
+            .setFooter(`${date} at ${time}`)
+        
+        client.channels.get(logChannel).send({ embed: embed })
     }
 
 }

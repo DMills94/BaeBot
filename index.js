@@ -17,6 +17,7 @@ for (const file of commandFiles) {
 
 client.on('ready', async () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`)
+    functions.logCommand(client)
     const devMode = await database.getDevMode()
 
     if (devMode) {
