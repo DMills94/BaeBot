@@ -599,12 +599,12 @@ exports.countryTrackUpdate = (client) => {
 
                                 // the new User wasn't in the previous top 100
                                 if (!oldTop50.includes(newUserId)) {
+                                    for (let i = newRank - 1; i < properties.limit; i++) {
+                                        playersPassed += `[${docs[countryObj].players[i].username}](https://osu.ppy.sh/users/${docs[countryObj].players[i].userId})\n`
+                                    }
+                                    
                                     for (const [channel, properties] of channels) {
                                         if (newRank <= properties.limit && properties.rankUpdates) {
-
-                                            for (let i = newRank - 1; i < properties.limit; i++) {
-                                                playersPassed += `[${docs[countryObj].players[i].username}](https://osu.ppy.sh/users/${docs[countryObj].players[i].userId})\n`
-                                            }
 
                                             const embed = new Discord.RichEmbed()
                                                 .setColor('#FFD700')
