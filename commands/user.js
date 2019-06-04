@@ -73,52 +73,69 @@ module.exports = {
             let scores = 0
             const message = await m.channel.send(`Processing top scores for \`${userInfo.username}\`, this can take a while... | \`${scores}/100\``)
 
-            let maxPP = 0
-            let minPP = 0
-            let ppRange = 0
-            let ppAvg = 0
+            let maxPP
+            let minPP
+            let ppRange
+            let ppAvg
             let zeroMiss= 0
-            let cumulativePP = 0
+            let cumulativePP
             let ppPerPlay
-            let totalMapLength = 0
-            let avgLengthMin = 0
-            let avgLengthSec = 0
-            let totalMapCombo = 0
+            let totalMapLength
+            let avgLengthMin
+            let avgLengthSec
+            let totalMapCombo
             let avgCombo
+            let top100
 
-            const top100 = await functions.getUserTop(username, 100)
+            try {
+                top100 = await functions.getUserTop(username, 100)
+            }
+            catch(err) {
+                message.edit(`Something went wrong! \:sob: Please try again!`)
+                return setTimeout(() => {
+                    message.delete()
+                }, 10000);
+            }
 
             maxPP = parseFloat(top100[0].pp).toFixed(2)
             minPP = parseFloat(top100[top100.length-1].pp).toFixed(2)
             ppRange = (maxPP - minPP).toFixed(2)
 
-            for (let play in top100) {
-                const beatmapInfoRaw = await functions.getBeatmap(top100[play].beatmap_id)
-                const beatmapInfo = beatmapInfoRaw[0]
+            try {
+                for (let play in top100) {
+                    const beatmapInfoRaw = await functions.getBeatmap(top100[play].beatmap_id)
+                    const beatmapInfo = beatmapInfoRaw[0]
 
-                const enabledMods = await functions.determineMods(top100[play])
+                    const enabledMods = await functions.determineMods(top100[play])
 
-                cumulativePP += parseFloat(top100[play].pp)
-                
-                if (enabledMods.includes('DT') || enabledMods.includes('NC')) {
-                    totalMapLength += parseInt(beatmapInfo.total_length / 1.5)
+                    cumulativePP += parseFloat(top100[play].pp)
+                    
+                    if (enabledMods.includes('DT') || enabledMods.includes('NC')) {
+                        totalMapLength += parseInt(beatmapInfo.total_length / 1.5)
+                    }
+                    else if (enabledMods.includes('HT')) {
+                        totalMapLength += parseInt(beatmapInfo.total_length * (1 + 1 / 3))
+                    }
+                    else {
+                        totalMapLength += parseInt(beatmapInfo.total_length)
+                    }
+
+                    totalMapCombo += parseInt(beatmapInfo.max_combo)
+
+                    if (top100[play].perfect === '1')
+                        zeroMiss++
+
+                    scores = scores + 1
+
+                    if (scores % 8 === 0)
+                        message.edit(`Processing top scores for \`${userInfo.username}\`, this can take a while... | \`${scores}/100\``)
                 }
-                else if (enabledMods.includes('HT')) {
-                    totalMapLength += parseInt(beatmapInfo.total_length * (1 + 1 / 3))
-                }
-                else {
-                    totalMapLength += parseInt(beatmapInfo.total_length)
-                }
-
-                totalMapCombo += parseInt(beatmapInfo.max_combo)
-
-                if (top100[play].perfect === '1')
-                    zeroMiss++
-
-                scores = scores + 1
-
-                if (scores % 8 === 0)
-                    message.edit(`Processing top scores for \`${userInfo.username}\`, this can take a while... | \`${scores}/100\``)
+            }
+            catch(err) {
+                message.edit('Seems there was an issue processing your top plays! \:sob: Please try again!')
+                return setTimeout(() => {
+                    message.delete()
+                }, 10000);
             }
 
             zeroMissPerc = zeroMiss / top100.length * 100
@@ -143,7 +160,7 @@ module.exports = {
                 )
                 .addField(
                     `More Stats for ${userInfo.username}`, 
-                    `[osu!track](https://ameobea.me/osutrack/user/${userInfo.username.split(' ').join('_')}) • [osu!stats](https://osustats.ppy.sh/u/${userInfo.username.split(' ').join('_')}) • [osu!skills](http://osuskills.com/user/${userInfo.username}) • [osu!chan](https://syrin.me/osuchan/u/${userInfo.user_id}) • [pp+](https://syrin.me/pp+/u/${userInfo.user_id})`
+                    `[osu!track](https://ameobea.me/osutrack/user/${userInfo.username.split(' ').join('_')}) • [osu!stats](https://osustats.ppy.sh/u/${userInfo.username.split(' ').join('_')}) • [osu!skills](http://osuskills.com/user/${userInfo.username.split(' ').join('_')}) • [osu!chan](https://syrin.me/osuchan/u/${userInfo.user_id}) • [pp+](https://syrin.me/pp+/u/${userInfo.user_id})`
                 )
                 .setFooter(`• Try [[ ${prefix}user ]] for account stats`)
 
