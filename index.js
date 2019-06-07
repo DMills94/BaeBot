@@ -190,7 +190,12 @@ client.on('message', async message => {
     }
 
     if (uI === 'bad bot' || uI === 'badbot') {
-        message.channel.send(`<@${config.baeID}> i'm being bullied \:sob:`)
+        if (message.author.id === config.baeID) {
+            message.channel.send('I\'m sorry master, shall I grab the belt \:flushed:')
+        }
+        else {
+            message.channel.send(`<@${config.baeID}> i'm being bullied \:sob:`)
+        }
     }
 
     // Beatmap recognition
