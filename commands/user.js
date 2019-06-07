@@ -76,19 +76,14 @@ module.exports = {
             let maxPP
             let minPP
             let ppRange
-            let ppAvg
-            let zeroMiss= 0
-            let cumulativePP
-            let ppPerPlay
-            let totalMapLength
-            let avgLengthMin
-            let avgLengthSec
-            let totalMapCombo
-            let avgCombo
+            let zeroMiss = 0
+            let cumulativePP = 0
+            let totalMapLength = 0
+            let totalMapCombo = 0
             let top100
 
             try {
-                top100 = await functions.getUserTop(username, 100)
+                top100 = await functions.getUserTop(userInfo.username, 100)
             }
             catch(err) {
                 message.edit(`Something went wrong! \:sob: Please try again!`)
@@ -138,12 +133,11 @@ module.exports = {
                 }, 10000);
             }
 
-            zeroMissPerc = zeroMiss / top100.length * 100
-            ppAvg = (cumulativePP / top100.length).toFixed(2)
-            ppPerPlay = parseFloat(cumulativePP / parseInt(userInfo.playcount)).toFixed(2)
-            avgLengthMin = Math.floor((totalMapLength / top100.length) / 60)
-            avgLengthSec = Math.round((totalMapLength / top100.length) - avgLengthMin * 60)
-            avgCombo = totalMapCombo / top100.length
+            const ppAvg = (cumulativePP / top100.length).toFixed(2)
+            const ppPerPlay = parseFloat(cumulativePP / parseInt(userInfo.playcount)).toFixed(2)
+            const avgLengthMin = Math.floor((totalMapLength / top100.length) / 60)
+            const avgLengthSec = Math.round((totalMapLength / top100.length) - avgLengthMin * 60)
+            const avgCombo = totalMapCombo / top100.length
 
 
             if (avgLengthSec < 10) {
