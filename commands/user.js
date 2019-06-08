@@ -136,7 +136,7 @@ module.exports = {
             const ppAvg = (cumulativePP / top100.length).toFixed(2)
             const ppPerPlay = parseFloat(cumulativePP / parseInt(userInfo.playcount)).toFixed(2)
             const avgLengthMin = Math.floor((totalMapLength / top100.length) / 60)
-            const avgLengthSec = Math.round((totalMapLength / top100.length) - avgLengthMin * 60)
+            let avgLengthSec = Math.round((totalMapLength / top100.length) - avgLengthMin * 60)
             const avgCombo = totalMapCombo / top100.length
 
 
