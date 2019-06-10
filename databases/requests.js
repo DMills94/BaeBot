@@ -610,7 +610,7 @@ exports.countryTrackUpdate = (client) => {
                                                 .setColor('#FFD700')
                                                 .setAuthor(`Welcome to the top ${properties.limit} ${userInfo.username}!: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, undefined, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                                                 .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
-                                                .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.userId})__** has entered the \:flag_${userInfo.country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada:`)
+                                                .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.user_id})__** has entered the \:flag_${userInfo.country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada:`)
                                                 .addField(
                                                     `**New Rank:** ${newRank}`,
                                                     `\:man_dancing:**__Players passed__** \:dancer:\n${playersPassed}`
