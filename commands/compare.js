@@ -89,7 +89,7 @@ module.exports = {
 
 
             for (let [index, score] of userScores.entries()) {
-                score.enabled_mods = functions.determineMods(score)
+                score.enabled_mods = functions.determineMods(score.enabled_mods)
                 if (score.enabled_mods === '')
                     score.enabled_mods = 'Nomod'
                 else
@@ -161,7 +161,7 @@ module.exports = {
 
         const mapRank = await functions.checkMapRank(score, prevBeatmap.beatmap.beatmap_id)
 
-        score.enabled_mods = functions.determineMods(score)
+        score.enabled_mods = functions.determineMods(score.enabled_mods)
 
         score.accuracy = functions.determineAcc(score)
 
