@@ -282,13 +282,18 @@ customExports.logCommand = (client, message, command, type, args = []) => {
     let embed = new Discord.RichEmbed()
     
     if (type === 'command') {
+
         embed
             .setColor('#964B00')
-            .setAuthor(`Server: ${message.channel.guild.name}`, message.channel.guild.iconURL)
             .setTitle(`Command: ${command.toUpperCase()}`)
             .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
             .setDescription(`Executed By: **${message.author.username}#${message.author.discriminator}**`)
             .setFooter(`${date} at ${time}`, message.author.avatarURL)
+
+        if (message.channel.guild)
+            embed.setAuthor(`Server: ${message.channel.guild}`, message.channel.guild.iconURL)
+        else 
+            embed.setAuthor('Direct Message')
 
         if (args.length > 0)
             embed.addField('Arguments', args.join(' '))
