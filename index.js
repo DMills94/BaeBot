@@ -44,7 +44,7 @@ client.on('ready', async () => {
                     .setFooter('Contact @Bae#3308 with any issues')
 
                 msg.edit({ embed })
-                    .catch(() => console.error('RUNNING BOT IN TEST MODE'))
+                    .catch(() => console.error('\x1b[41m%s\x1b[0m', 'RUNNING BOT IN TEST MODE'))
             })
     }
     catch(err) {
@@ -55,9 +55,11 @@ client.on('ready', async () => {
 
     //Check bot hasn't left any servers, if so remove their db entries
     console.log('Starting tracking..')
-    tracking(emojis, false)
-    tracking(emojis, true)
+    tracking(emojis, 'user')
+    tracking(emojis, 'country')
+    tracking(emojis, 'global')
     database.countryTrackUpdate(client.channels)
+    database.globalTrackUpdate(client.channels)
 })
 
 client.on('error', err => {
@@ -226,32 +228,32 @@ client.on('guildDelete', guild => {
     database.deleteGuild(guild)
 })
 
-async function tracking(emojis, country) {
+async function tracking(emojis, trackType) {
 
     // Start the loop to repeat the check for new scores
     let timeout = 150000 // Timeout for user tracking
-    if (country)
+    if (trackType !== 'user')
         timeout = 900000
 
 
     setTimeout(() => {
-        tracking(emojis, country)
+        tracking(emojis, trackType)
     }, timeout)
 
-    const newScores = await client.commands.get('getTrackScores').execute(country)
+    const newScores = await client.commands.get('getTrackScores').execute(trackType)
 
     const currentTime = new Date()
     const date = currentTime.toDateString().slice(4, 10)
     const time = currentTime.toTimeString().slice(0, 9)
 
     if (newScores.length > 0) {
-        console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} ${newScores.length} new scores detected...: ${date} at ${time}`)
+        console.log('\x1b[33m%s\x1b[0m', `[${trackType.toUpperCase()} TRACKING] ${newScores.length} new scores detected...: ${date} at ${time}`)
 
         for (let score in newScores) {
-            client.commands.get('postnew').execute(newScores[score], emojis, client.channels, country)
+            client.commands.get('postnew').execute(newScores[score], emojis, client.channels, trackType)
         }
     } else {
-        console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No new scores detected: ${date} at ${time}`)
+        console.log('\x1b[33m%s\x1b[0m', `[${trackType.toUpperCase()} TRACKING] No new scores detected: ${date} at ${time}`)
     }
 }
 
