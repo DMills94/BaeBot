@@ -23,10 +23,11 @@ module.exports = {
                 .setTitle('Commands')
                 .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
                 .addField('-help/-h', 'Hey, you\'re already here!')
-                .addField('-add/-a [osu username] [t=x],[osu username]...', 'Adds a user(s) to be tracked, separated by a comma. t=x optional, default is 100.')
-                .addField('-delete/-d [osu username]', 'Removes a user from being tracked')
-                .addField('-c [country code] [l=x] [t=x]', 'Adds a country to tracking! options: l=\'x\' only track the top x of the country, default: 10 | t=\'x\' track the top x plays of the players, default: 100')
                 .addField('-list/-l', 'List the users/countries currently being tracked')
+                .addField('**[USER]** 👉 -add/-a [osu username] [t=x],[osu username]...', 'Adds a user(s) to be tracked, separated by a comma\n**Options**\n\`t=x\` - track the top x players for this user, default: \`100\`')
+                .addField('**[USER]** 👉 -delete/-d [osu username]', 'Removes a user from being tracked')
+                .addField('**[COUNTRY]** 👉 -c [-d] [country code] [l=x] [t=x]', 'Adds a country to tracking!\n**Options**\n\`-d\` - Delete the [country] from tracking\n\`l=x\` - only track the top x of the country, default: \`10\`\n\`t=x\` - track the top x plays of the players, default: \`100\`')
+                .addField('**[GLOBAL]** 👉 -g [-d] [l=x] [t=x]', 'Enable global tracking in this channel\n**Options**\n\`-d\` - Disable global tracking\n\`l=x\` - only track the top x players (Max 50), default: \`10\`\n\`t=x\` - track the top x plays of the players, default: \`100\`')
                 .setFooter(`These commands are ADMIN ONLY`)
 
             m.channel.send({ embed })
@@ -104,6 +105,31 @@ module.exports = {
                     database.addCountryTrack(country, m, filters)
                 }
             }
+        }
+        else if (args[0] === '-global' || args[0] === '-g') {
+            let filters = {
+                top: 100,
+                limit: 10
+            }
+            
+            for (let arg in args) {
+                if (args[arg].startsWith('l=')) {
+                    const value = Number(args[arg].slice(2))
+                    if (Math.round(Number(value)) > 50 || Math.round(Number(value)) < 1 || !value)
+                        return m.channel.send(`Currently we only track up to the global \`top 50\`! Please enter a limit between \`1\` and \`50\`!`)
+                    filters.limit = value
+                    continue
+                }
+                else if (args[arg].startsWith('t=')) {
+                    const value = Number(args[arg].slice(2))
+                    if (Math.round(Number(value)) > 100 || Math.round(Number(value)) < 1 || !value)
+                        return m.channel.send(`Please enter a top player number between \`1\` and \`100\` plays!`)
+                    filters.top = value
+                }
+            }
+
+            database.toggleGlobalTrack(m, !args.includes('-d'), filters)
+            
         }
         else if (args[0] === '-add' || args[0] === '-a') {
             args.shift()
@@ -231,12 +257,12 @@ module.exports = {
                 }
             })
 
-            if (usernameArr.length < 1 && countriesArr.length < 1) {
-                trackedText += `There are no tracked users \:robot: or countries \:earth_africa: in this channel!`
+            if (usernameArr.length < 1 && countriesArr.length < 1 && !trackList.global) {
+                trackedText += `There are no users 🤖, countries 🏳️ OR global ranks 🌍 being tracked in this channel!`
             }
             else {
                 if (usernameArr.length < 1)
-                    trackedText += `There are no tracked users \:robot: in this channel!\n\n`
+                    trackedText += 'There are no tracked users 🤖 in this channel!\n\n'
                 else {
                     usernameArr.sort((a, b) => (a.username.toUpperCase() > b.username.toUpperCase()) ? 1 : ((b.username.toUpperCase() > a.username.toUpperCase()) ? -1 : 0))
 
@@ -250,17 +276,23 @@ module.exports = {
                 }
                 
                 if (countriesArr.length < 1)
-                    trackedText += `There are no tracked countries \:earth_africa: in this channel!`
+                    trackedText += 'There are no tracked countries 🏳️ in this channel!\n\n'
                 else {
                     countriesArr.sort((a, b) => (a.country.toUpperCase() > b.country.toUpperCase()) ? 1 : ((b.country.toUpperCase() > a.country.toUpperCase()) ? -1 : 0))
 
-                    trackedText += `__List of tracked countries in this channel__\n\`\`\``
+                    trackedText += '__List of tracked countries in this channel__\n\`\`\`'
                     
                     for (let country in countriesArr) {
                         trackedText += `\n - Top: ${(countriesArr[country].limit.limit).toString().length === 2 ? countriesArr[country].limit.limit + ' ' : countriesArr[country].limit.limit} | ${countriesArr[country].country}`
                     }
                     
                     trackedText += '```\n\n'
+                }
+
+                if (!trackList.global)
+                    trackedText += 'Global tracking 🌍 is currently __**disabled**__ ❎ in this channel!'
+                else {
+                    trackedText += `Global tracking 🌍 is currently __**enabled**__ ✅ in this channel for the top \`${trackList.global.limit}\`'s top \`${trackList.global.top}\` plays!`
                 }
             }
 

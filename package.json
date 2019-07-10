@@ -11,9 +11,10 @@
     "dependencies": {
         "axios": "^0.19.0",
         "discord.js": "^11.3.2",
+        "lodash": "^4.17.11",
         "nedb": "^1.8.0",
         "node-html-parser": "^1.1.11",
-        "npm": "^6.9.0",
+        "npm": "^6.10.0",
         "ojsama": "^1.2.1"
     },
     "devDependencies": {},

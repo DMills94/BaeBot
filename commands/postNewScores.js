@@ -5,7 +5,7 @@ const database = require('../databases/requests.js')
 module.exports = {
     name: 'postnew',
     description: 'Posts new scores from updating a users top 100',
-    async execute(score, emojis, client, country) {
+    async execute(score, emojis, client, trackType) {
 
         //API Calls
         const userInfo = await functions.getUser(score.user_id)
@@ -20,30 +20,33 @@ module.exports = {
         }
 
         const newPP = userInfo.pp_raw
-        let userDB
+        let trackdb
 
-        if (country) {
-            countryDB = await database.countryTracks(userInfo.country)
+        if (trackType === 'country') {
+            const countrydb = await database.countryTracks(userInfo.country)
 
-            for (let count in countryDB) {
-                if (countryDB[count].username = userInfo.username)
-                    userDB = countryDB[count]
+            for (let country in countrydb) {
+                if (countrydb[country].username === userInfo.username) {
+                    trackdb = countrydb[country]
                     break
+                }
             }
         }
-        else {
-            userDB = await database.userTrack(userInfo.username)
+        else if (trackType === 'global') {
+            trackdb = (await database.globalTracks())[0]
+        }
+        else if (trackType === 'user') {
+            trackdb = await database.userTrack(userInfo.username)
         }
 
         let oldPP
-        
-        if (country) {
-            oldPP = userDB.players.filter(player => {
-                return player.username === userInfo.username
-            })[0].pp
+        if (trackType === 'user') {
+            oldPP = trackdb.pp
         }
         else {
-            oldPP = userDB.pp
+            oldPP = trackdb.players.filter(player => {
+                return player.username === userInfo.username
+            })[0].pp
         }
 
         if (!oldPP)
@@ -100,16 +103,23 @@ module.exports = {
             .setFooter(`${mapStatus} • Beatmap by ${beatmapInfo.creator} • ${mapStatus == 'Ranked' ? 'Ranked on' : 'Last updated'} ${formatUpdateDate}`)
 
         //Send embed to channels where user tracked
-        const usersTrackedChannels = userDB.channels
+        const usersTrackedChannels = trackdb.channels
 
         Object.keys(usersTrackedChannels).forEach(channel => {
             if (score.playNumber <= usersTrackedChannels[channel] || score.playNumber <= usersTrackedChannels[channel].top) {
-                if (country) {
-                    if (userInfo.pp_country_rank <= usersTrackedChannels[channel].limit)
+                if (trackType === 'country') {
+                    if (userInfo.pp_country_rank <= usersTrackedChannels[channel].limit) {
                         client.get(channel).send({ embed })
                         functions.logCommand(client, channel, 'Tracking', 'track', embed)
+                    }
                 }
-                else {
+                else if (trackType === 'global') {
+                    if (userInfo.pp_rank <= usersTrackedChannels[channel].limit) {
+                        client.get(channel).send({ embed })
+                        functions.logCommand(client, channel, 'Tracking', 'track', embed)
+                    }
+                }
+                else if (trackRType === 'user') {
                     client.get(channel).send({ embed })
                     functions.logCommand(client, channel, 'Tracking', 'track', embed)
                 }
@@ -118,6 +128,6 @@ module.exports = {
         })
         
         // Update pp for user
-        database.updateTrack(userInfo, null, newPP, country)
+        database.updateTrack(userInfo, null, newPP, trackType)
     }
 }

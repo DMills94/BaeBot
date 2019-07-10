@@ -3,6 +3,8 @@ const Discord = require('discord.js')
 const axios = require('axios')
 const HTMLParser = require('node-html-parser')
 const functions = require('../commands/exportFunctions')
+const { prefix } = require('../config.json')
+const _ = require('lodash')
 
 let db = {}
 
@@ -12,9 +14,11 @@ db.linkedUsers = new Datastore({ filename: './databases/stores/links', autoload:
 db.servers = new Datastore({ filename: './databases/stores/servers', autoload: true })
 db.track = new Datastore({ filename: './databases/stores/track', autoload: true })
 db.countryTrack = new Datastore({ filename: './databases/stores/countryTrack', autoload: true })
+db.globalTrack = new Datastore({ filename: './databases/stores/globalTrack', autoload: true })
 
-db.countryTrack.persistence.setAutocompactionInterval(43200000)
 db.track.persistence.setAutocompactionInterval(43200000)
+db.countryTrack.persistence.setAutocompactionInterval(43200000)
+db.globalTrack.persistence.setAutocompactionInterval(43200000)
 
 //Dev Mode
 exports.addDevMode = () => {
@@ -352,19 +356,27 @@ exports.trackList = channelid => {
 
             tracks['users'] = docs
 
-            db.countryTrack.find({ $where: function() { return Object.keys(this.channels).includes(channelid) } }, (err, docs2) => {
-                if (err) console.error(err)
+            db.countryTrack.find({ $where: function() { return Object.keys(this.channels).includes(channelid) } }, (err2, docs2) => {
+                if (err2) console.error(err2)
 
                 tracks['countries'] = docs2
 
-                resolve(tracks)
+                db.globalTrack.find({ $where: function () { return Object.keys(this.channels).includes(channelid) } }, (err3, docs3) => {
+                    if (err3) console.error(err3)
+
+                    tracks['global'] = docs3.length > 0
+                        ? docs3[0].channels[channelid]
+                        : false
+
+                    resolve(tracks)
+                })
             })
         })
     })
 }
 
-exports.updateTrack = (userInfo, scoreDates, pp, country) => {
-    if (!country) {
+exports.updateTrack = (userInfo, scoreDates, pp, trackType) => {
+    if (trackType === 'user') {
         if (scoreDates !== null) { // Updates top 100 scores for an Individual
             db.track.update({ userId: userInfo.user_id }, { $set: { username: userInfo.username, userBest: scoreDates } }, {}, err => {
                 if (err) console.error(err)
@@ -376,8 +388,12 @@ exports.updateTrack = (userInfo, scoreDates, pp, country) => {
             })
         }
 }
-    else if (country) { // Country tracking updates
-        db.countryTrack.find({ 'players.username': userInfo.username }, (err, docs) => {
+    else if (trackType === 'country' || trackType === 'global') { // Country tracking updates
+        databases = {
+            country: db.countryTrack,
+            global: db.globalTrack
+        }
+        databases[trackType].find({ 'players.username': userInfo.username }, (err, docs) => {
             if (err) console.error(err)
             const playersInfo = [ ...docs[0].players ]
 
@@ -388,7 +404,7 @@ exports.updateTrack = (userInfo, scoreDates, pp, country) => {
                         break
                     }
                 }
-                db.countryTrack.update({ 'players.username': userInfo.username }, { $set: { players: playersInfo } }, {}, err => {
+                databases[trackType].update({ 'players.username': userInfo.username }, { $set: { players: playersInfo } }, {}, err => {
                     if (err) console.error(err)
                 })
             }
@@ -399,7 +415,7 @@ exports.updateTrack = (userInfo, scoreDates, pp, country) => {
                         break
                     }
                 }
-                db.countryTrack.update({ 'players.username': userInfo.username }, { $set: { players: playersInfo } }, {}, err => {
+                databases[trackType].update({ 'players.username': userInfo.username }, { $set: { players: playersInfo } }, {}, err => {
                     if (err) console.error(err)
                 })
             }
@@ -539,7 +555,7 @@ exports.deleteCountryTrack = (country, channelID, m) => {
 }
 
 exports.countryTrackUpdate = (client) => {
-    console.log('[COUNTRY TRACKING] Checking for country tracks to update.')
+    console.log('\x1b[32m\x1b[0m', '[COUNTRY TRACKING] Checking for country tracks to update.')
 
     // Start the loop to check for updated player list
     setTimeout(() => {
@@ -591,14 +607,14 @@ exports.countryTrackUpdate = (client) => {
                             if (docs[countryObj].players[player].userId !== userArr[player].userId) {
                                 const channels = Object.entries(docs[countryObj].channels)
                                 const oldTop50 = docs[countryObj].players.map(user => user.userId)
-                                const newUserId = userArr[player].userId
-                                const userInfo = await functions.getUser(newUserId)
+                                const userId = userArr[player].userId
+                                const userInfo = await functions.getUser(userId)
                                 const newRank = Number(player) + 1
                                 const currentDate = Date.now()
                                 let playersPassed = ''
 
                                 // the new User wasn't in the previous top 100
-                                if (!oldTop50.includes(newUserId)) {
+                                if (!oldTop50.includes(userId)) {
                                     for (let i = newRank - 1; i < 50; i++) {
                                         playersPassed += `[${docs[countryObj].players[i].username}](https://osu.ppy.sh/users/${docs[countryObj].players[i].userId})\n`
                                     }
@@ -612,7 +628,7 @@ exports.countryTrackUpdate = (client) => {
                                                 .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
                                                 .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.user_id})__** has entered the \:flag_${userInfo.country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada:`)
                                                 .addField(
-                                                    `**New Rank:** ${newRank}`,
+                                                    `**New Country Rank:** ${newRank}`,
                                                     `\:man_dancing:**__Players passed__** \:dancer:\n${playersPassed}`
                                                 )
                                                 
@@ -622,7 +638,7 @@ exports.countryTrackUpdate = (client) => {
                                 }
                                 else { // the new User was in the previous top 100
                                     const oldRank = docs[countryObj].players.filter(player => {
-                                        return player.userId === newUserId
+                                        return player.userId === userId
                                     })[0].countryRank
                                     const rankChange = oldRank - newRank
         
@@ -635,7 +651,7 @@ exports.countryTrackUpdate = (client) => {
                                             if (newRank <= properties.limit && properties.rankUpdates) {
                                                 const embed = new Discord.RichEmbed()
                                                     .setColor('#00FF00')
-                                                    .setAuthor(`County rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                                    .setAuthor(`Global rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                                                     .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
                                                     .addField(
                                                         `**Country**: \:flag_${userInfo.country.toLowerCase()}:\nRanks gained: ${rankChange}\nNew Rank: ${newRank}`,
@@ -653,7 +669,7 @@ exports.countryTrackUpdate = (client) => {
 
                     db.countryTrack.update({ country }, { $set: { players: userArr } }, {}, err => {
                         if (err) console.error(err)
-                        console.log(`[COUNTRY TRACKING] Finished updating database for ${country}!`)
+                        console.log('\x1b[36m%s\x1b[0m', `[COUNTRY TRACKING] Finished updating database for ${country}!`)
                     })
                 })
                 .catch(err => console.error(err))
@@ -661,35 +677,171 @@ exports.countryTrackUpdate = (client) => {
     })
 }
 
+exports.globalTracks = () => {
+    return new Promise(resolve => {
+        db.globalTrack.find({}, (err, docs) => {
+            if (err) console.error(err)
+            resolve(docs)
+        })
+    })
+}
 
+exports.globalTrackUpdate = async client => {
+    console.log('\x1b[32m\x1b[0m', '[GLOBAL TRACKING] Updating Global tracking list')
 
+    // Start the loop to check for updated player list
+    setTimeout(() => {
+        exports.globalTrackUpdate(client)
+    }, 1800000)
 
-exports.toggleRankTrack = (m, channelID) => {
-    db.countryTrack.find({ $where: function() { return Object.keys(this.channels).includes(channelID) } }, (err, docs) => {
+    let userArr = []
+    const resp = await axios.get('rankings/osu/performance')
+    const parsed = HTMLParser.parse(resp.data)
+
+    let users = parsed.querySelectorAll('.js-usercard')
+    for (let user in users) {
+        const username = users[user].rawText.trim()
+        const userInfo = await functions.getUser(username)
+        const userBest = (await functions.getUserTop(username, 100)).map(play => play.date)
+        const userObj = {
+            username,
+            userId: userInfo.user_id,
+            userBest,
+            pp: userInfo.pp_raw,
+            globalRank: Number(user) + 1
+        }
+        userArr.push(userObj)
+    }
+
+    db.globalTrack.find({}, async (err, docs) => {
+        if (err) {
+            console.error('Issue retrieving global track DB.')
+            console.error(err)
+        }
+
+        const globalTrackList = docs[0]
+
+        // Check for rank changes
+        if (globalTrackList.players) {
+            const channels = globalTrackList.channels
+
+            for (let player in globalTrackList.players) {
+                // If player userId is different (aka moved in rankings)
+                if (globalTrackList.players[player].userId !== userArr[player].userId) {
+                    const oldTop50 = globalTrackList.players.map(user => user.userId)
+                    const userId = userArr[player].userId
+                    const userInfo = await functions.getUser(userId)
+                    const newRank = Number(player) + 1
+                    const currentDate = Date.now()
+                    let playersPassed = ''
+
+                    // the User wasn't in the previous top 100
+                    if (!oldTop50.includes(userId)) {
+                        for (let i = newRank - 1; i < 50; i++) {
+                            playersPassed += `[${globalTrackList.players[i].username}](https://osu.ppy.sh/users/${globalTrackList.players[i].userId})\n`
+                        }
+                        
+                        for (const [channel, properties] of Object.entries(channels)) {
+                            if (newRank <= properties.limit) {
+
+                                const embed = new Discord.RichEmbed()
+                                    .setColor('#FFD700')
+                                    .setAuthor(`Welcome to the top ${properties.limit} ${userInfo.username}!: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, undefined, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                    .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
+                                    .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.user_id})__** has entered the GLOBAL \:earth_africa: top \`${globalTrackList.channels[channel].limit}\`! \:tada:`)
+                                    .addField(
+                                        `**New Global Rank:** ${newRank}`,
+                                        `\:man_dancing:**__Players passed__** \:dancer:\n${playersPassed.length < 950 ? playersPassed : `${playersPassed.length} players`}`
+                                    )
+                                    
+                                client.get(channel).send({ embed })
+                            }
+                        }
+                    }
+                    else { // the User was in the previous top 100
+                        const oldRank = globalTrackList.players.filter(player => {
+                            return player.userId === userId
+                        })[0].globalRank
+                        const rankChange = oldRank - newRank
+
+                        if (rankChange > 0) {                                        
+                            for (let i = newRank - 1; i < oldRank - 1; i++) {
+                                playersPassed += `[${globalTrackList.players[i].username}](https://osu.ppy.sh/users/${globalTrackList.players[i].userId})\n`
+                            }
+
+                            for (const [channel, properties] of Object.entries(channels)) {
+                                if (newRank <= properties.limit) {
+                                    const embed = new Discord.RichEmbed()
+                                        .setColor('#00FF00')
+                                        .setAuthor(`Country rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                        .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
+                                        .addField(
+                                            `**Global**: \:earth_africa:\nRanks gained: ${rankChange}\nNew Rank: ${newRank}`,
+                                            `\:man_dancing:**__Players passed__** \:dancer:\n${playersPassed}`
+                                        )
+                                
+                                    client.get(channel).send({ embed })
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        db.globalTrack.update({}, { $set: { players: userArr } }, {}, err => {
+            if (err) console.error(err)
+            console.log('\x1b[36m%s\x1b[0m', '[GLOBAL TRACKING] Finished updating database!')
+        })
+    })
+}
+
+exports.toggleGlobalTrack = (m, enable, filters) => {
+    const channelID = m.channel.id
+    const enableText = enable ? 'enable' : 'disable'
+
+    db.globalTrack.find({}, async (err, docs) => {
         if (err) {
             console.error(err)
             m.react('❎')
-            return m.channel.send(`Unable to toggle rank tracking right now \:sob:`)
+            return m.channel.send(`Unable to ${enableText} global tracking right now \:sob:`)
         }
 
-        if (docs.length < 1) {
-            return m.channel.send(`Seems no countries are being tracked \:thinking:`)
+        const globalTrackInfo = docs[0]
+
+        const channels = globalTrackInfo.channels
+            ? {...globalTrackInfo.channels}
+            : {}
+
+        const channelFilters = channels[channelID] //Also says if channel already is in list
+        
+
+        if (enable) {
+            if (channelFilters && _.isEqual(channelFilters, filters))
+                return m.channel.send(':thinking: It seems this channel already posts global tracking scores')
+            
+            channels[channelID] = filters
+            }
+        else {
+            if (!channelFilters)
+                return m.channel.send(`You\'re not tracking global scores here! Try :point_right: \`${prefix}track -g\``)
+            
+            delete channels[channelID]
         }
 
-        for (let country in docs) {
-            let newChannels = docs[country].channels
-            newChannels[channelID].rankUpdates = !newChannels[channelID].rankUpdates
+        db.globalTrack.update({}, {$set: { channels }}, {}, err => {
+            if (err) {
+                console.error(err)
+                m.react('❎')
+                return m.channel.send(`Unable to ${enableText} global tracking right now \:sob:`)
+            }
 
-            db.countryTrack.update({ country: docs[country].country }, { $set: { channels: newChannels }}, {}, err => {
-                if (err) {
-                    console.error(err)
-                    m.react('❎')
-                    return m.channel.send(`Unable to toggle rank tracking right now \:sob:`)
-                }
-                m.react('✅')
-                return m.channel.send(`Country rank tracking has been \`${newChannels[channelID].rankUpdates ? 'enabled' : 'disabled'}\` \:tada:`)
-            })
-        }
+            if (enable)
+                m.channel.send(`:earth_africa: Global tracking has been enabled for the top \`${filters.limit}\` | Top play cap: \`${filters.top}\``)
+            else
+                m.channel.send(':earth_africa: Global tracking has been disabled!')
+
+        })
     })
 }
 

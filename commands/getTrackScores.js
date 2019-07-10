@@ -4,14 +4,14 @@ const functions = require('./exportFunctions.js')
 module.exports = {
     name: 'getTrackScores',
     description: 'Parse tracked users scores for new plays and post if new top',
-    async execute(country) {
+    async execute(trackType) {
         return new Promise(async resolve => {
             let changedScoresArray = []
             let counter = 0
             let trackdb = []
             let limits = []
 
-            if (country) {
+            if (trackType === 'country') {
                 const countryTrackdb = await database.countryTracks()
                 
                 limits = countryTrackdb.map(country => {
@@ -31,31 +31,48 @@ module.exports = {
                 }
                 
             }
-            else {
+            else if (trackType === 'global') {
+                const globalTrackdb = (await database.globalTracks())[0]
+
+                limits = 0
+                for (const filters of Object.values(globalTrackdb.channels)) {
+                    if (filters.limit > limits)
+                        limits = filters.limit
+                }
+
+                trackdb = globalTrackdb.players
+            }
+            else if (trackType === 'user') {
                 trackdb = await database.allTracks()
             }
 
             if (trackdb.length < 1)
-                return console.log(`${country ? '[COUNTRY TRACKING]' : '[TRACKING]'} No track entries.`)
+                return console.log('\x1b[33m%s\x1b[0m', `[${trackType.toUpperCase()} TRACKING] No track entries.`)
             
             for (let user in trackdb) {
                 const trackInfo = trackdb[user]
                 let trackUser = true
 
-                for (let lim of limits) {
-                    if (Object.keys(lim)[0] == trackInfo.country) {
-                        if (trackInfo.countryRank > lim[trackInfo.country]) {
-                            trackUser = false
-                            break
+                if (trackType === 'country') {
+                    for (let lim of limits) {
+                        if (Object.keys(lim)[0] == trackInfo.country) {
+                            if (trackInfo.countryRank > lim[trackInfo.country]) {
+                                trackUser = false
+                                break
+                            }
                         }
                     }
+                }
+                else if (trackType === 'global') {
+                    if (trackInfo.globalRank > limits)
+                        trackUser = false
                 }
 
                 if (!trackUser) {
                     counter++
 
                     if (counter === Object.keys(trackdb).length)
-                    resolve(changedScoresArray)
+                        resolve(changedScoresArray)
 
                     continue
                 }
@@ -75,9 +92,9 @@ module.exports = {
                 const msNow = Date.now()
 
                 for (let score in newTop100) {
-                    if (msNow - Date.parse(newTop100[score].date) > 86400000) {
-                        continue
-                    }
+                    // if (msNow - Date.parse(newTop100[score].date) > 86400000) {
+                    //     continue
+                    // }
 
                     let scoreMatch = false
 
@@ -91,7 +108,7 @@ module.exports = {
                     if (!scoreMatch) {
                         changedScoresArray.push(newTop100[score])
                         let dbTop100 = newTop100.map(top => top.date)
-                        database.updateTrack(userInfo, dbTop100, null, country)
+                        database.updateTrack(userInfo, dbTop100, null, trackType)
                     }
                 }
 
