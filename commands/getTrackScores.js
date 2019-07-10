@@ -92,9 +92,9 @@ module.exports = {
                 const msNow = Date.now()
 
                 for (let score in newTop100) {
-                    // if (msNow - Date.parse(newTop100[score].date) > 86400000) {
-                    //     continue
-                    // }
+                    if (msNow - Date.parse(newTop100[score].date) > 86400000) {
+                        continue
+                    }
 
                     let scoreMatch = false
 
