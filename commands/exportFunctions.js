@@ -106,13 +106,27 @@ customExports.getScores = (bmpId, username) => {
     })
 }
 
-customExports.determineMods = score => {
+customExports.getMultiplayer = id => {
+    return new Promise(resolve => {
+        axios.get('api/get_match', {
+            params: {
+                k: osuApiKey,
+                mp: id
+            }
+        })
+            .then(resp => {
+                resolve(resp.data)
+            })
+    })
+}
+
+customExports.determineMods = modVal => {
     let mods = ''
-    if (score.enabled_mods === '0') {
+    if (modVal === '0') {
         return mods = ''
     } else {
         for (let mod in modnames) {
-            if (score.enabled_mods & modnames[mod].val) {
+            if (modVal & modnames[mod].val) {
                 mods += modnames[mod].short
             }
         }

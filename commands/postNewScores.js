@@ -54,7 +54,7 @@ module.exports = {
 
         let updatedPP = (Number(newPP) - Number(oldPP)).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-        score.enabled_mods = functions.determineMods(score)
+        score.enabled_mods = functions.determineMods(score.enabled_mods)
 
         score.accuracy = functions.determineAcc(score)
 

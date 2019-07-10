@@ -52,7 +52,7 @@ module.exports = {
 
         const beatmapInfo = (await functions.getBeatmap(usersScore.beatmap_id))[0]
 
-        usersScore.enabled_mods = functions.determineMods(usersScore)
+        usersScore.enabled_mods = functions.determineMods(usersScore.enabled_mods)
 
         usersScore.accuracy = functions.determineAcc(usersScore)
         

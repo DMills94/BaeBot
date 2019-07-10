@@ -51,7 +51,7 @@ module.exports = {
 
         //Determine Mods used for topPlays
         for (let score in topPlays) {
-            topPlays[score].enabled_mods = functions.determineMods(topPlays[score])
+            topPlays[score].enabled_mods = functions.determineMods(topPlays[score].enabled_mods)
         }
 
         //Calculate accuracy

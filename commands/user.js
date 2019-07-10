@@ -101,7 +101,7 @@ module.exports = {
                     const beatmapInfoRaw = await functions.getBeatmap(top100[play].beatmap_id)
                     const beatmapInfo = beatmapInfoRaw[0]
 
-                    const enabledMods = await functions.determineMods(top100[play])
+                    const enabledMods = await functions.determineMods(top100[play].enabledMods)
 
                     cumulativePP += parseFloat(top100[play].pp)
                     
