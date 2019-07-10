@@ -54,12 +54,12 @@ client.on('ready', async () => {
     const emojis = client.guilds.find('id', config.privServer).emojis
 
     //Check bot hasn't left any servers, if so remove their db entries
-    console.log('Starting tracking..')
-    tracking(emojis, 'user')
-    tracking(emojis, 'country')
-    tracking(emojis, 'global')
-    database.countryTrackUpdate(client.channels)
-    database.globalTrackUpdate(client.channels)
+    // console.log('Starting tracking..')
+    // tracking(emojis, 'user')
+    // tracking(emojis, 'country')
+    // tracking(emojis, 'global')
+    // database.countryTrackUpdate(client.channels)
+    // database.globalTrackUpdate(client.channels)
 })
 
 client.on('error', err => {
