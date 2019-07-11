@@ -23,14 +23,7 @@ module.exports = {
         let trackdb
 
         if (trackType === 'country') {
-            const countrydb = await database.countryTracks(userInfo.country)
-
-            for (let country in countrydb) {
-                if (countrydb[country].username === userInfo.username) {
-                    trackdb = countrydb[country]
-                    break
-                }
-            }
+            trackdb = (await database.countryTracks(userInfo.country))[0]
         }
         else if (trackType === 'global') {
             trackdb = (await database.globalTracks())[0]

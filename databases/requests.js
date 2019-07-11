@@ -555,7 +555,7 @@ exports.deleteCountryTrack = (country, channelID, m) => {
 }
 
 exports.countryTrackUpdate = (client) => {
-    console.log('\x1b[32m\x1b[0m', '[COUNTRY TRACKING] Checking for country tracks to update.')
+    console.log('[COUNTRY TRACKING] Checking for country tracks to update.')
 
     // Start the loop to check for updated player list
     setTimeout(() => {
@@ -564,12 +564,12 @@ exports.countryTrackUpdate = (client) => {
 
     db.countryTrack.find({}, (err, docs) => {
         if (err) {
-            console.error('Issue retrieving country track DB.')
+            console.error('Issue retrieving country track DB.'.red)
             console.error(err)
         }
 
         if (docs.length < 1) {
-            return console.log('[COUNTRY TRACKING || DB] No countries to update.')
+            return console.log('[COUNTRY TRACKING || DB] No countries to update.'.red)
         }
         
         for (let countryObj in docs) {
@@ -621,9 +621,14 @@ exports.countryTrackUpdate = (client) => {
                                     
                                     for (const [channel, properties] of channels) {
                                         if (newRank <= properties.limit && properties.rankUpdates) {
+                                            const colours = {
+                                                1: '#FFD700',
+                                                2: '#FFF',
+                                                3: '#cd7f32'
+                                            }
 
                                             const embed = new Discord.RichEmbed()
-                                                .setColor('#FFD700')
+                                                .setColor(colours[newRank] || '#00FF00')
                                                 .setAuthor(`Welcome to the top ${properties.limit} ${userInfo.username}!: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, undefined, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                                                 .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
                                                 .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.user_id})__** has entered the \:flag_${userInfo.country.toLowerCase()}: top \`${docs[countryObj].channels[channel].limit}\`! \:tada:`)
@@ -649,14 +654,23 @@ exports.countryTrackUpdate = (client) => {
 
                                         for (const [channel, properties] of channels) {
                                             if (newRank <= properties.limit && properties.rankUpdates) {
+                                                const colours = {
+                                                    1: '#FFD700',
+                                                    2: '#FFF',
+                                                    3: '#cd7f32'
+                                                }
+
                                                 const embed = new Discord.RichEmbed()
-                                                    .setColor('#00FF00')
-                                                    .setAuthor(`Global rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                                    .setColor(colours[newRank] || '#00FF00')
+                                                    .setAuthor(`Country rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                                                     .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
                                                     .addField(
                                                         `**Country**: \:flag_${userInfo.country.toLowerCase()}:\nRanks gained: ${rankChange}\nNew Rank: ${newRank}`,
                                                         `\:man_dancing:**__Players passed__** \:dancer:\n${playersPassed}`
                                                     )
+
+                                                if (newRank === 1)
+                                                    embed.addField(`${userInfo.username} IS NOW \:flag_${userInfo.country.toLowerCase()}: RANK 1`, '🎉🎉🎉🎉🎉')
                                             
                                                 client.get(channel).send({ embed })
                                             }
@@ -669,7 +683,7 @@ exports.countryTrackUpdate = (client) => {
 
                     db.countryTrack.update({ country }, { $set: { players: userArr } }, {}, err => {
                         if (err) console.error(err)
-                        console.log('\x1b[36m%s\x1b[0m', `[COUNTRY TRACKING] Finished updating database for ${country}!`)
+                        console.log(`[COUNTRY TRACKING] Finished updating database for ${country}!`.magenta.bgWhite)
                     })
                 })
                 .catch(err => console.error(err))
@@ -687,7 +701,7 @@ exports.globalTracks = () => {
 }
 
 exports.globalTrackUpdate = async client => {
-    console.log('\x1b[32m\x1b[0m', '[GLOBAL TRACKING] Updating Global tracking list')
+    console.log('[GLOBAL TRACKING] Updating Global tracking list')
 
     // Start the loop to check for updated player list
     setTimeout(() => {
@@ -751,9 +765,14 @@ exports.globalTrackUpdate = async client => {
                         
                         for (const [channel, properties] of Object.entries(channels)) {
                             if (newRank <= properties.limit) {
+                                const colours = {
+                                    1: '#FFD700',
+                                    2: '#FFF',
+                                    3: '#cd7f32'
+                                }
 
                                 const embed = new Discord.RichEmbed()
-                                    .setColor('#FFD700')
+                                    .setColor(colours[newRank] || '#00FF00')
                                     .setAuthor(`Welcome to the top ${properties.limit} ${userInfo.username}!: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, undefined, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                                     .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
                                     .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.user_id})__** has entered the GLOBAL \:earth_africa: top \`${globalTrackList.channels[channel].limit}\`! \:tada:`)
@@ -779,14 +798,23 @@ exports.globalTrackUpdate = async client => {
 
                             for (const [channel, properties] of Object.entries(channels)) {
                                 if (newRank <= properties.limit) {
+                                    const colours = {
+                                        1: '#FFD700',
+                                        2: '#FFF',
+                                        3: '#cd7f32'
+                                    }
+
                                     const embed = new Discord.RichEmbed()
-                                        .setColor('#00FF00')
-                                        .setAuthor(`Country rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                        .setColor(colours[newRank] || '#00FF00')
+                                        .setAuthor(`Global rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                                         .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
                                         .addField(
                                             `**Global**: \:earth_africa:\nRanks gained: ${rankChange}\nNew Rank: ${newRank}`,
                                             `\:man_dancing:**__Players passed__** \:dancer:\n${playersPassed}`
                                         )
+                                    
+                                    if (newRank === 1)
+                                        embed.addField(`${userInfo.username} IS NOW GLOBAL RANK 1`, '🎉🎉🎉🎉🎉')
                                 
                                     client.get(channel).send({ embed })
                                 }
@@ -799,7 +827,7 @@ exports.globalTrackUpdate = async client => {
 
         db.globalTrack.update({}, { $set: { players: userArr } }, {}, err => {
             if (err) console.error(err)
-            console.log('\x1b[36m%s\x1b[0m', '[GLOBAL TRACKING] Finished updating database!')
+            console.log('[GLOBAL TRACKING] Finished updating database!'.magenta.bgWhite)
         })
     })
 }

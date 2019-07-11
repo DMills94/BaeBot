@@ -1,5 +1,7 @@
 const database = require('../databases/requests.js')
 const functions = require('./exportFunctions.js')
+const _ = require('lodash')
+const c = require('colors')
 
 module.exports = {
     name: 'getTrackScores',
@@ -34,8 +36,8 @@ module.exports = {
             else if (trackType === 'global') {
                 const globalTrackdb = (await database.globalTracks())[0]
 
-                if (!globalTrackdb || !globalTrackdb.channels || !!globalTrackdb.channels)
-                    return console.log('[GLOBAL TRACKING] No channels require global tracking!')
+                if (!globalTrackdb || !globalTrackdb.channels || _.isEmpty(globalTrackdb.channels, true))
+                    return console.log('[GLOBAL TRACKING] No channels require global tracking!'.cyan)
 
                 limits = 0
                 for (const filters of Object.values(globalTrackdb.channels)) {
@@ -50,7 +52,7 @@ module.exports = {
             }
 
             if (trackdb.length < 1)
-                return console.log('\x1b[33m%s\x1b[0m', `[${trackType.toUpperCase()} TRACKING] No track entries.`)
+                return console.log(`[${trackType.toUpperCase()} TRACKING] No track entries.`.red)
             
             for (let user in trackdb) {
                 const trackInfo = trackdb[user]

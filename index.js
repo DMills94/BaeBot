@@ -4,6 +4,7 @@ const Discord = require('discord.js')
 const config = require('./config.json')
 const database = require('./databases/requests.js')
 const functions = require('./commands/exportFunctions.js')
+const c = require('colors')
 
 const client = new Discord.Client()
 client.commands = new Discord.Collection()
@@ -44,7 +45,7 @@ client.on('ready', async () => {
                     .setFooter('Contact @Bae#3308 with any issues')
 
                 msg.edit({ embed })
-                    .catch(() => console.error('\x1b[41m%s\x1b[0m', 'RUNNING BOT IN TEST MODE'))
+                    .catch(() => console.error('RUNNING BOT IN TEST MODE'.white.bgRed))
             })
     }
     catch(err) {
@@ -54,7 +55,7 @@ client.on('ready', async () => {
     const emojis = client.guilds.find('id', config.privServer).emojis
 
     //Check bot hasn't left any servers, if so remove their db entries
-    console.log('Starting tracking..')
+    console.log('Starting tracking..'.rainbow)
     tracking(emojis, 'user')
     tracking(emojis, 'country')
     tracking(emojis, 'global')
@@ -247,13 +248,13 @@ async function tracking(emojis, trackType) {
     const time = currentTime.toTimeString().slice(0, 9)
 
     if (newScores.length > 0) {
-        console.log('\x1b[33m%s\x1b[0m', `[${trackType.toUpperCase()} TRACKING] ${newScores.length} new scores detected...: ${date} at ${time}`)
+        console.log(`[${trackType.toUpperCase()} TRACKING] ${newScores.length} new scores detected...: ${date} at ${time}`.red.bold)
 
         for (let score in newScores) {
             client.commands.get('postnew').execute(newScores[score], emojis, client.channels, trackType)
         }
     } else {
-        console.log('\x1b[33m%s\x1b[0m', `[${trackType.toUpperCase()} TRACKING] No new scores detected: ${date} at ${time}`)
+        console.log(`[${trackType.toUpperCase()} TRACKING] No new scores detected: ${date} at ${time}`.yellow)
     }
 }
 
