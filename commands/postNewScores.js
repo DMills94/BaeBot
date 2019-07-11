@@ -119,7 +119,7 @@ module.exports = {
                         functions.logCommand(client, channel, 'Tracking', 'track', embed)
                     }
                 }
-                else if (trackRType === 'user') {
+                else if (trackType === 'user') {
                     client.get(channel).send({ embed })
                     functions.logCommand(client, channel, 'Tracking', 'track', embed)
                 }

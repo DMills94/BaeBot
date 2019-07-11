@@ -721,6 +721,14 @@ exports.globalTrackUpdate = async client => {
 
         const globalTrackList = docs[0]
 
+        if (!globalTrackList) {
+            return db.globalTrack.insert({ players: userArr }, err => {
+                if (err) console.error('error adding global track database')
+                
+                return exports.globalTrackUpdate(client)
+            })
+        }
+
         // Check for rank changes
         if (globalTrackList.players) {
             const channels = globalTrackList.channels

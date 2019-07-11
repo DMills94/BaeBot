@@ -34,6 +34,9 @@ module.exports = {
             else if (trackType === 'global') {
                 const globalTrackdb = (await database.globalTracks())[0]
 
+                if (!globalTrackdb || !globalTrackdb.channels || !!globalTrackdb.channels)
+                    return console.log('[GLOBAL TRACKING] No channels require global tracking!')
+
                 limits = 0
                 for (const filters of Object.values(globalTrackdb.channels)) {
                     if (filters.limit > limits)
