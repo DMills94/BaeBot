@@ -85,12 +85,11 @@ module.exports = {
                 // Get User info, check for name change
                 const userInfo = await functions.getUser(trackInfo.userId)
 
+                if (!userInfo) // player banned
+                    continue
+
                 //Get users Top 100
                 const newTop100 = await functions.getUserTop(userInfo.user_id)
-
-                if (newTop100.length < 1) {
-                    continue
-                }
 
                 //See if each of the new top 100 scores exist in the db top 100 scores
                 const prevTop100 = trackInfo.userBest
