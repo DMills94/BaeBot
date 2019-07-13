@@ -924,7 +924,7 @@ exports.globalTrackUpdate = async client => {
                                         }
 
                                         const embed = new Discord.RichEmbed()
-                                            .setColor(`${colours[newRank]}` || '#00FF00')
+                                            .setColor(colours[newRank] || '#00FF00')
                                             .setAuthor(`Global rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
                                             .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
                                             .addField(
