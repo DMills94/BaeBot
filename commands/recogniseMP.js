@@ -31,7 +31,7 @@ module.exports = {
         const argsSplit = args.split(' ')
         let mpId
         let mpUrl
-        let warmups = false
+        let warmups = 0
         let bans = 2
         let team1Bans = []
         let team2Bans = []
@@ -39,7 +39,7 @@ module.exports = {
         let team1Roll
         let team2Roll
         let title = ''
-        let firstPick = 1 // Defaults to RED
+        let firstPick = 0 // Defaults to RED
 
         for (let arg in argsSplit) {
             const a = argsSplit[arg]
@@ -47,8 +47,8 @@ module.exports = {
                 mpUrl = a
                 mpId = a.split('/').slice(-1)[0]
             }
-            else if (a === '+warmups' || a === '+w') {
-                warmups = true
+            else if (a.startsWith('w:')) {
+                warmups = +a.slice(2)
             }
             else if (a.startsWith('b:')) {
                 bans % 2 === 0
@@ -73,45 +73,50 @@ module.exports = {
         const mpData = await functions.getMultiplayer(mpId)
 
         if (!mpData.match) {
-            message.edit('Hmm, seems this match dosen\'t exist :thinking:')
-            return message.delete(4000)
+            message.edit('Hmm, seems this match dosen\'t exist 🤔')
+            return message.delete(10000)
         }
 
         if (mpData.games.length === 0) {
             message.edit('MP detected! But it seems no maps have been played yet 😴')
-            return message.delete(4000) 
+            return message.delete(10000) 
         }
 
         const lobbyInfo = mpData.match
         const tournament = lobbyInfo.name.split(':')[0]
         const team1 = lobbyInfo.name.split('vs')[0].match(/\(([^)]+)\)/)[1]
         const team2 = lobbyInfo.name.split('vs')[1].match(/\(([^)]+)\)/)[1]
-        let maps = mpData.games
+        let maps = mpData.games.slice(warmups) // Account for warmups
         let mapsProcessed = 0
         let team1DescriptionText = ''
         let team2DescriptionText = ''
+        let h2h = false
+        let team1UserInfo, team2UserInfo
+
+        if (!tournament || !team1 || !team2) {
+            message.edit('I was unable to read that MP succesfully 🤷‍. If it was a tournament match, it likely does not follow the standard format: \`TOURNAMENT_CODE: (Team1) vs (Team2)\`')
+            return message.delete(10000)
+        }
+
+        // Check for 1v1 and account for incorrect slots
+        if (maps[0].team_type === '0') {// Head2Head
+            h2h = true
+            team1UserInfo = await functions.getUser(team1)
+            team2UserInfo = await functions.getUser(team2)
+        }
 
         if (team1Roll) {
-            // embed
-            //     .addField(`${team1} roll`, team1Roll, true)
-            //     .addField(`${team2} roll`, team2Roll, true)
             team1DescriptionText += `__Roll:__ ${team1Roll}`
             team2DescriptionText += `__Roll:__ ${team2Roll}`
         }
 
         if (team1Bans.length > 0) {
-            // embed
-            //     .addField(`${team1} ban(s)`, `${team1Bans.join(', ').toUpperCase()}`, true)
-            //     .addField(`${team2} ban(s)`, `${team2Bans.join(', ').toUpperCase()}`, true)
             team1DescriptionText += `${!!team1DescriptionText ? ' - ' : ''} __Ban(s):__ ${team1Bans.join(', ').toUpperCase()}`
             team2DescriptionText += `${!!team2DescriptionText ? ' - ' : ''} __Ban(s):__ ${team2Bans.join(', ').toUpperCase()}`
         }
 
-        if (!!team1DescriptionText || !team2DescriptionText)
+        if (!!team1DescriptionText || !!team2DescriptionText)
             embed.setDescription(`**${team1}** | | ${team1DescriptionText}\n**${team2}** | | ${team2DescriptionText}`)
-
-        if (warmups)
-            maps = maps.slice(2)
 
         let team1Score = 0, team2Score = 0, MVP, team1Total, team2Total
         
@@ -122,15 +127,29 @@ module.exports = {
             let freemod = false
             let mods = map.mods
 
+            // TO DO;
             // If map was aborted
             // if (((Date.parse(map.end_time) - Date.parse(map.start_time)) / 1000) < Number(beatmapInfo.length) - 1)
             //     continue
 
             for (let s in scores) {
                 const score = scores[s]
-                score.team === '1' || score.slot === '0'
-                    ? team1Total += Number(score.score)
-                    : team2Total += Number(score.score)
+                if (!h2h){
+                    score.team === '1'
+                        ? team1Total += Number(score.score)
+                        : team2Total += Number(score.score)
+                }
+                else {
+                    // Don't count if score if player in H2H doesn't match a name in the lobby title
+                    if (score.user_id !== team1UserInfo.user_id && score.user_id !== team2UserInfo.user_id)
+                        continue
+
+                    score.user_id === team1UserInfo.user_id // Score is for team 1
+                        ? team1Total += Number(score.score)
+                        : team2Total += Number(score.score)
+
+                }
+                
 
                 if (score.enabled_mods !== mods && score.enabled_mods !== null) {
                     freemod = true
@@ -140,7 +159,8 @@ module.exports = {
                 if (Number(score.score) > MVP.score)
                     MVP = {score: score.score, player: score.user_id}
             }
-            const MVPInfo = await functions.getUser(MVP.player)
+
+            const MVPInfo = h2h ? await functions.getUser(MVP.player) : null
 
             if (!freemod) {
                 mods = functions.determineMods(map.mods) !== ''
@@ -159,7 +179,7 @@ module.exports = {
                         `${!beatmapInfo
                             ? `Deleted beatmap`
                             : `**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`}
-__${team1Total > team2Total ? team1 : team2}__ wins by **${team1Total > team2Total ? (team1Total - team2Total).toLocaleString() : Number(team2Total - team1Total).toLocaleString()}** || MVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString()})`
+__${team1Total > team2Total ? team1 : team2}__ wins by **${team1Total > team2Total ? (team1Total - team2Total).toLocaleString() : Number(team2Total - team1Total).toLocaleString()}** ${!h2h ? `|| MVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString("en")})` : ''}`
                     )
             }
             catch(err) {
@@ -173,9 +193,9 @@ __${team1Total > team2Total ? team1 : team2}__ wins by **${team1Total > team2Tot
             if (mapsProcessed === maps.length) {
                 embed
                     .setAuthor(`${lobbyInfo.name}`, 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png', mpUrl)
-                    .setTitle(`Match score: ${team1Score > team2Score
-                        ? `🏆 __**${team1} ${team1Score}**__ | ${team2Score} ${team2}`
-                        : `${team1} ${team1Score} | __**${team2Score} ${team2}**__ 🏆`
+                    .setTitle(`__Match score__\n${team1Score > team2Score
+                        ? `${h2h ? `\:flag_${team1UserInfo.country.toLowerCase()}:` : ''} \`${team1.padEnd(Math.max(team1.length, team2.length), ' ')} -\`  **${team1Score}** 🏆\n${h2h ? `\:flag_${team2UserInfo.country.toLowerCase()}:` : ''} \`${team2.padEnd(Math.max(team1.length, team2.length), ' ')} -\`  ${team2Score}`
+                        : `${h2h ? `\:flag_${team1UserInfo.country.toLowerCase()}:` : ''} \`${team1.padEnd(Math.max(team1.length, team2.length), ' ')} -\`  ${team1Score}\n${h2h ? `\:flag_${team2UserInfo.country.toLowerCase()}:` : ''} \`${team2.padEnd(Math.max(team1.length, team2.length), ' ')} -\`  **${team2Score}** 🏆`
                     }`)
                     .setThumbnail(icons[tournament] ? icons[tournament] : 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png')
                     .setFooter(`This is a --- B E T A --- feature. For the MP template, type [[ ${prefix}mp ]]`)
@@ -186,13 +206,9 @@ __${team1Total > team2Total ? team1 : team2}__ wins by **${team1Total > team2Tot
                         })
                     m.delete()
                         .catch(() => {
-                            m.author.send(`Psst, I can delete that mp post message but I need the __Manage Messages__ role in the channel! Please contact the server owner, or @Bae#3308 to give me that 😄`)
+                            m.author.send(`Psst, I can delete your multiplayer results post format message, but I need the __Manage Messages__ role in the channel! Please contact the server owner to give me that 😄`)
                         })
             }
-
         }
-
-
-        
     }
 }
