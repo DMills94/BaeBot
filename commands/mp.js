@@ -13,7 +13,7 @@ module.exports = {
         // Holy shit not allowing indenting is toxic
         const message = await m.channel.send(`
 **Example**
-\`https://osu.ppy.sh/community/matches/50005504 +w b:hr1 b:dt2 b:nm1 b:nm2 r:99 r:55 fp:1 grand finals xx\`
+\`https://osu.ppy.sh/community/matches/50005504 w:2 b:hr1 b:dt2 b:nm1 b:nm2 r:99 r:55 fp:1 grand finals xx\`
 
     __**Breakdown**__--
 *NB: TEAM 1 IS RED, TEAM 2 IS BLUE (As it appears on the MP / Lobby team order)*
