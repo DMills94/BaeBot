@@ -160,7 +160,8 @@ module.exports = {
                     MVP = {score: score.score, player: score.user_id}
             }
 
-            const MVPInfo = h2h ? await functions.getUser(MVP.player) : null
+
+            const MVPInfo = h2h ? null : await functions.getUser(MVP.player)
 
             if (!freemod) {
                 mods = functions.determineMods(map.mods) !== ''
@@ -168,26 +169,36 @@ module.exports = {
                     : '[NM]'
             }
 
-            if (!MVPInfo) {
-                continue
-            }
-
             try {
-                embed
-                    .addField(
-                        `Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__   ${mods}`,
-                        `${!beatmapInfo
-                            ? `Deleted beatmap`
-                            : `**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`}
-__${team1Total > team2Total ? team1 : team2}__ wins by **${team1Total > team2Total ? (team1Total - team2Total).toLocaleString() : Number(team2Total - team1Total).toLocaleString()}** ${!h2h ? `|| MVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString("en")})` : ''}`
-                    )
+                if (team1Total !== team2Total) {
+                    embed
+                        .addField(
+                            `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__   ${mods}`,
+                            `${!beatmapInfo
+                                ? `Deleted beatmap`
+                                : `**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`}
+                                __${team1Total > team2Total ? team1 : team2} (${Math.max(team1Total, team2Total).toLocaleString('en')})__ wins by **${team1Total > team2Total ? (team1Total - team2Total).toLocaleString() : (team2Total - team1Total).toLocaleString()}** ${h2h ? '' : `\nMVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString('en')})`}`
+                        )
+                }
+                else {
+                    embed
+                        .addField(
+                            `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__   ${mods}`,
+                            `${!beatmapInfo
+                                ? `Deleted beatmap`
+                                : `**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`}
+                                Map was a **DRAW!** (${Math.max(team1Total, team2Total).toLocaleString('en')}) ${h2h ? '' : `|| MVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString('en')})`}`
+                        )           
+                }  
             }
             catch(err) {
                 message.edit(`Oh no, seems this MP has too many maps for the embed to handle 😭 This is a limitation for now, but we'll improve. Promise!`)
                 return message.delete(10000)
             }
-                
-            team1Total > team2Total ? team1Score++ : team2Score++ 
+            
+            if (team1Total !== team2Total)
+                team1Total > team2Total ? team1Score++ : team2Score++ 
+
             mapsProcessed++
 
             if (mapsProcessed === maps.length) {
