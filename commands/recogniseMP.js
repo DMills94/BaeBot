@@ -40,6 +40,7 @@ module.exports = {
         let team2Roll
         let title = ''
         let firstPick = 0 // Defaults to RED
+        let bestOf = false
 
         for (let arg in argsSplit) {
             const a = argsSplit[arg]
@@ -64,6 +65,9 @@ module.exports = {
             }
             else if (a.startsWith('fp:')) {
                 firstPick = +a.slice(3) - 1
+            }
+            else if (a.startsWith('bo:')) {
+                bestOf = +a.slice(3)
             }
             else {
                 title += ` ${a}`
@@ -127,13 +131,9 @@ module.exports = {
             let freemod = false
             let mods = map.mods
 
-            // TO DO;
-            // If map was aborted
-            // if (((Date.parse(map.end_time) - Date.parse(map.start_time)) / 1000) < Number(beatmapInfo.length) - 1)
-            //     continue
-
             for (let s in scores) {
                 const score = scores[s]
+
                 if (!h2h){
                     score.team === '1'
                         ? team1Total += Number(score.score)
@@ -169,25 +169,31 @@ module.exports = {
                     : '[NM]'
             }
 
+            const pickText = bestOf
+                ? index + 1 === bestOf
+                    ? `⬜️ **__Tiebreaker__**`
+                    : `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__`
+                : `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__`
+
             try {
                 if (team1Total !== team2Total) {
                     embed
                         .addField(
-                            `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__   ${mods}`,
+                            `${pickText}   ${mods}`,
                             `${!beatmapInfo
                                 ? `Deleted beatmap`
                                 : `**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`}
-                                __${team1Total > team2Total ? team1 : team2} (${Math.max(team1Total, team2Total).toLocaleString('en')})__ wins by **${team1Total > team2Total ? (team1Total - team2Total).toLocaleString() : (team2Total - team1Total).toLocaleString()}** ${h2h ? '' : `\nMVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString('en')})`}`
+__${team1Total > team2Total ? team1 : team2} (${Math.max(team1Total, team2Total).toLocaleString('en')})__ wins by **${team1Total > team2Total ? (team1Total - team2Total).toLocaleString() : (team2Total - team1Total).toLocaleString()}** ${h2h ? '' : `\nMVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString('en')})`}`
                         )
                 }
                 else {
                     embed
                         .addField(
-                            `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__   ${mods}`,
+                            `${pickText}   ${mods}`,
                             `${!beatmapInfo
                                 ? `Deleted beatmap`
                                 : `**[${beatmapInfo.artist} - ${beatmapInfo.title} [${beatmapInfo.version}]](https://osu.ppy.sh/b/${beatmapInfo.beatmap_id})**`}
-                                Map was a **DRAW!** (${Math.max(team1Total, team2Total).toLocaleString('en')}) ${h2h ? '' : `|| MVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString('en')})`}`
+Map was a **DRAW!** (${Math.max(team1Total, team2Total).toLocaleString('en')}) ${h2h ? '' : `|| MVP: \:flag_${MVPInfo.country.toLowerCase()}: [${MVPInfo.username}](https://osu.ppy.sh/users/${MVPInfo.user_id}) (${Number(MVP.score).toLocaleString('en')})`}`
                         )           
                 }  
             }
@@ -201,7 +207,7 @@ module.exports = {
 
             mapsProcessed++
 
-            if (mapsProcessed === maps.length) {
+            if (mapsProcessed === maps.length || team1Score * 2 - 1 === bestOf || team2Score * 2 - 1 === bestOf) {
                 embed
                     .setAuthor(`${lobbyInfo.name}`, 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png', mpUrl)
                     .setTitle(`__Match score__\n${team1Score > team2Score
@@ -215,7 +221,7 @@ module.exports = {
                         .catch(() => {
                             message.edit(`Oh no, something went wrong 😭 try again or contact @Bae#3308`)
                         })
-                    m.delete()
+                    return m.delete()
                         .catch(() => {
                             m.author.send(`Psst, I can delete your multiplayer results post format message, but I need the __Manage Messages__ role in the channel! Please contact the server owner to give me that 😄`)
                         })
