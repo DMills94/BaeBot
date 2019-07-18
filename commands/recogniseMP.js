@@ -171,7 +171,7 @@ module.exports = {
 
             const pickText = bestOf
                 ? index + 1 === bestOf
-                    ? `⬜️ **__Tiebreaker__**`
+                    ? `️**__Tiebreaker__**`
                     : `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__`
                 : `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__`
 
