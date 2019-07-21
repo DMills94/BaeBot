@@ -125,7 +125,6 @@ module.exports = {
             embed.setDescription(`**${team1}** | | ${team1DescriptionText}\n**${team2}** | | ${team2DescriptionText}`)
 
         let team1Score = 0, team2Score = 0, MVP, team1Total, team2Total
-        
         for (let [index, map] of maps.entries()) {
             MVP = {score: 0, player: ''}, team1Total = 0, team2Total = 0 //Reset map specific stats            
             const scores = map.scores
@@ -224,7 +223,7 @@ Map was a **DRAW!** (${Math.max(team1Total, team2Total).toLocaleString('en')}) $
                         message.edit({ embed })
                     }, 10000);
 
-                    message.edit(title.slice(1).toUpperCase(), { embed })
+                    message.edit(`${title.slice(1).toUpperCase()}\n<${mpUrl}>`, { embed })
                         .catch(() => {
                             message.edit(`Oh no, something went wrong 😭 try again or contact @Bae#3308`)
                         })
