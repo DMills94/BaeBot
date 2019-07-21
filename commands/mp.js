@@ -6,6 +6,14 @@ module.exports = {
     async execute(m, args) {
         let deleteMessage = true
 
+        if (args[0] === '-delete') {
+            const prevMessages = await m.channel.fetchMessages({ limit: 2 })
+
+            return prevMessages.forEach(msg => {
+                msg.delete()
+            })
+        }
+
         if (args[0] === '-save') {
             deleteMessage = false
         }
@@ -25,6 +33,8 @@ __**Breakdown**__
 **r:[number]** - same as bans, first __r:[number]__ is **Team 1**, second is Team 2
 **fp:[number]** - Indicate which team picks first, \`1 (red)\` or \`2 (blue)\`!
 The rest of the text makes up the TITLE, add the match ID on the end!
+
+__If you make a mistake, just type \`${prefix}mp -delete\` to delete the message so you can try again!__
 
 Any feedback, or suggestions. Message @Bae#3308 on Discord!
 ${deleteMessage ? `This message will delete itself in 1 minute to save space! Type \`${prefix}mp -save\` to stop this! (For pinning, etc)` : ''}

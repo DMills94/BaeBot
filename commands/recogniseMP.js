@@ -90,7 +90,9 @@ module.exports = {
         const tournament = lobbyInfo.name.split(':')[0]
         const team1 = lobbyInfo.name.split('vs')[0].match(/\(([^)]+)\)/)[1]
         const team2 = lobbyInfo.name.split('vs')[1].match(/\(([^)]+)\)/)[1]
-        let maps = mpData.games.slice(warmups) // Account for warmups
+        let maps = mpData.games.slice(warmups).filter(map => {
+            return map.end_time
+        }) // Account for warmups and remove aborted maps
         let mapsProcessed = 0
         let team1DescriptionText = ''
         let team2DescriptionText = ''
@@ -171,7 +173,7 @@ module.exports = {
 
             const pickText = bestOf
                 ? index + 1 === bestOf
-                    ? `️**__Tiebreaker__**`
+                    ? `️🔺 **__Tiebreaker__**`
                     : `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__`
                 : `${(index + 1) % 2 === firstPick ? '🔹' : '🔸'}Pick #${index + 1} by __${(index + 1) % 2 === firstPick ? team2 : team1}__`
 
@@ -215,7 +217,12 @@ Map was a **DRAW!** (${Math.max(team1Total, team2Total).toLocaleString('en')}) $
                         : `${h2h ? `\:flag_${team1UserInfo.country.toLowerCase()}:` : ''} \`${team1.padEnd(Math.max(team1.length, team2.length), ' ')} -\`  ${team1Score}\n${h2h ? `\:flag_${team2UserInfo.country.toLowerCase()}:` : ''} \`${team2.padEnd(Math.max(team1.length, team2.length), ' ')} -\`  **${team2Score}** 🏆`
                     }`)
                     .setThumbnail(icons[tournament] ? icons[tournament] : 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png')
-                    .setFooter(`This is a --- B E T A --- feature. For the MP template, type [[ ${prefix}mp ]]`)
+                    .setFooter(`For the MP template, type [[ ${prefix}mp ]] || Made a mistake? Type [[ ${prefix}mp -delete ]]`)
+
+                    setTimeout(() => {
+                        embed.setFooter(`I don't accept that ${team1Score > team2Score ? team1 : team2} has won against me.`)
+                        message.edit({ embed })
+                    }, 10000);
 
                     message.edit(title.slice(1).toUpperCase(), { embed })
                         .catch(() => {
