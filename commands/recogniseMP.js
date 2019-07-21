@@ -90,9 +90,9 @@ module.exports = {
         const tournament = lobbyInfo.name.split(':')[0]
         const team1 = lobbyInfo.name.split('vs')[0].match(/\(([^)]+)\)/)[1]
         const team2 = lobbyInfo.name.split('vs')[1].match(/\(([^)]+)\)/)[1]
-        let maps = mpData.games.slice(warmups).filter(map => {
+        let maps = mpData.games.filter(map => {
             return map.end_time
-        }) // Account for warmups and remove aborted maps
+        }).slice(warmups) // Account for warmups and remove aborted maps
         let mapsProcessed = 0
         let team1DescriptionText = ''
         let team2DescriptionText = ''
