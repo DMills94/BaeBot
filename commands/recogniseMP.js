@@ -220,7 +220,7 @@ Map was a **DRAW!** (${Math.max(team1Total, team2Total).toLocaleString('en')}) $
 
                     setTimeout(() => {
                         embed.setFooter(`I don't accept that ${team1Score > team2Score ? team1 : team2} has won against me.`)
-                        message.edit({ embed })
+                        message.edit(`${title.slice(1).toUpperCase()}\n<${mpUrl}>`, { embed })
                     }, 10000);
 
                     message.edit(`${title.slice(1).toUpperCase()}\n<${mpUrl}>`, { embed })
