@@ -1,5 +1,4 @@
 const fs = require('fs')
-const util = require('util')
 const Discord = require('discord.js')
 const config = require('./config.json')
 const database = require('./databases/requests.js')
@@ -28,29 +27,24 @@ client.on('ready', async () => {
         client.user.setActivity(`messages! Try ${config.prefix}help!`, { type:'LISTENING' })
     }
 
-    try {
-        client.channels.get(config.updatesChannel).fetchMessage(config.commandsMessage)
-            .then(msg => {
-                let embed = new Discord.RichEmbed()
-                    .setColor('#fd0000')
-                    .setAuthor('List of bot commands')
-                    .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
-                    .addField(`${config.prefix}osu`, 'List of osu! commands')
-                    .addField(`${config.prefix}ping`, 'Check if the bot is live')
-                    .addField(`${config.prefix}roll`, 'Generate a random number between 1-100')
-                    .addField(`${config.prefix}roulette [@user]`, 'Fight to the death in the classic pistol shootiing game')
-                    .addField(`${config.prefix}server`, 'Tells you what about the server you are in')
-                    .addField(`${config.prefix}toggle`, '**__[ADMIN COMMAND]__**\nChange some bot settings via this command!')
-                    .addField(`${config.prefix}whoami [@user]`, 'Tell you about you, or someone else!')
-                    .setFooter('Contact @Bae#3308 with any issues')
+    client.channels.get(config.updatesChannel).fetchMessage(config.commandsMessage)
+        .then(msg => {
+            let embed = new Discord.RichEmbed()
+                .setColor('#fd0000')
+                .setAuthor('List of bot commands')
+                .setThumbnail('https://cdn-images-1.medium.com/max/1600/0*FDdiWdrriXPKGNyf.png')
+                .addField(`${config.prefix}osu`, 'List of osu! commands')
+                .addField(`${config.prefix}ping`, 'Check if the bot is live')
+                .addField(`${config.prefix}roll`, 'Generate a random number between 1-100')
+                .addField(`${config.prefix}roulette [@user]`, 'Fight to the death in the classic pistol shootiing game')
+                .addField(`${config.prefix}server`, 'Tells you what about the server you are in')
+                .addField(`${config.prefix}toggle`, '**__[ADMIN COMMAND]__**\nChange some bot settings via this command!')
+                .addField(`${config.prefix}whoami [@user]`, 'Tell you about you, or someone else!')
+                .setFooter('Contact @Bae#3308 with any issues')
 
-                msg.edit({ embed })
-                    .catch(() => console.error('RUNNING BOT IN TEST MODE'.white.bgRed))
-            })
-    }
-    catch(err) {
-        console.error(err)
-    }
+            msg.edit({ embed })
+                .catch(() => console.error('RUNNING BOT IN TEST MODE'.white.bgRed))
+        })
 
     const emojis = client.guilds.find('id', config.privServer).emojis
 
@@ -61,10 +55,6 @@ client.on('ready', async () => {
     tracking(emojis, 'global')
     database.countryTrackUpdate(client.channels)
     database.globalTrackUpdate(client.channels)
-})
-
-client.on('error', err => {
-    console.error(`[Error] ${util.inspect(err, { showHidden: true, depth: 2 })}`)
 })
 
 //Recording incoming messages
@@ -229,7 +219,7 @@ client.on('guildDelete', guild => {
     database.deleteGuild(guild)
 })
 
-async function tracking(emojis, trackType) {
+const tracking = async (emojis, trackType) => {
 
     // Start the loop to repeat the check for new scores
     let timeout = 150000 // Timeout for user tracking

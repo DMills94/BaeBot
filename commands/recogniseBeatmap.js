@@ -300,7 +300,7 @@ module.exports = {
                 })
                 .catch(err => {
                     m.channel.send('There was an error! Sorry, please try again later!')
-                    console.error(`There was an error [get_osu]: ${err}`)
+                    functions.handleError(err, m)
                 })
         }
     }

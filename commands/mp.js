@@ -25,14 +25,18 @@ module.exports = {
 
 __**Breakdown**__
 *NB: **TEAM 1** IS RED 🔴, **TEAM 2** IS BLUE 🔵 (As it appears on the MP / Lobby team order)*
+*NB: Lobby format is EXPECTED to be, eg, \`YSC: (Team1) vs (Team2)\`*
         
-**URL** - MP url, derr
-**w:[number]** - Number of warmups to include, default: \`0\`!
-**bo:[number]** - Match is a best of [number]
-**b:[text]** - include as many of these as there are bans. Order alternates, eg. the example has TEAM 1 banning \`HR1, NM1\`
-**r:[number]** - same as bans, first __r:[number]__ is **Team 1**, second is Team 2
-**fp:[number]** - Indicate which team picks first, \`1 (red)\` or \`2 (blue)\`!
+\`URL\` - MP url, derr
+\`w:[number]\` - Number of warmups to include, default: \`0\`!
+\`bo:[number]\` - Match is a best of [number]
+\`b:[text]\` - include as many of these as there are bans. Order alternates, eg. the example has TEAM 1 banning \`HR1, NM1\`
+\`r:[number]\` - same as bans, first __r:[number]__ is **Team 1**, second is Team 2
+\`fp:[number]\` - Indicate which team picks first, \`1 (red)\` or \`2 (blue)\`!
 The rest of the text makes up the TITLE, add the match ID on the end!
+
+__**Optional**__
+\`t:\` - Team/Player name - **max 2** - Where \`x\` is their name (replace spaces with underscores, eg: \`t:Jordan_The_Bear\`)
 
 __If you make a mistake, just type \`${prefix}mp -delete\` to delete the message so you can try again!__
 

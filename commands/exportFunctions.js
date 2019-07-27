@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 const axios = require('axios')
-const { osuApiKey, logChannel, trackChannel } = require('../config.json')
+const { osuApiKey, logChannel, trackChannel, baeID } = require('../config.json')
 const ojsama = require('ojsama')
 
 axios.defaults.baseURL = 'https://osu.ppy.sh/'
@@ -283,7 +283,7 @@ customExports.calculate = (beatmap, performance) => {
 
             })
             .catch(err => {
-                console.error(`There was an error! More info: + ${err}`)
+                console.error(`There was an error!`)
             })
     })
 }
@@ -321,13 +321,37 @@ customExports.logCommand = (client, message, command, type, args = []) => {
     }
     else {
         embed
-            .setColor('#964B00')
+            .setColor('#00FF900')
             .setAuthor(`BOT HAS RESTARTED`, 'https://cdn2.iconfinder.com/data/icons/circle-icons-1/64/power-512.png')
             .setFooter(`${date} at ${time}`)
         
         client.channels.get(logChannel).send({ embed: embed })
     }
 
+}
+
+customExports.handleError = (err, userMsg, botMsg = null) => {
+    const errMsgSplit = err.stack.split('\n')
+    const errName = errMsgSplit[0]
+    const errFile = errMsgSplit[1].split('\\').pop().split(':')[0]
+    const errLine = errMsgSplit[1].split('\\').pop().split(':')[1]
+    const errMsg = `${errName}\n\t${errFile}, Line ${errLine}`
+
+    if (botMsg) {
+        botMsg.edit(`Looks like something went wrong! Here's some details: \`\`\`${errMsg}\`\`\` Please copy this and send it to <@${baeID}>. This message will delete itself in 10 seconds!`)
+        botMsg.delete(10000)
+    }
+
+    const embed = new Discord.RichEmbed()
+    
+    embed
+        .setColor('#FF0000')
+        .setAuthor(`There was an error in ${userMsg.channel.guild}`, userMsg.channel.guild.iconURL)
+        .setThumbnail('https://image.flaticon.com/icons/svg/1320/1320554.svg')
+        .setDescription(`Channel: **${userMsg.channel.name}**\nDetails: \`\`\` ${errMsg} \`\`\``)
+        .setFooter(`Executed By: ${userMsg.author.username}`, userMsg.author.avatarURL)
+
+    userMsg.client.channels.get(logChannel).send({ embed })
 }
 
 let modnames = [{
