@@ -101,9 +101,10 @@ client.on('message', async message => {
 
         if (commandName === 'r')
             commandName = 'recent'
-
-        if (commandName === 'u')
+        else if (commandName === 'u')
             commandName = 'user'
+        else if (commandName === 'c')
+            commandName = 'compare'
 
         //If specific top play remove numbers
         if (commandName.includes('top') && commandName.length > 3) {
