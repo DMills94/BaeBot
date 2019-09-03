@@ -2,16 +2,12 @@ const Datastore = require('nedb')
 const Discord = require('discord.js')
 const axios = require('axios')
 const HTMLParser = require('node-html-parser')
-const functions = require('../commands/exportFunctions')
-const { prefix } = require('../config.json')
+const functions = require('../../commands/exportFunctions')
+const { prefix } = require('../../config.json')
 const _ = require('lodash')
 
 let db = {}
 
-db.devMode = new Datastore({ filename: './databases/stores/devMode', autoload: true })
-db.lastBeatmap = new Datastore({ filename: './databases/stores/lastBeatmap', autoload: true })
-db.linkedUsers = new Datastore({ filename: './databases/stores/links', autoload: true })
-db.servers = new Datastore({ filename: './databases/stores/servers', autoload: true })
 db.track = new Datastore({ filename: './databases/stores/track', autoload: true })
 db.countryTrack = new Datastore({ filename: './databases/stores/countryTrack', autoload: true })
 db.globalTrack = new Datastore({ filename: './databases/stores/globalTrack', autoload: true })
@@ -20,190 +16,6 @@ db.track.persistence.setAutocompactionInterval(43200000)
 db.countryTrack.persistence.setAutocompactionInterval(43200000)
 db.globalTrack.persistence.setAutocompactionInterval(43200000)
 
-//Dev Mode
-exports.addDevMode = () => {
-    db.devMode.insert({ devMode: false }, err => {
-        if (err) console.error(err)
-    })
-}
-
-exports.getDevMode = () => {
-    return new Promise(resolve => {
-        db.devMode.find({}, (err, docs) => {
-            if (err) console.error(err)
-            if (docs.length > 0)
-                resolve(docs[0].devMode)
-            else resolve(undefined)
-        })
-    })
-}
-
-exports.toggleDev = (devStatus, m) => {
-    db.devMode.update({ devMode: !devStatus }, { $set: { devMode: devStatus } }, {}, err => {
-        if (err) {
-            console.error(err)
-            m.react('❎')
-            return m.channel.send(`Unable to toggle dev mode right now! \:slight_frown:`)
-        }
-        m.react('✅')
-        return m.channel.send(`Dev mode is now ${devStatus ? 'active' : 'inactive'} \:sunglasses:`)
-    })
-}
-
-//Last Beatmap
-exports.storeBeatmap = (channelid, beatmap, performance) => {
-
-    db.lastBeatmap.find({ channelid }, (err, docs) => {
-        if (err) console.error(err)
-        if (docs.length < 1) { //New guild
-            const beatmapObj = {
-                channelid,
-                beatmap: beatmap,
-                performance: performance
-            }
-
-            db.lastBeatmap.insert(beatmapObj, err => {
-                if (err) console.error(err)
-            })
-        }
-        else {
-            db.lastBeatmap.update({ channelid }, { $set: { beatmap, performance } }, {}, err => {
-                if (err) console.error(err)
-            })
-        }
-    })
-}
-
-exports.fetchBeatmap = channelid => {
-    return new Promise(resolve => {
-        db.lastBeatmap.find({ channelid }, (err, docs) => {
-            if (err) resolve([])
-            resolve(docs[0])
-        })
-    })
-}
-
-//Linking
-exports.newLink = (discordid, userInfo, m) => {
-    let data = {
-        discordid,
-        osuUsername: userInfo.username,
-        osuId: userInfo.user_id
-    }
-    db.linkedUsers.insert(data, err => {
-        if (err) {
-            console.error(err)
-            m.react('❎')
-            return m.channel.send(`There was an issue linking your account! Please try again later.`)
-        }
-        m.react('✅')
-        return m.channel.send(`You have successfully been linked to \`${userInfo.username}\` \:tada:`)
-    })
-}
-
-exports.deleteLink = (discordid, userInfo, m) => {
-    db.linkedUsers.remove({ discordid }, {}, err => {
-        if (err) {
-            console.error(err)
-            m.react('❎')
-            return m.channel.send(`There was an error unlinking your account, please try again later!`)
-        }
-        m.react('✅')
-        return m.channel.send(`You have successfully unlinked from \`${userInfo.osuUsername}\` \:tada:`)
-    })
-}
-
-exports.checkForLink = discordid => {
-    return new Promise(resolve => {
-        db.linkedUsers.find({ discordid }, (err, docs) => {
-            if (err) console.error(err)
-            resolve(docs[0])
-        })
-    })
-}
-
-//Servers
-exports.addServer = (guildID, channelID) => {
-    const serverToggles = {
-        guildID,
-        announcements: true,
-        announceChannel: channelID
-    }
-    db.servers.insert(serverToggles, err => {
-        if (err) console.error(err)
-    })
-}
-
-exports.checkServer = (guildID, m, query) => {
-    return new Promise (resolve => {
-        db.servers.find({ guildID }, async (err, docs) => {
-            if (err) {
-                return m.channel.send(`There was an error. Try again later \:slight_frown:`)
-            }
-
-            let guild
-            if (docs.length == 0) {
-                await exports.addServer(guildID, m.guild.systemChannelID)
-                resolve({announcements: true, announceChannel: null})
-            }
-            else {
-                guild = docs[0]
-            }
-
-            switch(query) {
-                case 'announcements':
-                    resolve(guild)
-                default:
-                    resolve(false)
-            }
-        })
-    })
-}
-
-exports.toggleAnnouncements = (m, channel) => {
-    const guildID = m.guild.id
-
-    //Lookup Guild
-    db.servers.find({ guildID }, async (err, docs) => {
-        if (err) {
-            return m.channel.send(`There's an error with toggling this at the moment! Sorry about that, try again later \:slight_frown:`)
-        }
-
-        let guild
-        if (docs.length == 0) { //Add the guild, as it doesn't exist and assign guild as a template object
-            await exports.addServer(guildID)
-            guild = {announcements: channel ? true: false, announceChannel: channel}
-        }
-        else { //Otherwise, reverse the database for announcements and add the announce channel if needed
-            guild = docs[0]
-            guild.announcements = channel ? true : !guild.announcements
-            if (channel) { //Users wishes to update their track channel
-                guild.announceChannel = channel
-            }
-        }
-
-        db.servers.update({ guildID }, {$set: { announcements: guild.announcements, announceChannel: guild.announceChannel }}, {}, err => {
-            if (err) console.error(err)
-            m.channel.send(`\:mega: Announcements have been ${guild.announcements ? `\`enabled\` ${guild.announceChannel ? 'in \`#' + m.guild.channels.get(guild.announceChannel).name + '\`' : ''} \:smile:` : '`disabled` \:slight_frown:'}`)
-        })
-    })
-}
-
-exports.announceHere = (channelID, guildID) => {
-    return new Promise(promise => {
-        db.servers.update({ guildID }, {$set: { announceChannel: channelID }}, {}, err => {
-            if (err) {
-                console.error(err)
-                resolve(false)
-            }
-            resolve(true)
-        })
-    })
-
-}
-
-
-//Tracking
 exports.checkForTrack = userId => {
     return new Promise(resolve => {
         db.track.find({ userId }, (err, docs) => {
@@ -999,39 +811,4 @@ exports.toggleGlobalTrack = (m, enable, filters) => {
 
         })
     })
-}
-
-// Delete Guild information
-exports.deleteGuild = guild => {
-    guildChannels = guild.channels.map(chan => chan.id)
-
-    for (let chanid in guildChannels) {
-        //Last Beatmap
-        db.lastBeatmap.remove({ channelid: guildChannels[chanid] }, {}, err => {
-            if (err) console.error(err)
-        })
-
-        //Tracking
-        db.track.find({}, (err, docs) => {
-            if (err) console.error(err)
-
-            for (let user in docs) {
-                if (Object.keys(docs[user].channels).includes(guildChannels[chanid])){
-                    newChannels = { ...docs[user].channels }
-                    delete newChannels[guildChannels[chanid]]
-
-                    if (Object.keys(newChannels).length === 0) {
-                        db.track.remove({ username: docs[user].username }, {}, err => {
-                            if (err) console.error(err)
-                        })
-                    }
-                    else {
-                        db.track.update({ username: docs[user].username }, { $set: { channels: newChannels } }, {}, err => {
-                            if (err) console.error(err)
-                        })
-                    }
-                }
-            }
-        })
-    }
 }
