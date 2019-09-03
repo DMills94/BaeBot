@@ -1,7 +1,7 @@
-const functions = require('./exportFunctions.js')
 const Discord = require('discord.js')
+const functions = require('./exportFunctions.js')
 const icons = require('../tournaments.json')
-const { prefix, baeID } = require('../config.json')
+const { prefix } = require('../config.json')
 
 module.exports = {
     name: 'recognise multi',

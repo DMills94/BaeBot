@@ -1,16 +1,16 @@
 const config = require('../config.json')
-const database = require('../databases/requests.js')
+const { getDevMode, addDevMode, toggleDev } = require('../databases/requests/devMode.js')
 
 module.exports = {
     name: 'toggledev',
     description: 'Toggles dev mode',
     async execute(m) {
         if (m.author.id === config.baeID) {
-            let devModeOld = await database.getDevMode()
+            let devModeOld = await getDevMode()
             let devModeNew
 
             if (devModeOld === undefined) {
-                database.addDevMode()
+                addDevMode()
                 devModeNew = false
             }
             else {
@@ -24,7 +24,7 @@ module.exports = {
                 m.client.user.setActivity(`Stuck? Try ${config.prefix}help!`)
             }
 
-            database.toggleDev(devModeNew, m)
+            toggleDev(devModeNew, m)
         }
         else {
             return m.channel.send(`Sorry this command isn't for you! \:scream:`)

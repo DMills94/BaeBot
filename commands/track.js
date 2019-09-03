@@ -1,8 +1,7 @@
-const database = require('../databases/requests.js')
 const Discord = require('discord.js')
+const database = require('../databases/requests/track.js')
 const config = require('../config.json')
 const countries = require('../databases/countries.json')
-
 
 const functions = require('./exportFunctions.js')
 

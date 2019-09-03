@@ -1,6 +1,7 @@
 const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
-const database = require('../databases/requests.js')
+const { checkForLink } = require('../databases/requests/links.js')
+const { storeBeatmap, fetchBeatmap } = require('../databases/requests/lastBeatmap')
 const config = require('../config.json')
 
 module.exports = {
@@ -33,14 +34,14 @@ module.exports = {
         }
 
         if (args.length === 0) {
-            user = await database.checkForLink(m.author.id)
+            user = await checkForLink(m.author.id)
         }
         else if (args[0].startsWith('<@')) {
             let discordId = args[0].slice(2, args[0].length - 1)
             if (discordId.startsWith('!')) {
                 discordId = discordId.slice(1)
             }
-            user = await database.checkForLink(discordId)
+            user = await checkForLink(discordId)
         }
         else {
             username = args.join('_')
@@ -55,7 +56,7 @@ module.exports = {
         }
 
         //Get Beatmap Id
-        const prevBeatmap = await database.fetchBeatmap(channelId)
+        const prevBeatmap = await fetchBeatmap(channelId)
 
         if (!prevBeatmap)
             return m.channel.send(`There was an issue comparing, perhaps the channel you are trying to compare with doesn't have a beatmap posted recently? Apologies! Please try again later.`)
@@ -117,7 +118,7 @@ module.exports = {
                 )
             }
             
-            database.storeBeatmap(m.channel.id, prevBeatmap.beatmap, null)
+            storeBeatmap(m.channel.id, prevBeatmap.beatmap, null)
             return m.channel.send({ embed })
         }
         else if (!compMods) {
@@ -217,6 +218,6 @@ module.exports = {
             embed
         })
 
-        database.storeBeatmap(m.channel.id, prevBeatmap.beatmap, score)
+        storeBeatmap(m.channel.id, prevBeatmap.beatmap, score)
     }
 }

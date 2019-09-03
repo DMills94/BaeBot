@@ -1,5 +1,5 @@
 const { prefix } = require('../config.json')
-const database = require('../databases/requests.js')
+const { checkForLink, newLink } = require('../databases/requests/links.js')
 const functions = require('./exportFunctions.js')
 
 module.exports = {
@@ -8,7 +8,7 @@ module.exports = {
     async execute(m, args) {
         const userID = m.author.id
 
-        const link = await database.checkForLink(userID)
+        const link = await checkForLink(userID)
 
         if (link) {          
             return m.channel.send(`\:link: Your account is already linked to \`${link.osuUsername}\` \:link:`)
@@ -28,6 +28,6 @@ module.exports = {
             return m.channel.send(`The username \`${osuIGN}\` does not exist! Please try again 🙂`)
         }
 
-        await database.newLink(userID, userInfo, m)
+        await newLink(userID, userInfo, m)
     }
 }

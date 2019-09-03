@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 const { prefix } = require('../config.json')
-const database = require('../databases/requests.js')
+const { checkServer } = require('../databases/requests/servers.js')
 
 module.exports = {
     name: 'psa',
@@ -29,7 +29,7 @@ module.exports = {
 
         client.guilds.forEach(async guild => {
 
-            const permissions = await database.checkServer(guild.id, m, 'announcements')
+            const permissions = await checkServer(guild.id, m, 'announcements')
             if (!permissions.announcements)
                 return
 
