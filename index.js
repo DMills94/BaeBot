@@ -209,6 +209,7 @@ client.on('message', async message => {
 
     // MP recognition
     if (uI.match(/https?:\/\/(osu|new).ppy.sh\/community\/matches\//i) || uI.match(/https?:\/\/(osu|new).ppy.sh\/mp\//i)) {
+        if (uI.includes(`${config.prefix}qualifier`)) return
         const emojis = client.guilds.find('id', config.privServer).emojis
         client.commands.get('recognise multi').execute(message, uI, emojis)
         functions.logCommand(client.channels, message, 'Recognise MP', 'command')
