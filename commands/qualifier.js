@@ -121,7 +121,7 @@ Is this correct? (Yes/No)
             const addMp = await processNewMp(channel.id, mpId)
             processingMsg.delete()
             if (addMp.success) {
-                const successMsg = await channel.send('Added successfully!')
+                const successMsg = await channel.send('Added successfully! 😚')
 
                 const newLeaderboardRaw = addMp.embedInfo.results
                 const sortedLeaderboard = orderBy(newLeaderboardRaw, obj => obj[Object.keys(obj)[0]].total, 'desc')
@@ -171,26 +171,29 @@ const qualifierEmbed = (dbObj) => {
         ? 'Nobody has played yet!'
         : `${results.slice(0, 10).map((player, i) => {
             const playerName = Object.keys(player)[0]
-            return `\`${playerName.padEnd(16, ' ')}-\` (${player[playerName].total.toLocaleString('en')}) ${i === 0 ? '🏆' : ''}${i === 1 ? '🥈' : ''}${i === 2 ? '🥉' : ''}`
+            return `\`${String((i+1) + '.').padEnd(3)}\`\:flag_${player[playerName].country.toLowerCase()}: **${playerName}** (${player[playerName].total.toLocaleString('en')}) ${i === 0 ? '🏆' : ''}${i === 1 ? '🥈' : ''}${i === 2 ? '🥉' : ''}`
         }).join('\n')}`
 
-    const cutOff = () => {
-        const cutOffObj = results[dbObj.config.numberQualify]
-        console.log(cutOffObj)
+    const cutOff = embed => {
+        const cutOffObj = results[Number(dbObj.config.numberQualify) - 1]
+
         if (cutOffObj) {
-            return Object.keys(cutOffObj[Object.keys(cutOffObj)[0]].total)
+            const cutOffPlayer = Object.keys(cutOffObj)[0]
+            embed.addBlankField()
+            embed.addField('Who to beat 🥊', `\`${dbObj.config.numberQualify}.\` \:flag_${cutOffObj[cutOffPlayer].country.toLowerCase()}: **${cutOffPlayer}** (${cutOffObj[cutOffPlayer].total.toLocaleString('en')})`)
         }
-        else {
-            return Object.keys(results.slice(-1)[0][Object.keys(results.slice(-1)[0])[0]].total)
-        }
+        return embed
     }
 
-    return new Discord.RichEmbed()
+    let embed = new Discord.RichEmbed()
+        .setColor('#fcee03')
         .setAuthor(dbObj.config.qualifierName, 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png', dbObj.config.qualifierURL)
-        .setTitle(`Number of players: ${dbObj.config.playerCount}\nPlayers to progress: ${dbObj.config.numberQualify}`)
+        .setTitle(`\:spy: Number of players: ${dbObj.config.playerCount}\n👉 Players to progress: ${dbObj.config.numberQualify}`)
         .setThumbnail(icons[dbObj.config.acronym] ? icons[dbObj.config.acronym] : 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png')
         .addField(`Top 10 Leaderboard (${results.length}/${dbObj.config.playerCount})`, leaderboard)
-        .addField(`Current Cutoff`, cutOff())
+        .setImage('https://media.giphy.com/media/mqWZoUiub0cyA/giphy.gif')
         .setFooter('Beta feature | any issues/suggestions, contact @Bae#3308')
-        
+    
+    embed = cutOff(embed)
+    return embed
 }

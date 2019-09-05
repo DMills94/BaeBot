@@ -56,6 +56,7 @@ exports.processNewMp = (channelId, mpId) => {
 
                 players[playerInfo.username] = {
                     ...players[playerInfo.username],
+                    country: playerInfo.country,
                     [i + 1]: score.score,
                     total: (players[playerInfo.username] ? players[playerInfo.username].total : 0) + Number(score.score)
                 }
