@@ -1,7 +1,8 @@
 const fs = require('fs')
 const Discord = require('discord.js')
 const config = require('./config.json')
-const database = require('./databases/requests.js')
+const database = require('./databases/requests/track.js')
+const { getDevMode } = require('./databases/requests/devMode.js')
 const functions = require('./commands/exportFunctions.js')
 const c = require('colors')
 
@@ -18,7 +19,7 @@ for (const file of commandFiles) {
 client.on('ready', async () => {
     console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`)
     functions.logCommand(client)
-    const devMode = await database.getDevMode()
+    const devMode = await getDevMode()
 
     if (devMode) {
         client.user.setActivity(`In dev mode`)
@@ -140,7 +141,7 @@ client.on('message', async message => {
             return
         }
         
-        const devMode = await database.getDevMode()
+        const devMode = await getDevMode()
         if (devMode && message.author.id !== config.baeID)
             return message.channel.send('Bot is currently under maintenance, we will be back soon, promise!')
 
@@ -208,6 +209,7 @@ client.on('message', async message => {
 
     // MP recognition
     if (uI.match(/https?:\/\/(osu|new).ppy.sh\/community\/matches\//i) || uI.match(/https?:\/\/(osu|new).ppy.sh\/mp\//i)) {
+        if (uI.includes(`${config.prefix}qualifier`)) return
         const emojis = client.guilds.find('id', config.privServer).emojis
         client.commands.get('recognise multi').execute(message, uI, emojis)
         functions.logCommand(client.channels, message, 'Recognise MP', 'command')

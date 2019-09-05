@@ -1,6 +1,7 @@
 const config = require('../config.json')
 const Discord = require('discord.js')
-const database = require('../databases/requests')
+const database = require('../databases/requests/track.js')
+const { toggleAnnouncements } = require('../databases/requests/servers.js')
 
 module.exports = {
 	name: 'toggle',
@@ -31,10 +32,10 @@ module.exports = {
 		else if (args[0] === 'announcements') {
 			if (args[1] && args[1].startsWith('<#')) {
 				const channelID = args[1].slice(2, args[1].length - 1)
-				database.toggleAnnouncements(m, channelID)
+				toggleAnnouncements(m, channelID)
 			}
 			else {
-				database.toggleAnnouncements(m, false)
+				toggleAnnouncements(m, false)
 			}
 		}
 	}

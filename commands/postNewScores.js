@@ -1,6 +1,7 @@
 const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
-const database = require('../databases/requests.js')
+const database = require('../databases/requests/track.js')
+const { storeBeatmap } = require('../databases/requests/lastBeatmap')
 
 module.exports = {
     name: 'postnew',
@@ -116,7 +117,7 @@ module.exports = {
                     client.get(channel).send({ embed })
                     functions.logCommand(client, channel, 'Tracking', 'track', embed)
                 }
-                database.storeBeatmap(channel, beatmapInfo, score)
+                storeBeatmap(channel, beatmapInfo, score)
             }
         })
         

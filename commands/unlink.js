@@ -1,4 +1,4 @@
-const database = require('../databases/requests.js')
+const { checkForLink, deleteLink } = require('../databases/requests/links.js')
 const config = require('../config.json')
 
 module.exports = {
@@ -7,7 +7,7 @@ module.exports = {
     async execute(m) {
         const userID = m.author.id
 
-        const link = await database.checkForLink(userID)
+        const link = await checkForLink(userID)
 
         if (!link) {
             m.react('❎')
@@ -16,6 +16,6 @@ module.exports = {
 
         const userInfo = link
 
-        database.deleteLink(userID, userInfo, m)
+        deleteLink(userID, userInfo, m)
     }
 }

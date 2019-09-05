@@ -2,7 +2,7 @@ const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
 const axios = require('axios')
 const ojsama = require('ojsama')
-const database = require('../databases/requests.js')
+const { storeBeatmap } = require('../databases/requests/lastBeatmap')
 
 module.exports = {
     name: 'recognise beatmap',
@@ -293,7 +293,7 @@ module.exports = {
 
                         m.channel.send({ embed: embed })
 
-                        database.storeBeatmap(m.channel.id, beatmapAPI[0], null)
+                        storeBeatmap(m.channel.id, beatmapAPI[0], null)
                     }
 
                     counter++

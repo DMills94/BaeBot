@@ -1,6 +1,7 @@
 const Discord = require('discord.js')
 const functions = require('./exportFunctions.js')
-const database = require('../databases/requests.js')
+const { checkForLink } = require('../databases/requests/links.js')
+const { storeBeatmap } = require('../databases/requests/lastBeatmap')
 const config = require('../config.json')
 
 module.exports = {
@@ -11,14 +12,14 @@ module.exports = {
         let username
 
         if (args.length === 0) {
-            user = await database.checkForLink(m.author.id)
+            user = await checkForLink(m.author.id)
         }
         else if (args[0].startsWith('<@')) {
             let discordId = args[0].slice(2, args[0].length - 1)
             if (discordId.startsWith('!')) {
                 discordId = discordId.slice(1)
             }
-            user = await database.checkForLink(discordId)
+            user = await checkForLink(discordId)
         }
         else {
             username = args.join('_')
@@ -129,6 +130,6 @@ module.exports = {
         //Send Embed to Channel
         m.channel.send({ embed })
 
-        database.storeBeatmap(m.channel.id, beatmapInfo, recent)
+        storeBeatmap(m.channel.id, beatmapInfo, recent)
     }
 }
