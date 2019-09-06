@@ -6,24 +6,25 @@ db.servers = new Datastore({ filename: './databases/stores/qualifiers', autoload
 
 exports.newQualifier = data => {
     return new Promise(resolve => {
-        db.servers.insert(data, err => {
+        db.servers.insert(data, (err, dbObj) => {
             if (err) {
                 console.error(err)
                 resolve({ success: false })
             }
-            resolve({ success: true })
+            console.log(dbObj._id)
+            resolve({ success: true, dbObj })
         })
     })
 }
 
-exports.lookupQualifier = (channelId, checkExists = false) => {
+exports.lookupQualifier = (id, checkExists = false) => {
     return new Promise(resolve => {
-        db.servers.find({ channelId }, (err, docs) => {
-            if (err || docs.length === 0) resolve(false) // No entries
+        db.servers.findOne({ $or: [{ channelId: id }, {_id: id }] }, (err, docs) => {
+            if (err || !docs) resolve(false) // No entries
             if (checkExists)
                 resolve(true)
             else
-                resolve(docs[0])
+                resolve(docs)
         })
     })
 }
@@ -66,8 +67,11 @@ exports.processNewMp = (channelId, mpId) => {
         // Map into array so can be added to DB
         const newResults = Object.entries(players).map((e) => ({ [e[0]]: e[1] } ))    
     
-        db.servers.update({ channelId }, {$push: { results: {$each: newResults }}}, { returnUpdatedDocs: true }, (err, numReplaced, newDocs) => {
-            if (err) resolve({ success: false })
+        db.servers.update({ channelId }, { $push: { results: {$each: newResults }, mps: `https://osu.ppy.sh/community/matches/${mpId}` } }, { returnUpdatedDocs: true }, (err, numReplaced, newDocs) => {
+            if (err) {
+                console.error(err)
+                resolve({ success: false, err })
+            }
             resolve({ success: true, embedInfo: newDocs })
         })
     })
@@ -78,8 +82,7 @@ exports.finishQualifier = channelId => {
     return new Promise(resolve => {
         db.servers.remove({ channelId }, {}, err => {
             if (err) {
-                console.error(err)
-                resolve({ success: false })
+                resolve({ success: false, err })
             }
             resolve({ success: true })
         })
