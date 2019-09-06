@@ -367,7 +367,7 @@ exports.deleteCountryTrack = (country, channelID, m) => {
 }
 
 exports.countryTrackUpdate = (client) => {
-    console.log('[COUNTRY TRACKING] Checking for country tracks to update.')
+    console.log('[COUNTRY TRACKING] Checking for country tracks to update.'.cyan)
 
     // Start the loop to check for updated player list
     setTimeout(() => {
@@ -381,7 +381,7 @@ exports.countryTrackUpdate = (client) => {
         }
 
         if (docs.length < 1) {
-            return console.log('[COUNTRY TRACKING || DB] No countries to update.'.red)
+            return console.log('[COUNTRY TRACKING || DB] No countries to update.'.cyan)
         }
         
         for (let countryObj in docs) {
@@ -555,7 +555,7 @@ exports.countryTrackUpdate = (client) => {
 
                     db.countryTrack.update({ country }, { $set: { players: userArr } }, {}, err => {
                         if (err) console.error(err)
-                        console.log(`[COUNTRY TRACKING] Finished updating database for ${country}!`.magenta.bgWhite)
+                        console.log(`[COUNTRY TRACKING] Finished updating database for ${country}!`.cyan)
                     })
                 })
                 .catch(err => console.error(err))
@@ -573,7 +573,7 @@ exports.globalTracks = () => {
 }
 
 exports.globalTrackUpdate = async client => {
-    console.log('[GLOBAL TRACKING] Updating Global tracking list')
+    console.log('[GLOBAL TRACKING] Updating Global tracking list'.magenta.bgWhite)
 
     // Start the loop to check for updated player list
     setTimeout(() => {
@@ -604,7 +604,7 @@ exports.globalTrackUpdate = async client => {
             console.error('Issue retrieving global track DB.')
             console.error(err)
         }
-
+        
         const globalTrackList = docs[0]
 
         if (!globalTrackList) {
@@ -618,84 +618,23 @@ exports.globalTrackUpdate = async client => {
         // Check for rank changes
         if (globalTrackList.players) {
             const channels = globalTrackList.channels
-            let playerBeenBanned = false
-            let bannedPlayerPosted = false
+            if (channels) {
+                let playerBeenBanned = false
+                let bannedPlayerPosted = false
 
-            for (let player in globalTrackList.players) {
-                // If player userId is different (aka moved in rankings)
-                if (globalTrackList.players[player].userId !== userArr[player].userId) {
-                    const oldTop50 = globalTrackList.players.map(user => user.userId)
-                    const userId = userArr[player].userId
-                    const userInfo = await functions.getUser(userId)
-                    const newRank = Number(player) + 1
-                    const currentDate = Date.now()
-                    let playersPassed = ''
+                for (let player in globalTrackList.players) {
+                    // If player userId is different (aka moved in rankings)
+                    if (globalTrackList.players[player].userId !== userArr[player].userId) {
+                        const oldTop50 = globalTrackList.players.map(user => user.userId)
+                        const userId = userArr[player].userId
+                        const userInfo = await functions.getUser(userId)
+                        const newRank = Number(player) + 1
+                        const currentDate = Date.now()
+                        let playersPassed = ''
 
-                    // the User wasn't in the previous top 100
-                    if (!oldTop50.includes(userId)) {
-                        for (let i = newRank - 1; i < 50; i++) {
-                            const playerPassed = await functions.getUser(globalTrackList.players[i].userId) 
-
-                            if (!playerPassed) { // The passed player doesn't exist on the leaderboards
-                                if(!_.isEqual(playerBeenBanned, globalTrackList.players[i])) {
-                                    playerBeenBanned = globalTrackList.players[i]
-                                }
-                            }
-                            else
-                                playersPassed += `[${playerPassed.username}](https://osu.ppy.sh/users/${playerPassed.user_id})\n`
-                        }
-
-                        if (playerBeenBanned)
-                            playersPassed = `[${playerBeenBanned.username}](https://osu.ppy.sh/users/${playerBeenBanned.userId}) \`BANNED\`\n`
-
-                                        
-                        for (const [channel, properties] of Object.entries(channels)) {
-                            if (newRank <= properties.limit) {
-                                if (playerBeenBanned) {
-                                    if (!_.isEqual(playerBeenBanned, bannedPlayerPosted)) {
-                                        const bannedEmbed = new Discord.RichEmbed()
-                                            .setColor('#cc0000')
-                                            .setAuthor('PLAYER BEEN BANNED')
-                                            .setImage('https://cfvod.kaltura.com/p/2354731/sp/235473100/thumbnail/entry_id/0_t7bnzrmq/version/100002/width/412/height/248')
-                                            .addField(
-                                                `${playerBeenBanned.username} has been banned! 🦀`,
-                                                `**${playerBeenBanned.pp.toLocaleString('en')}pp**\nGlobal Rank: ${playerBeenBanned.globalRank}`
-                                            )
-                                            .setFooter('Cya idiot.')
-
-                                        bannedPlayerPosted = playerBeenBanned
-                                        client.get(channel).send({ embed: bannedEmbed })
-                                    }
-                                }
-
-                                const colours = {
-                                    1: '#FFD700',
-                                    2: '#FFFFFF',
-                                    3: '#cd7f32'
-                                }
-
-                                const embed = new Discord.RichEmbed()
-                                    .setColor(colours[newRank] || '#00FF00')
-                                    .setAuthor(`Welcome to the top ${properties.limit} ${userInfo.username}!: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, undefined, `https://osu.ppy.sh/users/${userInfo.user_id}`)
-                                    .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
-                                    .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.user_id})__** has entered the GLOBAL \:earth_africa: top \`${globalTrackList.channels[channel].limit}\`! \:tada:`)
-                                    .addField(
-                                        `**New Global Rank:** ${newRank}`,
-                                        `🕺 **__Players passed__**💃\n${playersPassed.length < 950 ? playersPassed : `${playersPassed.length} players`}`
-                                    )
-                                    
-                                client.get(channel).send({ embed })
-                            }
-                        }
-                    }
-                    else { // the User was in the previous top 100
-                        const oldRank = globalTrackList.players.filter(player => {
-                            return player.userId === userId
-                        })[0].globalRank
-                        const rankChange = oldRank - newRank
-
-                        if (rankChange > 0) {                                        
-                            for (let i = newRank - 1; i < oldRank - 1; i++) {
+                        // the User wasn't in the previous top 100
+                        if (!oldTop50.includes(userId)) {
+                            for (let i = newRank - 1; i < 50; i++) {
                                 const playerPassed = await functions.getUser(globalTrackList.players[i].userId) 
 
                                 if (!playerPassed) { // The passed player doesn't exist on the leaderboards
@@ -710,6 +649,7 @@ exports.globalTrackUpdate = async client => {
                             if (playerBeenBanned)
                                 playersPassed = `[${playerBeenBanned.username}](https://osu.ppy.sh/users/${playerBeenBanned.userId}) \`BANNED\`\n`
 
+                                            
                             for (const [channel, properties] of Object.entries(channels)) {
                                 if (newRank <= properties.limit) {
                                     if (playerBeenBanned) {
@@ -728,32 +668,94 @@ exports.globalTrackUpdate = async client => {
                                             client.get(channel).send({ embed: bannedEmbed })
                                         }
                                     }
-                                    else {
-                                        const colours = {
-                                            1: '#FFD700',
-                                            2: '#FFFFFF',
-                                            3: '#CD7F32'
-                                        }
 
-                                        const embed = new Discord.RichEmbed()
-                                            .setColor(colours[newRank] || '#00FF00')
-                                            .setAuthor(`Global rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
-                                            .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
-                                            .addField(
-                                                `**Global**: \:earth_africa:\nRanks gained: ${rankChange}\nNew Rank: ${newRank}`,
-                                                `🕺 **__Players passed__**💃\n${playersPassed}`
-                                            )
+                                    const colours = {
+                                        1: '#FFD700',
+                                        2: '#FFFFFF',
+                                        3: '#cd7f32'
+                                    }
+
+                                    const embed = new Discord.RichEmbed()
+                                        .setColor(colours[newRank] || '#00FF00')
+                                        .setAuthor(`Welcome to the top ${properties.limit} ${userInfo.username}!: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, undefined, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                        .setThumbnail(`https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`)
+                                        .setDescription(`\:tada: **__[${userInfo.username}](https://osu.ppy.sh/users/${userInfo.user_id})__** has entered the GLOBAL \:earth_africa: top \`${globalTrackList.channels[channel].limit}\`! \:tada:`)
+                                        .addField(
+                                            `**New Global Rank:** ${newRank}`,
+                                            `🕺 **__Players passed__**💃\n${playersPassed.length < 950 ? playersPassed : `${playersPassed.length} players`}`
+                                        )
                                         
-                                        if (newRank === 1)
-                                            embed.addField(`${userInfo.username} IS NOW GLOBAL RANK 1`, '🎉🎉🎉🎉🎉')
-                                    
-                                        client.get(channel).send({ embed })
+                                    client.get(channel).send({ embed })
+                                }
+                            }
+                        }
+                        else { // the User was in the previous top 100
+                            const oldRank = globalTrackList.players.filter(player => {
+                                return player.userId === userId
+                            })[0].globalRank
+                            const rankChange = oldRank - newRank
+
+                            if (rankChange > 0) {                                        
+                                for (let i = newRank - 1; i < oldRank - 1; i++) {
+                                    const playerPassed = await functions.getUser(globalTrackList.players[i].userId) 
+
+                                    if (!playerPassed) { // The passed player doesn't exist on the leaderboards
+                                        if(!_.isEqual(playerBeenBanned, globalTrackList.players[i])) {
+                                            playerBeenBanned = globalTrackList.players[i]
+                                        }
+                                    }
+                                    else
+                                        playersPassed += `[${playerPassed.username}](https://osu.ppy.sh/users/${playerPassed.user_id})\n`
+                                }
+
+                                if (playerBeenBanned)
+                                    playersPassed = `[${playerBeenBanned.username}](https://osu.ppy.sh/users/${playerBeenBanned.userId}) \`BANNED\`\n`
+
+                                for (const [channel, properties] of Object.entries(channels)) {
+                                    if (newRank <= properties.limit) {
+                                        if (playerBeenBanned) {
+                                            if (!_.isEqual(playerBeenBanned, bannedPlayerPosted)) {
+                                                const bannedEmbed = new Discord.RichEmbed()
+                                                    .setColor('#cc0000')
+                                                    .setAuthor('PLAYER BEEN BANNED')
+                                                    .setImage('https://cfvod.kaltura.com/p/2354731/sp/235473100/thumbnail/entry_id/0_t7bnzrmq/version/100002/width/412/height/248')
+                                                    .addField(
+                                                        `${playerBeenBanned.username} has been banned! 🦀`,
+                                                        `**${playerBeenBanned.pp.toLocaleString('en')}pp**\nGlobal Rank: ${playerBeenBanned.globalRank}`
+                                                    )
+                                                    .setFooter('Cya idiot.')
+
+                                                bannedPlayerPosted = playerBeenBanned
+                                                client.get(channel).send({ embed: bannedEmbed })
+                                            }
+                                        }
+                                        else {
+                                            const colours = {
+                                                1: '#FFD700',
+                                                2: '#FFFFFF',
+                                                3: '#CD7F32'
+                                            }
+
+                                            const embed = new Discord.RichEmbed()
+                                                .setColor(colours[newRank] || '#00FF00')
+                                                .setAuthor(`Global rank gain ${userInfo.username}: ${parseFloat(userInfo.pp_raw).toLocaleString('en')}pp (#${parseInt(userInfo.pp_rank).toLocaleString('en')} ${userInfo.country}#${parseInt(userInfo.pp_country_rank).toLocaleString('en')})`, `https://a.ppy.sh/${userInfo.user_id}?${currentDate}.jpeg`, `https://osu.ppy.sh/users/${userInfo.user_id}`)
+                                                .setThumbnail('https://www.emoji.co.uk/files/twitter-emojis/objects-twitter/11037-chart-with-upwards-trend.png')
+                                                .addField(
+                                                    `**Global**: \:earth_africa:\nRanks gained: ${rankChange}\nNew Rank: ${newRank}`,
+                                                    `🕺 **__Players passed__**💃\n${playersPassed}`
+                                                )
+                                            
+                                            if (newRank === 1)
+                                                embed.addField(`${userInfo.username} IS NOW GLOBAL RANK 1`, '🎉🎉🎉🎉🎉')
+                                        
+                                            client.get(channel).send({ embed })
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
+                }   
             }
         }
 

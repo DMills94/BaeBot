@@ -87,12 +87,13 @@ Is this correct? (Yes/No)
                             mapIterations,
                             acronym,
                         },
+                        mps: [],
                         results: [] // Array of Player Objects containing results
                     }
 
                     const addQualifier = await newQualifier(dbObj)
                     if (addQualifier.success) {
-                        let embed = qualifierEmbed(dbObj)
+                        let embed = qualifierEmbed(addQualifier.dbObj)
                         return botMsg.edit({ embed })
                     }
                     botMsg.edit(`Uhoh, I failed to save this. Trying again... \`${attempts + 1}/3\``)
@@ -123,12 +124,11 @@ Is this correct? (Yes/No)
             if (addMp.success) {
                 const successMsg = await channel.send('Added successfully! 😚')
 
-                const newLeaderboardRaw = addMp.embedInfo.results
-                const sortedLeaderboard = orderBy(newLeaderboardRaw, obj => obj[Object.keys(obj)[0]].total, 'desc')
+                const leaderboard = sortLeaderboard(addMp.embedInfo.results)
 
                 let updatedEmbed = qualifierEmbed({
                     ...addMp.embedInfo,
-                    results: sortedLeaderboard
+                    results: leaderboard
                 })
 
                 const embedMessage = await channel.fetchMessage(addMp.embedInfo.embedId)
@@ -143,7 +143,7 @@ Is this correct? (Yes/No)
             }
         }
         else if (args[0] === 'end') {
-            const qualifierExists = await lookupQualifier(channel.id, true)
+            const qualifierExists = await lookupQualifier(channel.id)
             if (!qualifierExists) {
                 const existMsg = await channel.send(`There\'s no qualifier to end! Please use \`${prefix}qualifier start\` to set a new one up!`) 
                 return existMsg.delete(5000)
@@ -151,6 +151,17 @@ Is this correct? (Yes/No)
 
             const endQualifier = await finishQualifier(channel.id)
             if (endQualifier.success) {
+                const leaderboard = sortLeaderboard(qualifierExists.results)
+                let updatedEmbed = qualifierEmbed({
+                        ...qualifierExists,
+                        results: leaderboard
+                }, true)
+                    .setImage('https://media.giphy.com/media/SeysxkSfenHY4/giphy.gif')
+                    .setTitle(`**${qualifierExists.config.qualifierName} ENDED**`)
+                    
+                const embedMessage = await channel.fetchMessage(qualifierExists.embedId, true)
+                embedMessage.edit({ embed: updatedEmbed })
+
                 const endMsg = await channel.send('Qualifier ended!')
                 return endMsg.delete(5000)
             }
@@ -159,13 +170,28 @@ Is this correct? (Yes/No)
                 endFailedMsg.delete(5000)
             }
         }
+        else if (args[0] === 'mps') {
+            const qualifierId = m.content.split(' ')[2]
+
+            const qualifier = await lookupQualifier(qualifierId)
+
+            const mps = qualifier.mps
+
+            if (mps.length === 0)
+                return m.channel.send('No MPs have been processed for this qualifier!')
+            else {
+                return m.channel.send(`<${mps.join('>\n<')}>`)
+            }
+        } 
         else if (args[0] === 'help') {
 
         }
     }
 }
 
-const qualifierEmbed = (dbObj) => {
+const sortLeaderboard = resultsObj => orderBy(resultsObj, obj => obj[Object.keys(obj)[0]].total, 'desc')
+
+const qualifierEmbed = (dbObj, finished = false) => {
     const results = dbObj.results
     const leaderboard = results.length === 0
         ? 'Nobody has played yet!'
@@ -185,6 +211,29 @@ const qualifierEmbed = (dbObj) => {
         return embed
     }
 
+    const finalStats = embed => {
+        let runningTotal = 0
+
+        for (const player of results) {
+            const playerName = Object.keys(player)[0]
+            runningTotal += player[playerName].total
+        }
+
+        const winnerName = Object.keys(results[0])[0]
+        const averageScore = Math.round(runningTotal/dbObj.results.length).toLocaleString('en')
+        let cutOffScore = '__All players progress!__' // Assuming number of players isn't equal to the cut off
+
+        const cutOffObj = results[Number(dbObj.config.numberQualify) - 1]
+        if (cutOffObj) {
+            const cutOffPlayer = Object.keys(cutOffObj)[0]
+            cutOffScore = `${cutOffObj[cutOffPlayer].total.toLocaleString('en')} \`(${dbObj.config.numberQualify}. ${cutOffPlayer})\``
+        }
+
+        embed.addBlankField()
+        embed.addField('QUALIFIER RESULTS 📈', `🏆 Winner: **${winnerName}**\n👍 Average Score: ${averageScore}\n😱 Cut Off: ${cutOffScore}`)
+        return embed
+    }
+
     let embed = new Discord.RichEmbed()
         .setColor('#fcee03')
         .setAuthor(dbObj.config.qualifierName, 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png', dbObj.config.qualifierURL)
@@ -192,8 +241,14 @@ const qualifierEmbed = (dbObj) => {
         .setThumbnail(icons[dbObj.config.acronym] ? icons[dbObj.config.acronym] : 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png')
         .addField(`Top 10 Leaderboard (${results.length}/${dbObj.config.playerCount})`, leaderboard)
         .setImage('https://media.giphy.com/media/mqWZoUiub0cyA/giphy.gif')
-        .setFooter('Beta feature | any issues/suggestions, contact @Bae#3308')
+        .setFooter(`${dbObj._id} | Beta feature | any issues/suggestions, contact @Bae#3308`)
     
-    embed = cutOff(embed)
+    if (finished) {
+        embed = finalStats(embed)
+    }
+    else {
+        embed = cutOff(embed)
+    }
+
     return embed
 }

@@ -37,7 +37,7 @@ module.exports = {
                 const globalTrackdb = (await database.globalTracks())[0]
 
                 if (!globalTrackdb || !globalTrackdb.channels || _.isEmpty(globalTrackdb.channels, true))
-                    return console.log('[GLOBAL TRACKING] No channels require global tracking!'.cyan)
+                    return console.log('[GLOBAL TRACKING] No channels require global tracking!'.magenta.bgWhite)
 
                 limits = 0
                 for (const filters of Object.values(globalTrackdb.channels)) {
@@ -52,7 +52,7 @@ module.exports = {
             }
 
             if (trackdb.length < 1)
-                return console.log(`[${trackType.toUpperCase()} TRACKING] No track entries.`.red)
+                return console.log(`[${trackType.toUpperCase()} TRACKING] No track entries.`)
             
             for (let user in trackdb) {
                 const trackInfo = trackdb[user]
