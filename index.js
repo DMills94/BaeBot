@@ -137,7 +137,7 @@ client.on('message', async message => {
 
         //config.prefix Commands
         if (!client.commands.has(commandName)) {
-            message.channel.send(`Sorry, that\'s not a command I can help you with \:sob: \nIf you need help try \` ${config.prefix}help \` or for **osu! commands** try \` ${config.prefix}osu \`!`)
+            message.channel.send(`Sorry, that's not a command I can help you with 😭\nIf you need help try \`${config.prefix}help\` or for **osu! commands** try \`${config.prefix}osu\`!`)
             return
         }
         
