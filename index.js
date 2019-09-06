@@ -72,10 +72,6 @@ client.on('message', async message => {
     if (uI.startsWith(config.prefix)) {
 
         const args = uI.slice(config.prefix.length).split(' ')
-        for (let word in args) {
-            if (args[word].includes('`'))
-                return
-        }
 
         let commandName = args.shift()
 
@@ -96,6 +92,10 @@ client.on('message', async message => {
                 return message.channel.send('Hey! What are you trying to do to me \:rage:')
         }
 
+        for (let word in args) {
+            if (args[word].includes('`'))
+                return
+        }
 
         let playNum
         let top5 = true
@@ -129,7 +129,7 @@ client.on('message', async message => {
                 return message.channel.send(`Please select a number between 1-100 for \` ${config.prefix}rb[x]\``)
             }
             if (!Number.isInteger(playNum))
-                return message.channel.send(`Please use the follow format \` ${config.prefix}rb[x]\` where \`x\` is a number between 1 and 100!`)
+                return message.channel.send(`Please use the follow format \`${config.prefix}rb[x]\` where \`x\` is a number between 1 and 100!`)
             commandName = 'rb'
         } else if (commandName.includes('rb')) {
             playNum = 1
