@@ -92,11 +92,6 @@ client.on('message', async message => {
                 return message.channel.send('Hey! What are you trying to do to me \:rage:')
         }
 
-        for (let word in args) {
-            if (args[word].includes('`'))
-                return
-        }
-
         let playNum
         let top5 = true
 

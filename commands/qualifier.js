@@ -19,7 +19,6 @@ module.exports = {
             return msg.content
         }
 
-
         if (args[0] === 'start') {
             const qualifierExists = await lookupQualifier(channel.id, true)
             if (qualifierExists) {
@@ -180,7 +179,9 @@ Is this correct? (Yes/No)
             if (mps.length === 0)
                 return m.channel.send('No MPs have been processed for this qualifier!')
             else {
-                return m.channel.send(`<${mps.join('>\n<')}>`)
+                return m.channel.send(`**MPs for ${qualifier.config.qualifierName}**\n${mps.map((mp, i) => {
+                    return `\`Lobby ${i+1}\`. <${mp}>`
+                }).join('\n')}`)
             }
         } 
         else if (args[0] === 'help') {

@@ -11,7 +11,6 @@ exports.newQualifier = data => {
                 console.error(err)
                 resolve({ success: false })
             }
-            console.log(dbObj._id)
             resolve({ success: true, dbObj })
         })
     })
