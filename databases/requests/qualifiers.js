@@ -28,12 +28,15 @@ exports.lookupQualifier = (id, checkExists = false) => {
     })
 }
 
-exports.editQualifier = (channelId, data) => {
-    db.servers.update({ channelId }, {$set: { ...data }}, {}, err => {
-        if (err) {
-            console.error(err)
-            return Error('I failed to edit your qualifier, yikes 😬 contact @Bae#3308, or try again later!')
-        }
+exports.editQualifier = (qualifierId, data) => {
+    return new Promise(resolve => {
+        db.servers.update({ _id: qualifierId }, { $set: data }, { returnUpdatedDocs: true }, (err, numReplaced, newDocs) => {
+            if (err) {
+                console.error(err)
+                resolve({success: false})
+            }
+            resolve({ success: true, embedInfo: newDocs })
+        })
     })
 }
 

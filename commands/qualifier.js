@@ -184,6 +184,36 @@ Is this correct? (Yes/No)
                 }).join('\n')}`)
             }
         } 
+        else if (args[0] === 'edit') {
+            const qualifierId = m.content.split(' ')[2]
+            const qualifier = await lookupQualifier(qualifierId)
+            switch (args[2]) {
+                case 'player': // qualifier edit <id> player remove <player>
+                    switch (args[3]) {
+                        case 'remove':
+                            const player = m.content.split(' ')[5]
+                            const results = qualifier.results.filter(playerObj => Object.keys(playerObj)[0] !== player)
+                            const editResp = await editQualifier(qualifierId, { results })
+                            if (editResp.success) {
+                                const successMsg = await channel.send('Editted successfully! 😚')
+                                return editEmbed(editResp, successMsg)
+                            }
+                            break;
+                    
+                        default:
+                            break;
+                    }
+                    
+                    break;
+            
+                default:
+                    break;
+            }
+
+            // Send edit error, if code reaches here we failed
+            const errorMsg = await channel.send('I failed to edit that qualifier, Contact Bae#3308, or try again later!')
+            errorMsg.delete(5000)
+        }
         else if (args[0] === 'help') {
 
         }
@@ -191,6 +221,21 @@ Is this correct? (Yes/No)
 }
 
 const sortLeaderboard = resultsObj => orderBy(resultsObj, obj => obj[Object.keys(obj)[0]].total, 'desc')
+
+const editEmbed = async (qualObj, successMsg) => {
+    const leaderboard = sortLeaderboard(qualObj.embedInfo.results)
+
+    let updatedEmbed = qualifierEmbed({
+        ...qualObj.embedInfo,
+        results: leaderboard
+    })
+
+    const embedMessage = await channel.fetchMessage(qualObj.embedInfo.embedId)
+
+    embedMessage.edit({ embed: updatedEmbed })
+
+    successMsg.delete(5000)
+}
 
 const qualifierEmbed = (dbObj, finished = false) => {
     const results = dbObj.results
