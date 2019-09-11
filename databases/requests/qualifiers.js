@@ -40,9 +40,10 @@ exports.editQualifier = (qualifierId, data) => {
     })
 }
 
-exports.processNewMp = (channelId, mpId) => {
+exports.processNewMp = (channelId, mpId, mpName) => {
     return new Promise(async resolve => {
         const mpInfo = await functions.getMultiplayer(mpId)
+        if (!mpInfo.match) resolve({success: false})
 
         let players = {}
         
@@ -69,7 +70,7 @@ exports.processNewMp = (channelId, mpId) => {
         // Map into array so can be added to DB
         const newResults = Object.entries(players).map((e) => ({ [e[0]]: e[1] } ))    
     
-        db.servers.update({ channelId }, { $push: { results: {$each: newResults }, mps: `https://osu.ppy.sh/community/matches/${mpId}` } }, { returnUpdatedDocs: true }, (err, numReplaced, newDocs) => {
+        db.servers.update({ channelId }, { $push: { results: {$each: newResults }, mps: {url: `https://osu.ppy.sh/community/matches/${mpId}`, name: mpName } } }, { returnUpdatedDocs: true }, (err, numReplaced, newDocs) => {
             if (err) {
                 console.error(err)
                 resolve({ success: false, err })

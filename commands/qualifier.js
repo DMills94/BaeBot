@@ -112,13 +112,19 @@ Is this correct? (Yes/No)
                 const existMsg = await channel.send(`There\'s no qualifier running right now! Please use \`${prefix}qualifier start\` to set a new one up!`) 
                 return existMsg.delete(5000)
             }
+            // Require lobby name
+            if (!args[2]) {
+                return channel.send('Please add the name of the mp on the end of the command! 😬')
+                    .then(msg => msg.delete(5000))
+            }
 
             const processingMsg = await channel.send('🔨 Processing that MP, one moment...')
 
             const mpUrl = args[1]
             const mpId = mpUrl.split('/').slice(-1)[0]
+            const mpName = args.slice(2).join(' ')
 
-            const addMp = await processNewMp(channel.id, mpId)
+            const addMp = await processNewMp(channel.id, mpId, mpName)
             processingMsg.delete()
             if (addMp.success) {
                 const successMsg = await channel.send('Added successfully! 😚')
@@ -137,7 +143,7 @@ Is this correct? (Yes/No)
                 successMsg.delete(5000)
             }
             else {
-                const errorMsg = await channel.send('Error in adding mp to your qualifier! Contact @Bae#3308, or try again later!')
+                const errorMsg = await channel.send('Error in adding mp to your qualifier! 🙅 Check the url is correct, contact @Bae#3308, or try again later!')
                 errorMsg.delete(5000)
             }
         }
@@ -178,10 +184,10 @@ Is this correct? (Yes/No)
 
             if (mps.length === 0)
                 return m.channel.send('No MPs have been processed for this qualifier!')
+                    .then(msg => msg.delete(5000))
             else {
-                return m.channel.send(`**MPs for ${qualifier.config.qualifierName}**\n${mps.map((mp, i) => {
-                    return `\`Lobby ${i+1}\`. <${mp}>`
-                }).join('\n')}`)
+                return m.channel.send(`**MPs for ${qualifier.config.qualifierName}**\n${mps.map(mp => `\`${mp.name}\` - <${mp.url}>`).join('\n')}`)
+                    .then(msg => msg.delete(60000))
             }
         } 
         else if (args[0] === 'edit') {
