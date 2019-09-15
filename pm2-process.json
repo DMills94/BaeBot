@@ -1,7 +1,7 @@
 {
   "script": "index.js",
   "watch": true,
-  "ignore_watch": ["node_modules", "databases/stores"],
+  "ignore_watch": ["node_modules", "databases/stores", ".git"],
   "watch_options": {
     "followSymlinks": false
   },
