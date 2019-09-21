@@ -47,43 +47,44 @@ module.exports = {
             let firstPick = 0 // Defaults to RED
             let bestOf = false
 
-            for (let arg in argsSplit) {
-                const a = argsSplit[arg]
-                if (a.match(/https?:\/\/(osu|new).ppy.sh\/community\/matches\//i) || a.match(/https?:\/\/(osu|new).ppy.sh\/mp\//i)) {
-                    mpUrl = a
-                    mpId = a.split('/').slice(-1)[0]
+            for (let [idx, arg] of argsSplit.entries()) {
+                if (arg.match(/https?:\/\/(osu|new).ppy.sh\/community\/matches\//i) || arg.match(/https?:\/\/(osu|new).ppy.sh\/mp\//i)) {
+                    mpUrl = arg
+                    mpId = arg.split('/').slice(-1)[0]
                 }
-                else if (a.startsWith('w:')) {
-                    warmups = +a.slice(2)
+                else if (arg.startsWith('w:')) {
+                    warmups = +arg.slice(2)
                 }
-                else if (a.startsWith('b:')) {
+                else if (arg.startsWith('b:')) {
                     bans % 2 === 0
-                        ? team1Bans.push(a.slice(2))
-                        : team2Bans.push(a.slice(2))
+                        ? team1Bans.push(arg.slice(2))
+                        : team2Bans.push(arg.slice(2))
                     bans++
                 }
-                else if (a.startsWith('r:')) {
+                else if (arg.startsWith('r:')) {
                     rolls % 2 === 0
-                        ? team1Roll = a.slice(2)
-                        : team2Roll = a.slice(2)
+                        ? team1Roll = arg.slice(2)
+                        : team2Roll = arg.slice(2)
                     rolls++
                 }
-                else if (a.startsWith('fp:')) {
-                    firstPick = +a.slice(3) - 1
+                else if (arg.startsWith('fp:')) {
+                    firstPick = +arg.slice(3) - 1
                 }
-                else if (a.startsWith('bo:')) {
-                    bestOf = +a.slice(3)
+                else if (arg.startsWith('bo:')) {
+                    bestOf = +arg.slice(3)
                 }
-                else if (a.startsWith('t:')) {
+                else if (arg.startsWith('t:')) {
                     if (teams === 4)
                         continue
+                    console.log(m.content)
+                    console.log(m.content.split(' ')[idx])
                     teams % 2 === 0
-                        ? team1 = a.slice(2).replace('_', ' ')
-                        : team2 = a.slice(2).replace('_', ' ')
+                        ? team1 = m.content.split(' ')[idx].slice(2).replace('_', ' ')
+                        : team2 = m.content.split(' ')[idx].slice(2).replace('_', ' ')
                     teams++
                 }
                 else {
-                    title += ` ${a}`
+                    title += ` ${arg}`
                 }
             }
 
