@@ -80,7 +80,7 @@ module.exports = {
             }
         }
 
-        const playDate = Date.parse(recent.date) + 3600000
+        const playDate = Date.parse(recent.date) + 0
         const currentDate = Date.now()
 
         recent.date = functions.timeDifference(currentDate, playDate)

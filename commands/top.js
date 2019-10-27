@@ -70,7 +70,7 @@ module.exports = {
 
         //Time Since Playcount
         for (let score in topPlays) {
-            let playDate = Date.parse(topPlays[score].date) + 3600000
+            let playDate = Date.parse(topPlays[score].date) + 0
             let currentDate = Date.now()
             topPlays[score].date = functions.timeDifference(currentDate, playDate)
         }

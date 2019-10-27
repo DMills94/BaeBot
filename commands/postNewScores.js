@@ -52,7 +52,7 @@ module.exports = {
 
         score.accuracy = functions.determineAcc(score)
 
-        let playDate = Date.parse(score.date) + 3600000
+        let playDate = Date.parse(score.date) + 0
         let currentDate = Date.now()
 
         const mapRank = await functions.checkMapRank(score, beatmapInfo.beatmap_id)

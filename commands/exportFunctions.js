@@ -81,7 +81,7 @@ customExports.checkMapRank = (score, beatmapid) => {
             .then(resp => {
                 const scores = resp.data
                 for (let player in scores) {
-                    if (scores[player].date === score.date || Date.parse(scores[player].date) + 3600000 === score.date) {
+                    if (scores[player].date === score.date || Date.parse(scores[player].date) + 0 === score.date) {
                         return resolve(Number(player) + 1)
                     }
                 }
