@@ -3,6 +3,7 @@ const Discord = require('discord.js')
 const config = require('./config.json')
 const database = require('./databases/requests/track.js')
 const { getDevMode } = require('./databases/requests/devMode.js')
+const { checkServer } = require('./databases/requests/servers.js')
 const functions = require('./commands/exportFunctions.js')
 const c = require('colors')
 
@@ -61,8 +62,7 @@ client.on('ready', async () => {
 //Recording incoming messages
 client.on('message', async message => {
     //Bot ignores self
-    if (message.author.bot)
-        return
+    if (message.author.bot) return
 
     //Record message
     psaText = message.content.slice(5)
@@ -90,6 +90,18 @@ client.on('message', async message => {
             }
             else
                 return message.channel.send('Hey! What are you trying to do to me \:rage:')
+        }
+
+        // Check if channel is whitelisted, if not (whitelist array isn't empty AND channel id isn't in it) ignore the message
+        if (commandName === 'whitelist') {
+            if (!message.channel.permissionsFor(message.member).has('ADMINISTRATOR') && message.author.id !== config.baeID) return
+        }
+        else {
+            const guild = await checkServer(message.guild.id, message)
+
+            if (guild && guild.whitelistChannels.length && !guild.whitelistChannels.includes(message.channel.id)) {
+                return
+            }
         }
 
         let playNum
