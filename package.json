@@ -20,7 +20,7 @@
         "lodash": "^4.17.13",
         "nedb": "^1.8.0",
         "node-html-parser": "^1.1.11",
-        "npm": "^6.10.0",
+        "npm": "^6.13.4",
         "ojsama": "^1.2.1"
     },
     "devDependencies": {},
