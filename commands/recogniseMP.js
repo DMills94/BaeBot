@@ -150,13 +150,12 @@ module.exports = {
                 const beatmapInfo = (await functions.getBeatmap(map.beatmap_id))[0]
                 let freemod = false
                 let mods = map.mods
-                console.log(scores)
 
                 for (let s in scores) {
                     const score = scores[s]
 
                     if (!h2h) {
-                        score.team === '1'
+                        score.team === '2' // 1 = blue, 2 = red
                             ? team1Total += Number(score.score)
                             : team2Total += Number(score.score)
                     }
