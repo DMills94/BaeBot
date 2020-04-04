@@ -76,11 +76,10 @@ module.exports = {
                 else if (arg.startsWith('t:')) {
                     if (teams === 4)
                         continue
-                    console.log(m.content)
-                    console.log(m.content.split(' ')[idx])
+                        
                     teams % 2 === 0
-                        ? team1 = m.content.split(' ')[idx].slice(2).replace('_', ' ')
-                        : team2 = m.content.split(' ')[idx].slice(2).replace('_', ' ')
+                        ? team1 = m.content.split(' ')[idx].slice(2).replace(/_/g, ' ')
+                        : team2 = m.content.split(' ')[idx].slice(2).replace(/_/g, ' ')
                     teams++
                 }
                 else {
@@ -151,11 +150,12 @@ module.exports = {
                 const beatmapInfo = (await functions.getBeatmap(map.beatmap_id))[0]
                 let freemod = false
                 let mods = map.mods
+                console.log(scores)
 
                 for (let s in scores) {
                     const score = scores[s]
 
-                    if (!h2h){
+                    if (!h2h) {
                         score.team === '1'
                             ? team1Total += Number(score.score)
                             : team2Total += Number(score.score)
@@ -177,8 +177,7 @@ module.exports = {
                         mods = '[FM]'
                     }
 
-                    if (Number(score.score) > MVP.score)
-                        MVP = {score: score.score, player: score.user_id}
+                    if (Number(score.score) > MVP.score) MVP = {score: score.score, player: score.user_id}
                 }
 
 
@@ -223,8 +222,7 @@ module.exports = {
                     return message.delete(10000)
                 }
                 
-                if (team1Total !== team2Total)
-                    team1Total > team2Total ? team1Score++ : team2Score++ 
+                if (team1Total !== team2Total) team1Total > team2Total ? team1Score++ : team2Score++
 
                 mapsProcessed++
 
