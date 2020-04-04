@@ -99,7 +99,7 @@ client.on('message', async message => {
         else {
             const guild = await checkServer(message.guild.id, message)
 
-            if (guild && guild.whitelistChannels.length && !guild.whitelistChannels.includes(message.channel.id)) {
+            if (guild.whitelistChannels && guild.whitelistChannels.length && !guild.whitelistChannels.includes(message.channel.id)) {
                 return
             }
         }

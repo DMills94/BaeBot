@@ -178,7 +178,7 @@ customExports.timeDifference = (current, previous) => {
     const msPerDay = msPerHour * 24 //86,400,000
     const msPerYear = msPerDay * 365
 
-    let elapsed = current - previous
+    let elapsed = current - previous - 3600000 // Daylight savings
     let time
 
     if (elapsed < msPerMinute) {
