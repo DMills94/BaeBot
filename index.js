@@ -171,14 +171,14 @@ client.on('message', async message => {
     }
 
     //No-config.prefix Commands
+    const itsbaeChamp = client.emojis.find('name', 'itsbaeChamp')
     if (uI.includes('pepehands')) {
         const emoji = client.emojis.find('name', 'PepeHands')
         message.react(emoji)
     }
 
     if (uI.startsWith('goodbye') || uI.startsWith('good bye')) {
-        const konCha = client.emojis.find('name', 'KonCha')
-        message.reply(`cya! ${konCha}`)
+        message.reply(`cya! ${itsbaeChamp}`)
     }
 
     if (uI === 'good bot' || uI === 'goodbot') {
@@ -186,7 +186,6 @@ client.on('message', async message => {
             message.channel.send('S...senpai owo')
         }
         else {
-            const itsbaeChamp = client.emojis.find('name', 'itsbaeChamp')
             message.channel.send(`Thanks! ${itsbaeChamp}`)
         }
     }
