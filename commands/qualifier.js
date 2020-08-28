@@ -226,7 +226,7 @@ const qualifierEmbed = (dbObj, finished = false) => {
         ? 'Nobody has played yet!'
         : `${results.slice(0, 10).map((player, i) => {
             const playerName = Object.keys(player)[0]
-            return `\`${String((i+1) + '.').padEnd(3)}\`\:flag_${player[playerName].country.toLowerCase()}: **${playerName}** (${player[playerName].total.toLocaleString('en')}) ${i === 0 ? '🏆' : ''}${i === 1 ? '🥈' : ''}${i === 2 ? '🥉' : ''}`
+            return `\`${String((i+1) + '.').padEnd(3)}\`\:flag_${player[playerName].country.toLowerCase()}: **${playerName}** (${player[playerName].total.toLocaleString('en', { maximumFractionDigits: 0 })}) ${i === 0 ? '🏆' : ''}${i === 1 ? '🥈' : ''}${i === 2 ? '🥉' : ''}`
         }).join('\n')}`
 
     const cutOff = embed => {

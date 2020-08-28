@@ -40,10 +40,18 @@ exports.processNewMp = (channelId, mpId, mpName) => {
 
         // Loop through games or "maps" then the scores to extract player performance
         for (const [i, game] of games.entries()) {
-            const scores = game.scores
+            const { scores, mods } = game
+
+            const modMultipliers = {
+                0: 1, //Nomod
+                8: 1.06, //Hd
+                16: 1.1, //Hr
+                64: 1.2 //Dt
+            }
+
+            const appliedMultiplier = modMultipliers[mods]
 
             for (const score of scores) {
-                console.log(score)
                 if (score.score === '0') continue
                 const playerInfo = await functions.getUser(score.user_id)
 
@@ -51,7 +59,7 @@ exports.processNewMp = (channelId, mpId, mpName) => {
                     ...players[playerInfo.username],
                     country: playerInfo.country,
                     [i + 1]: score.score,
-                    total: (players[playerInfo.username] ? players[playerInfo.username].total : 0) + Number(score.score)
+                    total: (players[playerInfo.username] ? players[playerInfo.username].total : 0) + (Number(score.score) / appliedMultiplier)
                 }
             }
         }
