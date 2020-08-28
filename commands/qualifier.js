@@ -129,14 +129,14 @@ Is this correct? (Yes/No)
             if (addMp.success) {
                 const successMsg = await channel.send('Added successfully! 😚')
 
-                const leaderboard = sortLeaderboard(addMp.embedInfo.results)
+                const leaderboard = sortLeaderboard(addMp.results)
 
                 let updatedEmbed = qualifierEmbed({
-                    ...addMp.embedInfo,
+                    ...addMp,
                     results: leaderboard
                 })
 
-                const embedMessage = await channel.fetchMessage(addMp.embedInfo.embedId)
+                const embedMessage = await channel.fetchMessage(addMp.embedId)
 
                 embedMessage.edit({ embed: updatedEmbed })
 
@@ -189,36 +189,12 @@ Is this correct? (Yes/No)
                 return m.channel.send(`**MPs for ${qualifier.config.qualifierName}**\n${mps.map(mp => `\`${mp.name}\` - <${mp.url}>`).join('\n')}`)
                     .then(msg => msg.delete(60000))
             }
-        } 
-        else if (args[0] === 'edit') {
+        }
+        else if (args[0] === 'forceupdate') {
             const qualifierId = m.content.split(' ')[2]
             const qualifier = await lookupQualifier(qualifierId)
-            switch (args[2]) {
-                case 'player': // qualifier edit <id> player remove <player>
-                    switch (args[3]) {
-                        case 'remove':
-                            const player = m.content.split(' ')[5]
-                            const results = qualifier.results.filter(playerObj => Object.keys(playerObj)[0] !== player)
-                            const editResp = await editQualifier(qualifierId, { results })
-                            if (editResp.success) {
-                                const successMsg = await channel.send('Editted successfully! 😚')
-                                return editEmbed(editResp, successMsg)
-                            }
-                            break;
-                    
-                        default:
-                            break;
-                    }
-                    
-                    break;
-            
-                default:
-                    break;
-            }
-
-            // Send edit error, if code reaches here we failed
-            const errorMsg = await channel.send('I failed to edit that qualifier, Contact Bae#3308, or try again later!')
-            errorMsg.delete(5000)
+            const successMsg = await channel.send('Updated the leaderboard')
+            return editEmbed(qualifier, successMsg)
         }
         else if (args[0] === 'help') {
 
@@ -229,14 +205,14 @@ Is this correct? (Yes/No)
 const sortLeaderboard = resultsObj => orderBy(resultsObj, obj => obj[Object.keys(obj)[0]].total, 'desc')
 
 const editEmbed = async (qualObj, successMsg) => {
-    const leaderboard = sortLeaderboard(qualObj.embedInfo.results)
+    const leaderboard = sortLeaderboard(qualObj.results)
 
     let updatedEmbed = qualifierEmbed({
-        ...qualObj.embedInfo,
+        ...qualObj,
         results: leaderboard
     })
 
-    const embedMessage = await channel.fetchMessage(qualObj.embedInfo.embedId)
+    const embedMessage = await channel.fetchMessage(qualObj.embedId)
 
     embedMessage.edit({ embed: updatedEmbed })
 
@@ -244,6 +220,7 @@ const editEmbed = async (qualObj, successMsg) => {
 }
 
 const qualifierEmbed = (dbObj, finished = false) => {
+    console.log(dbObj)
     const results = dbObj.results
     const leaderboard = results.length === 0
         ? 'Nobody has played yet!'
