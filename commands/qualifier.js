@@ -220,7 +220,6 @@ const editEmbed = async (qualObj, successMsg) => {
 }
 
 const qualifierEmbed = (dbObj, finished = false) => {
-    console.log(dbObj)
     const results = dbObj.results
     const leaderboard = results.length === 0
         ? 'Nobody has played yet!'

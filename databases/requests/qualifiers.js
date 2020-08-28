@@ -43,10 +43,14 @@ exports.processNewMp = (channelId, mpId, mpName) => {
             const { scores, mods } = game
 
             const modMultipliers = {
-                0: 1, //Nomod
-                8: 1.06, //Hd
-                16: 1.1, //Hr
-                64: 1.2 //Dt
+                '0': 1, //Nomod
+                '1': 1, //Nomod, Nofail
+                '8': 1.06, //Hd
+                '9': 1.06, //Hd, Nofail
+                '16': 1.1, //Hr
+                '17': 1.1, //Hr, Nofail
+                '64': 1.2, //Dt
+                '65': 1.2 //Dt, Nofail
             }
 
             const appliedMultiplier = modMultipliers[mods]
@@ -54,12 +58,13 @@ exports.processNewMp = (channelId, mpId, mpName) => {
             for (const score of scores) {
                 if (score.score === '0') continue
                 const playerInfo = await functions.getUser(score.user_id)
+                const normalisedScore = Number(score.score) / appliedMultiplier
 
                 players[playerInfo.username] = {
                     ...players[playerInfo.username],
                     country: playerInfo.country,
                     [i + 1]: score.score,
-                    total: (players[playerInfo.username] ? players[playerInfo.username].total : 0) + (Number(score.score) / appliedMultiplier)
+                    total: (players[playerInfo.username] ? players[playerInfo.username].total : 0) + normalisedScore
                 }
             }
         }
