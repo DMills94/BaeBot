@@ -28,18 +28,6 @@ exports.lookupQualifier = (id, checkExists = false) => {
     })
 }
 
-exports.editQualifier = (qualifierId, data) => {
-    return new Promise(resolve => {
-        db.servers.update({ _id: qualifierId }, { $set: data }, { returnUpdatedDocs: true }, (err, numReplaced, newDocs) => {
-            if (err) {
-                console.error(err)
-                resolve({success: false})
-            }
-            resolve({ success: true, embedInfo: newDocs })
-        })
-    })
-}
-
 exports.processNewMp = (channelId, mpId, mpName) => {
     return new Promise(async resolve => {
         const mpInfo = await functions.getMultiplayer(mpId)
@@ -55,6 +43,7 @@ exports.processNewMp = (channelId, mpId, mpName) => {
             const scores = game.scores
 
             for (const score of scores) {
+                console.log(score)
                 if (score.score === '0') continue
                 const playerInfo = await functions.getUser(score.user_id)
 
@@ -75,7 +64,10 @@ exports.processNewMp = (channelId, mpId, mpName) => {
                 console.error(err)
                 resolve({ success: false, err })
             }
-            resolve({ success: true, embedInfo: newDocs })
+            resolve({
+                ...newDocs,
+                success: true
+            })
         })
     })
 

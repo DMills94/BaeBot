@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 const icons = require('../tournaments.json')
-const { newQualifier, lookupQualifier, editQualifier, processNewMp, finishQualifier } = require('../databases/requests/qualifiers')
+const { newQualifier, lookupQualifier, processNewMp, finishQualifier } = require('../databases/requests/qualifiers')
 const { prefix } = require('../config.json')
 const { orderBy } = require('lodash')
 
