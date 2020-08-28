@@ -338,7 +338,7 @@ customExports.handleError = (err, userMsg, botMsg = null) => {
     const errMsg = `${errName}\n\t${errFile}, Line ${errLine}`
 
     if (botMsg) {
-        botMsg.edit(`Looks like something went wrong! Here's some details: \`\`\`${errMsg}\`\`\` Please copy this and send it to <@${baeID}>. This message will delete itself in 10 seconds!`)
+        botMsg.edit(`Looks like something went wrong! If you expected this to work, please contact <@${baeID}>. This message will delete itself in 10 seconds!`)
         botMsg.delete(10000)
     }
 
