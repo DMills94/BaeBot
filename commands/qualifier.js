@@ -232,7 +232,7 @@ const qualifierEmbed = (dbObj, finished = false) => {
         if (cutOffObj) {
             const cutOffPlayer = Object.keys(cutOffObj)[0]
             embed.addBlankField()
-            embed.addField('Who to beat 🥊', `\`${dbObj.config.numberQualify}.\` \:flag_${cutOffObj[cutOffPlayer].country.toLowerCase()}: **${cutOffPlayer}** (${cutOffObj[cutOffPlayer].total.toLocaleString('en')})`)
+            embed.addField('Who to beat 🥊', `\`${dbObj.config.numberQualify}.\` \:flag_${cutOffObj[cutOffPlayer].country.toLowerCase()}: **${cutOffPlayer}** (${cutOffObj[cutOffPlayer].total.toLocaleString('en', { maximumFractionDigits: 0 })})`)
         }
         return embed
     }
