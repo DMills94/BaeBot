@@ -185,7 +185,7 @@ Is this correct? (Yes/No)
             if (mps.length === 0)
                 return m.channel.send('No MPs have been processed for this qualifier!')
             else {
-                return m.channel.send(`**MPs for ${qualifier.config.qualifierName}**\n${mps.map(mp => `\`${mp.name}\` - <${mp.url}>`).join('\n')}`))
+                return m.channel.send(`**MPs for ${qualifier.config.qualifierName}**\n${mps.map(mp => `\`${mp.name}\` - <${mp.url}>`).join('\n')}`)
             }
         }
         else if (args[0] === 'forceupdate') {
