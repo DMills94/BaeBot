@@ -97,10 +97,12 @@ client.on('message', async message => {
             if (!message.channel.permissionsFor(message.member).has('ADMINISTRATOR') && message.author.id !== config.baeID) return
         }
         else {
-            const guild = await checkServer(message.guild.id, message)
+            if(message.channel.type !== "dm") {
+                const guild = await checkServer(message.guild.id, message)
 
-            if (guild.whitelistChannels && guild.whitelistChannels.length && !guild.whitelistChannels.includes(message.channel.id)) {
-                return
+                if (guild.whitelistChannels && guild.whitelistChannels.length && !guild.whitelistChannels.includes(message.channel.id)) {
+                    return
+                }
             }
         }
 
