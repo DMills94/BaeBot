@@ -252,7 +252,7 @@ const qualifierEmbed = (dbObj, finished = false) => {
         const cutOffObj = results[Number(dbObj.config.numberQualify) - 1]
         if (cutOffObj) {
             const cutOffPlayer = Object.keys(cutOffObj)[0]
-            cutOffScore = `${cutOffObj[cutOffPlayer].total.toLocaleString('en')} \`(${dbObj.config.numberQualify}. ${cutOffPlayer})\``
+            cutOffScore = `${cutOffObj[cutOffPlayer].total.toLocaleString('en', { maximumFractionDigits: 0 })} \`(${dbObj.config.numberQualify}. ${cutOffPlayer})\``
         }
 
         embed.addBlankField()
