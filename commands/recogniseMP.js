@@ -245,9 +245,6 @@ module.exports = {
                                 message.edit(`Oh no, something went wrong 😭 try again or contact @Bae#3308`)
                             })
                         return m.delete()
-                            .catch(() => {
-                                m.author.send(`Psst, I can delete your multiplayer results post format message, but I need the __Manage Messages__ role in the channel! Please contact the server owner to give me that 😄`)
-                            })
                 }
             }
         }   
