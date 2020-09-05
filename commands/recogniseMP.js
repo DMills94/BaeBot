@@ -105,8 +105,9 @@ module.exports = {
             const correctFormat = lobbyInfo.name.split(':')[1] !== undefined && lobbyInfo.name.split(':')[1].split('vs')[1] !== undefined
             const tournament = correctFormat ? lobbyInfo.name.split(':')[0] : ''
             if (!team1 && !team2) {
-                team1 = lobbyInfo.name.split('vs')[0].match(/\(([^)]+)\)/)[1]
-                team2 = lobbyInfo.name.split('vs')[1].match(/\(([^)]+)\)/)[1]
+                const teamNames = lobbyInfo.name.match(/\(([^)]+)\)/g)
+                team1 = teamNames[0].substring(1, teamNames[0].length - 1)
+                team2 = teamNames[1].substring(1, teamNames[1].length - 1)
             }
 
             let maps = mpData.games.filter(map => {
